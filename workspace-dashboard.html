@@ -9,22 +9,24 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
-    --bg: #EEF0E8;
-    --bg-tex: #E7EADF;
+    --bg: #EBE7DF;
+    --bg-tex: #E2DDD0;
     --surface: #FFFFFF;
-    --surface-2: #F6F7F1;
-    --ink: #22281F;
-    --ink-soft: #6B7263;
-    --ink-faint: #9AA192;
-    --line: #DCE0D2;
-    --gold: #B4842B;
-    --gold-soft: #F1E6CC;
-    --teal: #2E6B63;
-    --teal-soft: #DFEAE6;
-    --seal: #A23F2E;
-    --seal-soft: #F3E0DA;
-    --radius: 14px;
-    --shadow: 0 1px 2px rgba(34,40,31,0.04), 0 6px 20px rgba(34,40,31,0.05);
+    --surface-2: #F4F1E9;
+    --ink: #1C1B17;
+    --ink-soft: #5C584C;
+    --ink-faint: #9B9481;
+    --line: #DBD5C4;
+    --gold: #B8963C;
+    --gold-soft: #F0E6C4;
+    --teal: #9C8A2E;
+    --teal-soft: #EFE9B8;
+    --seal: #1C1B17;
+    --seal-soft: #E8E4D8;
+    --yellow: #F2E23F;
+    --yellow-soft: #FBF7C9;
+    --radius: 12px;
+    --shadow: 0 1px 2px rgba(28,27,23,0.05), 0 6px 20px rgba(28,27,23,0.06);
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
@@ -82,7 +84,7 @@
     font-size: 22px;
     margin: 0 auto 18px;
     transform: rotate(-3deg);
-    box-shadow: 0 3px 10px rgba(162,63,46,0.35);
+    box-shadow: 0 3px 10px rgba(28,27,23,0.28);
   }
   .auth-title{
     font-family: 'Noto Serif TC', serif;
@@ -197,7 +199,7 @@
     font-weight: 700;
     font-size: 15px;
     transform: rotate(-2deg);
-    box-shadow: 0 2px 6px rgba(162,63,46,0.35);
+    box-shadow: 0 2px 6px rgba(28,27,23,0.28);
   }
   .brand-name{
     font-family: 'Noto Serif TC', serif;
@@ -225,9 +227,9 @@
   }
   .nav-item:hover{ background: var(--surface-2); color: var(--ink); }
   .nav-item.active{
-    background: var(--gold-soft);
-    color: #7A5A18;
-    font-weight: 500;
+    background: var(--yellow);
+    color: #1C1B17;
+    font-weight: 600;
   }
   .nav-icon{ width: 18px; text-align:center; font-size: 14px; }
   .sidebar-foot{
@@ -286,7 +288,7 @@
 
   .card{
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1.5px solid rgba(28,27,23,0.16);
     border-radius: var(--radius);
     padding: 20px 22px;
     box-shadow: var(--shadow);
@@ -355,7 +357,7 @@
     height: 6px; border-radius: 4px; background: var(--surface-2);
     overflow: hidden; border: 1px solid var(--line);
   }
-  .bar-fill{ height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--teal), #4C9088); }
+  .bar-fill{ height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--gold), #D4B65C); }
 
   .todo-item{
     display: flex; align-items: center; gap: 10px;
@@ -412,7 +414,7 @@
   .cal-daynum{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: .85; }
   .cal-event{
     font-size: 10px; padding: 2px 5px; border-radius: 5px;
-    background: var(--gold-soft); color: #7A5A18; line-height: 1.4;
+    background: var(--gold-soft); color: #7A6420; line-height: 1.4;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .cal-cell.today .cal-event{ background: rgba(255,255,255,0.22); color: #fff; }
@@ -1033,12 +1035,12 @@
     }
   }
 
-  /* ---- 行事曆頁：所有行程列表（可編輯／刪除本機行程） ---- */
+  /* ---- 行事曆頁：所有行程列表（本機與 Google 行程都可編輯／刪除） ---- */
   function renderEventList(){
     const now = new Date();
     const el = document.getElementById('upcomingList');
     const upcoming = allEvents().filter(e => e.date >= new Date(now.getFullYear(),now.getMonth(),now.getDate()))
-      .sort((a,b)=>a.date-b.date).slice(0,30);
+      .sort((a,b)=>a.date-b.date).slice(0,50);
     el.innerHTML = upcoming.length === 0
       ? '<div class="empty-state">還沒有任何行程</div>'
       : upcoming.map(e => {
@@ -1051,34 +1053,49 @@
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <div class="up-label">${e.label}</div>
-            ${isGoogle ? '' : `
             <div class="item-actions">
               <button class="icon-btn" data-edit-event="${e.id}" title="編輯">✎</button>
               <button class="icon-btn danger" data-del-event="${e.id}" title="刪除">✕</button>
-            </div>`}
+            </div>
           </div>
         </div>`;
       }).join('');
 
     el.querySelectorAll('[data-edit-event]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const ev = events.find(x=>x.id === btn.dataset.editEvent);
+      btn.addEventListener('click', async ()=>{
+        const id = btn.dataset.editEvent;
+        const ev = allEvents().find(x=>x.id === id);
         if(!ev) return;
         const newLabel = prompt('編輯行程名稱：', ev.label);
         if(newLabel === null) return;
         const newDateStr = prompt('編輯日期（YYYY-MM-DD）：', fmtDate(ev.date));
         if(newDateStr === null) return;
-        const parsed = new Date(newDateStr);
-        if(newLabel.trim()) ev.label = newLabel.trim();
-        if(!isNaN(parsed)) ev.date = parsed;
-        renderAllEvents();
+        const finalLabel = newLabel.trim() || ev.label;
+        const finalDateStr = newDateStr.trim() || fmtDate(ev.date);
+        if(ev.googleId){
+          btn.disabled = true;
+          await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr);
+        }else{
+          const parsed = new Date(finalDateStr);
+          ev.label = finalLabel;
+          if(!isNaN(parsed)) ev.date = parsed;
+          renderAllEvents();
+        }
       });
     });
     el.querySelectorAll('[data-del-event]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
+      btn.addEventListener('click', async ()=>{
         if(!confirm('確定要刪除這筆行程嗎？')) return;
-        events = events.filter(x=>x.id !== btn.dataset.delEvent);
-        renderAllEvents();
+        const id = btn.dataset.delEvent;
+        const ev = allEvents().find(x=>x.id === id);
+        if(!ev) return;
+        if(ev.googleId){
+          btn.disabled = true;
+          await deleteGoogleEvent(ev.googleId);
+        }else{
+          events = events.filter(x=>x.id !== id);
+          renderAllEvents();
+        }
       });
     });
   }
@@ -1278,9 +1295,9 @@
   async function fetchGoogleEvents(){
     if(!gAccessToken) return;
     setGcalStatus('同步中…');
-    const timeMin = new Date(); timeMin.setDate(1); timeMin.setHours(0,0,0,0);
-    const timeMax = new Date(timeMin); timeMax.setMonth(timeMax.getMonth()+2);
-    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=100`;
+    const timeMin = new Date(); timeMin.setMonth(timeMin.getMonth()-1); timeMin.setDate(1); timeMin.setHours(0,0,0,0);
+    const timeMax = new Date(timeMin); timeMax.setMonth(timeMax.getMonth()+7);
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`;
     try{
       const res = await fetch(url, { headers: { Authorization: `Bearer ${gAccessToken}` } });
       if(res.status === 401){
@@ -1301,7 +1318,7 @@
           tag: 'work',
           googleId: ev.id,
         }));
-      setGcalStatus(`已從 Google 日曆同步 ${googleEvents.length} 筆行程`);
+      setGcalStatus(`已從 Google 日曆同步 ${googleEvents.length} 筆行程（前一個月～後六個月）`);
       renderAllEvents();
     }catch(err){
       setGcalStatus('同步失敗，請稍後再試。');
@@ -1321,6 +1338,39 @@
       return true;
     }catch(err){
       setGcalStatus('新增到 Google 日曆失敗，請稍後再試。');
+      return false;
+    }
+  }
+
+  async function updateGoogleEvent(googleId, label, dateStr){
+    if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆。'); return false; }
+    try{
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleId}`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${gAccessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: label, start: { date: dateStr }, end: { date: dateStr } })
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      await fetchGoogleEvents();
+      return true;
+    }catch(err){
+      setGcalStatus('更新 Google 日曆行程失敗，請稍後再試。');
+      return false;
+    }
+  }
+
+  async function deleteGoogleEvent(googleId){
+    if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆。'); return false; }
+    try{
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${gAccessToken}` }
+      });
+      if(!res.ok && res.status !== 410) throw new Error('HTTP ' + res.status);
+      await fetchGoogleEvents();
+      return true;
+    }catch(err){
+      setGcalStatus('刪除 Google 日曆行程失敗，請稍後再試。');
       return false;
     }
   }
