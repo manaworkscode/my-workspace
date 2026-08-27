@@ -724,23 +724,6 @@
     appRoot.classList.remove('locked');
   }
 
-  // 一開始就把工作台內容渲染出來（模糊、鎖住），登入後再解鎖
-  initDashboard();
-
-  // 初始判斷：有沒有已設定的帳密 / 有沒有有效的本次瀏覽階段
-  (function initAuth(){
-    const creds = getCreds();
-    if(!creds){
-      showSetup();
-      return;
-    }
-    if(sessionStorage.getItem(SESSION_KEY) === '1'){
-      enterApp();
-    }else{
-      showLogin();
-    }
-  })();
-
   document.getElementById('setupBtn').addEventListener('click', ()=>{
     const u = document.getElementById('setupUser').value.trim();
     const p = document.getElementById('setupPass').value;
@@ -1035,6 +1018,23 @@
     renderAllEvents();
     initGoogleAuth();
   }
+
+  // 一開始就把工作台內容渲染出來（模糊、鎖住），登入後再解鎖
+  initDashboard();
+
+  // 初始判斷：有沒有已設定的帳密 / 有沒有有效的本次瀏覽階段
+  (function initAuth(){
+    const creds = getCreds();
+    if(!creds){
+      showSetup();
+      return;
+    }
+    if(sessionStorage.getItem(SESSION_KEY) === '1'){
+      enterApp();
+    }else{
+      showLogin();
+    }
+  })();
 </script>
 </body>
 </html>
