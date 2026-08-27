@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工作台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --bg: #EEF0E8;
+    --bg-tex: #E7EADF;
+    --surface: #FFFFFF;
+    --surface-2: #F6F7F1;
+    --ink: #22281F;
+    --ink-soft: #6B7263;
+    --ink-faint: #9AA192;
+    --line: #DCE0D2;
+    --gold: #B4842B;
+    --gold-soft: #F1E6CC;
+    --teal: #2E6B63;
+    --teal-soft: #DFEAE6;
+    --seal: #A23F2E;
+    --seal-soft: #F3E0DA;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(34,40,31,0.04), 0 6px 20px rgba(34,40,31,0.05);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(ellipse at top left, var(--bg-tex), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono{ font-family: 'IBM Plex Mono', monospace; }
+  .serif{ font-family: 'Noto Serif TC', serif; }
+
+  /* ================= AUTH OVERLAY ================= */
+  #authOverlay{
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(34, 40, 31, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 100;
+    padding: 20px;
+    animation: overlayFade .18s ease;
+  }
+  @keyframes overlayFade{
+    from{ opacity: 0; }
+    to{ opacity: 1; }
+  }
+  @keyframes modalPop{
+    from{ opacity: 0; transform: translateY(6px) scale(.97); }
+    to{ opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .auth-card{
+    width: 100%;
+    max-width: 320px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(20,24,16,0.28), 0 4px 14px rgba(20,24,16,0.12);
+    padding: 30px 26px 24px;
+    position: relative;
+    animation: modalPop .2s cubic-bezier(.2,.7,.3,1);
+  }
+  .auth-seal{
+    width: 56px; height: 56px;
+    border-radius: 8px;
+    background: var(--seal);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 700;
+    font-size: 22px;
+    margin: 0 auto 18px;
+    transform: rotate(-3deg);
+    box-shadow: 0 3px 10px rgba(162,63,46,0.35);
+  }
+  .auth-title{
+    font-family: 'Noto Serif TC', serif;
+    font-size: 19px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .auth-sub{
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+  .auth-field{ margin-bottom: 14px; }
+  .auth-label{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    display: block;
+    letter-spacing: .02em;
+  }
+  .auth-input{
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--surface-2);
+    color: var(--ink);
+    outline: none;
+    transition: border-color .15s ease;
+  }
+  .auth-input:focus{ border-color: var(--seal); }
+  .auth-btn{
+    width: 100%;
+    padding: 11px 12px;
+    border: none;
+    border-radius: 9px;
+    background: var(--seal);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: opacity .15s ease;
+  }
+  .auth-btn:hover{ opacity: .9; }
+  .auth-error{
+    font-size: 12px;
+    color: var(--seal);
+    text-align: center;
+    margin-top: 10px;
+    min-height: 16px;
+  }
+  .auth-switch{
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    margin-top: 16px;
+  }
+  .auth-switch a{
+    color: var(--teal);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .auth-note{
+    text-align:center;
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin-top: 18px;
+    line-height: 1.6;
+  }
+
+  /* ================= APP ================= */
+  #appRoot{ display: block; transition: filter .2s ease; }
+  #appRoot.locked{
+    filter: blur(7px);
+    pointer-events: none;
+    user-select: none;
+  }
+  .app{
+    display: grid;
+    grid-template-columns: 208px 1fr;
+    min-height: 100vh;
+  }
+
+  .sidebar{
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 28px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+  .brand{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 6px;
+  }
+  .brand-seal{
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    background: var(--seal);
+    color: #fff;
+    display: flex; align-items:center; justify-content:center;
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 700;
+    font-size: 15px;
+    transform: rotate(-2deg);
+    box-shadow: 0 2px 6px rgba(162,63,46,0.35);
+  }
+  .brand-name{
+    font-family: 'Noto Serif TC', serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .brand-sub{
+    font-size: 11px;
+    color: var(--ink-faint);
+    letter-spacing: 0.05em;
+  }
+  nav{ display: flex; flex-direction: column; gap: 2px; }
+  .nav-item{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: background .15s ease, color .15s ease;
+    user-select: none;
+  }
+  .nav-item:hover{ background: var(--surface-2); color: var(--ink); }
+  .nav-item.active{
+    background: var(--gold-soft);
+    color: #7A5A18;
+    font-weight: 500;
+  }
+  .nav-icon{ width: 18px; text-align:center; font-size: 14px; }
+  .sidebar-foot{
+    margin-top: auto;
+    font-size: 11px;
+    color: var(--ink-faint);
+    padding: 0 6px;
+    line-height: 1.6;
+  }
+  .logout-link{
+    text-decoration: underline;
+    cursor: pointer;
+    color: var(--ink-soft);
+  }
+
+  main{ padding: 34px 40px 60px; max-width: 1180px; }
+
+  .top{
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+  }
+  .greet-name{
+    font-family: 'Noto Serif TC', serif;
+    font-size: 26px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .greet-date{
+    margin-top: 4px;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .quote{
+    text-align: right;
+    max-width: 380px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px;
+    color: var(--seal);
+    line-height: 1.7;
+    position: relative;
+    padding-top: 4px;
+  }
+  .quote::before{ content: "「"; opacity: .6; }
+  .quote::after{ content: "」"; opacity: .6; }
+
+  .grid{ display: grid; gap: 16px; }
+  .grid-2{ grid-template-columns: 1.1fr 1fr; }
+  .grid-3{ grid-template-columns: 1fr 1fr 1fr; }
+
+  .card{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+    position: relative;
+  }
+  .card-head{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .card-title{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-weight: 500;
+    letter-spacing: .02em;
+  }
+  .card-badge{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  .goal-card{ background: linear-gradient(155deg, #FBF8F1, var(--surface) 55%); }
+  .goal-label{
+    font-size: 11.5px;
+    color: var(--gold);
+    font-weight: 600;
+    letter-spacing: .04em;
+    margin-bottom: 6px;
+  }
+  .goal-text{
+    font-family: 'Noto Serif TC', serif;
+    font-size: 25px;
+    font-weight: 700;
+    color: var(--seal);
+    line-height: 1.35;
+  }
+  .goal-sub{ margin-top: 10px; font-size: 12px; color: var(--ink-soft); line-height: 1.6; }
+  .seal-mark{
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 46px; height: 46px;
+    border-radius: 6px;
+    border: 2px solid var(--seal);
+    color: var(--seal);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 17px;
+    font-weight: 700;
+    transform: rotate(4deg);
+    opacity: .85;
+    writing-mode: vertical-rl;
+    letter-spacing: 1px;
+  }
+
+  .proj-row{ margin-bottom: 14px; }
+  .proj-row:last-child{ margin-bottom: 0; }
+  .proj-top{ display:flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .proj-name{ color: var(--ink); }
+  .proj-pct{ color: var(--teal); font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .bar-track{
+    height: 6px; border-radius: 4px; background: var(--surface-2);
+    overflow: hidden; border: 1px solid var(--line);
+  }
+  .bar-fill{ height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--teal), #4C9088); }
+
+  .todo-item{
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .todo-item:last-child{ border-bottom: none; }
+  .todo-check{
+    width: 16px; height: 16px;
+    border-radius: 5px;
+    border: 1.5px solid var(--ink-faint);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: transparent;
+    transition: all .15s ease;
+  }
+  .todo-item.done .todo-check{ background: var(--teal); border-color: var(--teal); color: #fff; }
+  .todo-item.done .todo-label{ color: var(--ink-faint); text-decoration: line-through; }
+  .todo-label{ flex: 1; }
+  .todo-date{ font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-faint); }
+
+  .sched-item{ display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .sched-item:last-child{ border-bottom: none; }
+  .tag{ font-size: 10.5px; padding: 3px 8px; border-radius: 20px; font-weight: 500; white-space: nowrap; }
+  .tag-personal{ background: var(--seal-soft); color: var(--seal); }
+  .tag-work{ background: var(--teal-soft); color: var(--teal); }
+  .tag-general{ background: var(--gold-soft); color: var(--gold); }
+  .sched-label{ flex: 1; }
+  .sched-date{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); }
+
+  .fin-card{ display: flex; flex-direction: column; }
+  .fin-value-row{ display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+  .fin-value{ font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 500; letter-spacing: 0.5px; }
+  .fin-eye{ cursor: pointer; color: var(--ink-faint); font-size: 15px; user-select: none; }
+  .fin-label{ font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .spark{ margin-top: 14px; }
+
+  .cal-wrap{ display: grid; grid-template-columns: 1fr 260px; gap: 16px; margin-top: 16px; }
+  .cal-card{ padding: 22px; }
+  .cal-head{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .cal-title{ font-family: 'Noto Serif TC', serif; font-size: 16px; font-weight: 600; }
+  .cal-grid{ display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .cal-dow{ text-align: center; font-size: 11px; color: var(--ink-faint); padding-bottom: 6px; font-family: 'IBM Plex Mono', monospace; }
+  .cal-cell{
+    min-height: 70px; border-radius: 9px; border: 1px solid var(--line);
+    padding: 6px 7px; font-size: 11.5px; background: var(--surface-2);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .cal-cell.empty{ background: transparent; border-color: transparent; }
+  .cal-cell.today{ background: var(--seal); border-color: var(--seal); color: #fff; }
+  .cal-daynum{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: .85; }
+  .cal-event{
+    font-size: 10px; padding: 2px 5px; border-radius: 5px;
+    background: var(--gold-soft); color: #7A5A18; line-height: 1.4;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .cal-cell.today .cal-event{ background: rgba(255,255,255,0.22); color: #fff; }
+
+  .upcoming-card{ padding: 20px; }
+  .up-item{ padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .up-item:last-child{ border-bottom: none; }
+  .up-top{ display:flex; justify-content: space-between; align-items:center; margin-bottom: 3px;}
+  .up-label{ font-size: 13px; }
+  .up-date{ font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-faint); }
+
+  /* Google Calendar sync */
+  .gcal-btn{
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: all .15s ease;
+  }
+  .gcal-btn:hover{ background: var(--surface); border-color: var(--teal); }
+  .gcal-btn.connected{
+    background: var(--teal-soft);
+    color: var(--teal);
+    border-color: var(--teal);
+  }
+  .gcal-dot{
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-faint);
+  }
+  .gcal-btn.connected .gcal-dot{ background: var(--teal); }
+  .gcal-status{
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin-top: 8px;
+  }
+  .quickadd{
+    display: flex; gap: 8px; margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .quickadd input{
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 9px;
+    background: var(--surface-2);
+    color: var(--ink);
+    outline: none;
+  }
+  .quickadd input:focus{ border-color: var(--teal); }
+  .quickadd-date{ flex: 0 0 128px; }
+  .quickadd-label{ flex: 1; }
+  .quickadd-btn{
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .quickadd-btn:hover{ opacity: .9; }
+  .quickadd-btn:disabled{ opacity: .5; cursor: not-allowed; }
+
+  /* ============ 分頁視圖切換 ============ */
+  .view{ display: none; }
+  .view.active{ display: block; }
+  .page-head{
+    margin-bottom: 22px;
+  }
+  .page-title{
+    font-family: 'Noto Serif TC', serif;
+    font-size: 22px;
+    font-weight: 700;
+  }
+  .page-sub{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-top: 4px;
+  }
+
+  /* ============ 新增表單（專案／待辦／行程共用） ============ */
+  .add-form{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding: 16px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+  }
+  .add-form input, .add-form select{
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--surface);
+    color: var(--ink);
+    outline: none;
+  }
+  .add-form input:focus, .add-form select:focus{ border-color: var(--teal); }
+  .add-form .f-name{ flex: 1 1 160px; }
+  .add-form .f-num{ width: 90px; }
+  .add-form .f-date{ width: 150px; }
+  .add-form .f-tag{ width: 100px; }
+  .add-form-btn{
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    background: var(--seal);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .add-form-btn:hover{ opacity: .9; }
+
+  /* ============ 列表項目的編輯/刪除按鈕 ============ */
+  .item-actions{
+    display: flex;
+    gap: 6px;
+    margin-left: 8px;
+    flex-shrink: 0;
+  }
+  .icon-btn{
+    width: 24px; height: 24px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s ease;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover{ border-color: var(--teal); color: var(--teal); }
+  .icon-btn.danger:hover{ border-color: var(--seal); color: var(--seal); }
+
+  .proj-list-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .proj-list-row .proj-row{ flex: 1; margin-bottom: 0; }
+
+  .full-todo-item, .full-sched-item{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .full-todo-item:last-child, .full-sched-item:last-child{ border-bottom: none; }
+
+  .empty-state{
+    font-size: 12.5px;
+    color: var(--ink-faint);
+    padding: 20px 0;
+    text-align: center;
+  }
+
+  @media (max-width: 880px){
+    .app{ grid-template-columns: 1fr; }
+    .sidebar{ flex-direction: row; overflow-x: auto; padding: 14px 16px; gap: 16px; align-items: center; }
+    nav{ flex-direction: row; }
+    .sidebar-foot{ display: none; }
+    main{ padding: 22px 18px 40px; }
+    .grid-2, .grid-3{ grid-template-columns: 1fr; }
+    .cal-wrap{ grid-template-columns: 1fr; }
+    .top{ flex-direction: column; }
+    .quote{ text-align: left; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH OVERLAY ================= -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-seal" id="authSealIcon">封</div>
+    <div class="auth-title" id="authTitle">解封工作台</div>
+    <div class="auth-sub" id="authSub">輸入帳號密碼，進入你的工作台</div>
+
+    <div id="loginForm">
+      <div class="auth-field">
+        <label class="auth-label">帳號</label>
+        <input class="auth-input" id="loginUser" type="text" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">密碼</label>
+        <input class="auth-input" id="loginPass" type="password" autocomplete="current-password">
+      </div>
+      <button class="auth-btn" id="loginBtn">解封進入</button>
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-switch">忘記密碼？<a id="resetLink">重新設定帳號</a></div>
+    </div>
+
+    <div id="setupForm" style="display:none;">
+      <div class="auth-field">
+        <label class="auth-label">建立帳號</label>
+        <input class="auth-input" id="setupUser" type="text" autocomplete="username">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">設定密碼</label>
+        <input class="auth-input" id="setupPass" type="password" autocomplete="new-password">
+      </div>
+      <div class="auth-field">
+        <label class="auth-label">再輸入一次密碼</label>
+        <input class="auth-input" id="setupPass2" type="password" autocomplete="new-password">
+      </div>
+      <button class="auth-btn" id="setupBtn">建立並蓋印</button>
+      <div class="auth-error" id="setupError"></div>
+    </div>
+
+    <div class="auth-note">帳密僅儲存在此瀏覽器本機，屬於基本防護，並非加密保護等級的安全機制。</div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="appRoot" class="locked">
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-seal">工</div>
+      <div>
+        <div class="brand-name">我的工作台</div>
+        <div class="brand-sub">WORKSPACE</div>
+      </div>
+    </div>
+    <nav>
+      <div class="nav-item active" data-view="home"><span class="nav-icon">🏠</span>首頁</div>
+      <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span>專案排程</div>
+      <div class="nav-item" data-view="calendar"><span class="nav-icon">📅</span>行事曆</div>
+      <div class="nav-item" data-view="todos"><span class="nav-icon">✅</span>待辦清單</div>
+    </nav>
+    <div class="sidebar-foot">
+      最後更新<br><span class="mono" id="lastUpdate"></span>
+      <div style="margin-top:10px;"><span class="logout-link" id="logoutLink">登出</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ========== 首頁：只顯示近一週行程 + 行事曆 ========== -->
+    <div class="view active" id="view-home">
+      <div class="top">
+        <div>
+          <div class="greet-name" id="greetName"></div>
+          <div class="greet-date" id="greetDate"></div>
+        </div>
+        <div class="quote">把每天的第一眼,留給最重要的事。</div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-head"><div class="card-title">🗓 近一週行程</div></div>
+        <div id="homeWeekList"></div>
+      </div>
+
+      <div class="card cal-card">
+        <div class="cal-head">
+          <div class="cal-title" id="homeCalTitle"></div>
+          <div class="card-badge">本月</div>
+        </div>
+        <div class="cal-grid" id="homeCalGrid"></div>
+      </div>
+    </div>
+
+    <!-- ========== 專案排程 ========== -->
+    <div class="view" id="view-projects">
+      <div class="page-head">
+        <div class="page-title">專案排程</div>
+        <div class="page-sub">新增、更新進度或刪除專案</div>
+      </div>
+
+      <div class="add-form">
+        <input class="f-name" id="projAddName" type="text" placeholder="專案名稱">
+        <input class="f-num" id="projAddPct" type="number" min="0" max="100" placeholder="進度 %">
+        <button class="add-form-btn" id="projAddBtn">新增專案</button>
+      </div>
+
+      <div class="card">
+        <div id="projList"></div>
+      </div>
+    </div>
+
+    <!-- ========== 行事曆（完整版） ========== -->
+    <div class="view" id="view-calendar">
+      <div class="page-head">
+        <div class="page-title">行事曆</div>
+        <div class="page-sub">管理本機行程，或連接 Google 日曆同步</div>
+      </div>
+
+      <div class="add-form">
+        <input class="f-date" id="evAddDate" type="date">
+        <input class="f-name" id="evAddLabel" type="text" placeholder="行程名稱">
+        <select class="f-tag" id="evAddTag">
+          <option value="personal">個人</option>
+          <option value="work">工作</option>
+          <option value="general">一般</option>
+        </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);">
+          <input type="checkbox" id="evAddSyncGoogle" style="width:auto;">同步到 Google
+        </label>
+        <button class="add-form-btn" id="evAddBtn">新增行程</button>
+      </div>
+
+      <div class="cal-wrap">
+        <div class="card cal-card">
+          <div class="cal-head">
+            <div class="cal-title" id="calTitle"></div>
+            <button class="gcal-btn" id="gcalBtn"><span class="gcal-dot"></span><span id="gcalBtnText">連接 Google 日曆</span></button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+          <div class="gcal-status" id="gcalStatus"></div>
+        </div>
+
+        <div class="card upcoming-card">
+          <div class="card-head"><div class="card-title">📌 所有行程</div></div>
+          <div id="upcomingList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== 待辦清單 ========== -->
+    <div class="view" id="view-todos">
+      <div class="page-head">
+        <div class="page-title">待辦清單</div>
+        <div class="page-sub"><span id="todoCount"></span></div>
+      </div>
+
+      <div class="add-form">
+        <input class="f-name" id="todoAddLabel" type="text" placeholder="待辦事項">
+        <input class="f-date" id="todoAddDate" type="date">
+        <button class="add-form-btn" id="todoAddBtn">新增待辦</button>
+      </div>
+
+      <div class="card">
+        <div id="todoList"></div>
+      </div>
+    </div>
+  </main>
+</div>
+</div>
+
+<script>
+  /* ================= 可自訂內容區 ================= */
+  let events = [
+    { id: "e1", date: new Date(2026,7,27), label: "看電影", tag: "personal" },
+    { id: "e2", date: new Date(2026,7,28), label: "團隊週會", tag: "work" },
+    { id: "e3", date: new Date(2026,7,29), label: "健身房", tag: "personal" },
+    { id: "e4", date: new Date(2026,7,31), label: "月底結算", tag: "general" },
+    { id: "e5", date: new Date(2026,8,3), label: "牙醫回診", tag: "personal" },
+    { id: "e6", date: new Date(2026,8,5), label: "專案交付", tag: "work" },
+    { id: "e7", date: new Date(2026,8,12), label: "朋友聚餐", tag: "personal" },
+  ];
+  let todos = [
+    { id: "t1", label: "整理本週工作紀錄", date: "08-27", done: false },
+    { id: "t2", label: "回覆客戶提案信件", date: "08-28", done: false },
+    { id: "t3", label: "預約健康檢查", date: "08-31", done: true },
+    { id: "t4", label: "備份筆電資料", date: "09-02", done: false },
+  ];
+  let projects = [
+    { id: "p1", name: "個人網站改版", pct: 70 },
+    { id: "p2", name: "秋季旅行計畫", pct: 35 },
+  ];
+  /* ================================================= */
+
+  function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  /* ---------------- Google 日曆同步設定 ----------------
+     1. 依照步驟申請 OAuth Client ID 後，貼到下面 GOOGLE_CLIENT_ID
+     2. 這個網頁必須用 http:// 或 https:// 開啟（不能是 file://），
+        且網址要跟 Google Cloud 後台「已授權的 JavaScript 來源」一致
+  --------------------------------------------------- */
+  const GOOGLE_CLIENT_ID = "561575427324-cju3vtq8v2nrkfanvpbvdac6441k3fe5.apps.googleusercontent.com";
+  const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar.events";
+
+  /* ---------------- 簡易本機帳密驗證 ----------------
+     注意：這是靜態網頁，沒有伺服器，帳密僅存在瀏覽器
+     的 localStorage，屬於基本防護，不是加密等級的安全機制。
+  --------------------------------------------------- */
+  const STORAGE_KEY = "workspace_auth_v1";
+  const SESSION_KEY = "workspace_session_v1";
+
+  function simpleHash(str){
+    // 簡單雜湊，避免密碼以明文儲存（非加密級安全）
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0; i < str.length; i++){
+      const ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(16);
+  }
+
+  function getCreds(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function setCreds(username, password){
+    const salt = Math.random().toString(36).slice(2);
+    const hash = simpleHash(salt + password);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ username, salt, hash }));
+  }
+  function checkCreds(username, password){
+    const c = getCreds();
+    if(!c) return false;
+    return c.username === username && simpleHash(c.salt + password) === c.hash;
+  }
+
+  const authOverlay = document.getElementById('authOverlay');
+  const appRoot = document.getElementById('appRoot');
+  const loginForm = document.getElementById('loginForm');
+  const setupForm = document.getElementById('setupForm');
+  const authTitle = document.getElementById('authTitle');
+  const authSub = document.getElementById('authSub');
+
+  function showSetup(){
+    loginForm.style.display = 'none';
+    setupForm.style.display = 'block';
+    authTitle.textContent = '建立你的工作台';
+    authSub.textContent = '第一次使用，先設定帳號密碼';
+  }
+  function showLogin(){
+    setupForm.style.display = 'none';
+    loginForm.style.display = 'block';
+    authTitle.textContent = '解封工作台';
+    authSub.textContent = '輸入帳號密碼，進入你的工作台';
+  }
+
+  function enterApp(){
+    authOverlay.style.display = 'none';
+    appRoot.classList.remove('locked');
+  }
+
+  document.getElementById('setupBtn').addEventListener('click', ()=>{
+    const u = document.getElementById('setupUser').value.trim();
+    const p = document.getElementById('setupPass').value;
+    const p2 = document.getElementById('setupPass2').value;
+    const err = document.getElementById('setupError');
+    if(!u || !p){ err.textContent = '請輸入帳號與密碼'; return; }
+    if(p.length < 4){ err.textContent = '密碼至少需要 4 個字元'; return; }
+    if(p !== p2){ err.textContent = '兩次輸入的密碼不一致'; return; }
+    setCreds(u, p);
+    sessionStorage.setItem(SESSION_KEY, '1');
+    err.textContent = '';
+    enterApp();
+  });
+
+  document.getElementById('loginBtn').addEventListener('click', ()=>{
+    const u = document.getElementById('loginUser').value.trim();
+    const p = document.getElementById('loginPass').value;
+    const err = document.getElementById('loginError');
+    if(checkCreds(u, p)){
+      sessionStorage.setItem(SESSION_KEY, '1');
+      err.textContent = '';
+      enterApp();
+    }else{
+      err.textContent = '帳號或密碼不正確';
+    }
+  });
+
+  ['loginUser','loginPass'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', e=>{
+      if(e.key === 'Enter') document.getElementById('loginBtn').click();
+    });
+  });
+  ['setupUser','setupPass','setupPass2'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', e=>{
+      if(e.key === 'Enter') document.getElementById('setupBtn').click();
+    });
+  });
+
+  document.getElementById('resetLink').addEventListener('click', ()=>{
+    if(confirm('這會清除目前儲存的帳號密碼，需要重新設定。確定要繼續嗎？')){
+      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(SESSION_KEY);
+      showSetup();
+    }
+  });
+
+  function logout(){
+    sessionStorage.removeItem(SESSION_KEY);
+    appRoot.classList.add('locked');
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    authOverlay.style.display = 'flex';
+    showLogin();
+  }
+
+  /* ================= 分頁視圖切換 ================= */
+  function switchView(viewName){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById('view-' + viewName).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>{
+      n.classList.toggle('active', n.dataset.view === viewName);
+    });
+  }
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.addEventListener('click', ()=> switchView(n.dataset.view));
+  });
+
+  /* ================= 共用資料與渲染 ================= */
+  let dashboardInitialized = false;
+  let googleEvents = []; // 從 Google 日曆抓回來的行程（唯讀，不能在此編輯／刪除）
+  let gAccessToken = sessionStorage.getItem('gcal_access_token') || null;
+  let tokenClient = null;
+
+  const tagLabel = { personal: "個人", work: "工作", general: "一般" };
+
+  function allEvents(){
+    return events.concat(googleEvents);
+  }
+
+  function fmtDate(d){
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  /* ---- 首頁：近一週行程 ---- */
+  function renderHomeWeek(){
+    const now = new Date();
+    const el = document.getElementById('homeWeekList');
+    const inWeek = allEvents().filter(e => {
+      const diff = (e.date - new Date(now.getFullYear(),now.getMonth(),now.getDate())) / 86400000;
+      return diff >= 0 && diff <= 7;
+    }).sort((a,b)=>a.date-b.date);
+    el.innerHTML = inWeek.length === 0
+      ? '<div class="empty-state">近一週沒有安排</div>'
+      : inWeek.map(e => `
+        <div class="sched-item">
+          <span class="tag tag-${e.tag}">${tagLabel[e.tag]}</span>
+          <span class="sched-label">${e.label}</span>
+          <span class="sched-date">${e.date.getMonth()+1}-${String(e.date.getDate()).padStart(2,'0')}</span>
+        </div>`).join('');
+  }
+
+  /* ---- 共用月曆繪製（首頁精簡版 / 行事曆完整版共用同一份邏輯） ---- */
+  function drawCalendarInto(titleId, gridId){
+    const now = new Date();
+    const calYear = now.getFullYear();
+    const calMonth = now.getMonth();
+    document.getElementById(titleId).textContent = `${calYear} 年 ${calMonth+1} 月`;
+    const calGrid = document.getElementById(gridId);
+    calGrid.innerHTML = '';
+    ["日","一","二","三","四","五","六"].forEach(d=>{
+      const el = document.createElement('div');
+      el.className = 'cal-dow';
+      el.textContent = d;
+      calGrid.appendChild(el);
+    });
+    const firstDow = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    for(let i=0;i<firstDow;i++){
+      const el = document.createElement('div');
+      el.className = 'cal-cell empty';
+      calGrid.appendChild(el);
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      const el = document.createElement('div');
+      const isToday = d === now.getDate();
+      el.className = 'cal-cell' + (isToday ? ' today' : '');
+      const dayEvents = allEvents().filter(e => e.date.getMonth()===calMonth && e.date.getDate()===d && e.date.getFullYear()===calYear);
+      el.innerHTML = `<div class="cal-daynum">${d}</div>` +
+        dayEvents.slice(0,2).map(e=>`<div class="cal-event">${e.label}</div>`).join('');
+      calGrid.appendChild(el);
+    }
+  }
+
+  /* ---- 行事曆頁：所有行程列表（可編輯／刪除本機行程） ---- */
+  function renderEventList(){
+    const now = new Date();
+    const el = document.getElementById('upcomingList');
+    const upcoming = allEvents().filter(e => e.date >= new Date(now.getFullYear(),now.getMonth(),now.getDate()))
+      .sort((a,b)=>a.date-b.date).slice(0,30);
+    el.innerHTML = upcoming.length === 0
+      ? '<div class="empty-state">還沒有任何行程</div>'
+      : upcoming.map(e => {
+        const isGoogle = !!e.googleId;
+        return `
+        <div class="up-item">
+          <div class="up-top">
+            <span class="tag tag-${e.tag}">${tagLabel[e.tag]}${isGoogle ? '・Google' : ''}</span>
+            <span class="up-date">${fmtDate(e.date)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div class="up-label">${e.label}</div>
+            ${isGoogle ? '' : `
+            <div class="item-actions">
+              <button class="icon-btn" data-edit-event="${e.id}" title="編輯">✎</button>
+              <button class="icon-btn danger" data-del-event="${e.id}" title="刪除">✕</button>
+            </div>`}
+          </div>
+        </div>`;
+      }).join('');
+
+    el.querySelectorAll('[data-edit-event]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const ev = events.find(x=>x.id === btn.dataset.editEvent);
+        if(!ev) return;
+        const newLabel = prompt('編輯行程名稱：', ev.label);
+        if(newLabel === null) return;
+        const newDateStr = prompt('編輯日期（YYYY-MM-DD）：', fmtDate(ev.date));
+        if(newDateStr === null) return;
+        const parsed = new Date(newDateStr);
+        if(newLabel.trim()) ev.label = newLabel.trim();
+        if(!isNaN(parsed)) ev.date = parsed;
+        renderAllEvents();
+      });
+    });
+    el.querySelectorAll('[data-del-event]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('確定要刪除這筆行程嗎？')) return;
+        events = events.filter(x=>x.id !== btn.dataset.delEvent);
+        renderAllEvents();
+      });
+    });
+  }
+
+  function renderAllEvents(){
+    renderHomeWeek();
+    drawCalendarInto('homeCalTitle', 'homeCalGrid');
+    drawCalendarInto('calTitle', 'calGrid');
+    renderEventList();
+  }
+
+  /* ---- 新增本機行程（行事曆頁的表單） ---- */
+  document.getElementById('evAddBtn').addEventListener('click', async ()=>{
+    const dateStr = document.getElementById('evAddDate').value;
+    const label = document.getElementById('evAddLabel').value.trim();
+    const tag = document.getElementById('evAddTag').value;
+    const syncGoogle = document.getElementById('evAddSyncGoogle').checked;
+    if(!dateStr || !label){ setGcalStatus('請輸入日期和行程名稱。'); return; }
+    events.push({ id: newId('e'), date: new Date(dateStr), label, tag });
+    document.getElementById('evAddLabel').value = '';
+    renderAllEvents();
+    if(syncGoogle){
+      await addGoogleEvent(dateStr, label);
+    }
+  });
+
+  /* ================= 專案排程：新增／編輯／刪除 ================= */
+  function renderProjects(){
+    const el = document.getElementById('projList');
+    el.innerHTML = projects.length === 0
+      ? '<div class="empty-state">還沒有任何專案，新增一個吧</div>'
+      : projects.map(p => `
+        <div class="proj-list-row" style="margin-bottom:14px;">
+          <div class="proj-row">
+            <div class="proj-top"><span class="proj-name">${p.name}</span><span class="proj-pct">${p.pct}%</span></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${p.pct}%"></div></div>
+          </div>
+          <div class="item-actions">
+            <button class="icon-btn" data-edit-proj="${p.id}" title="編輯">✎</button>
+            <button class="icon-btn danger" data-del-proj="${p.id}" title="刪除">✕</button>
+          </div>
+        </div>`).join('');
+
+    el.querySelectorAll('[data-edit-proj]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const p = projects.find(x=>x.id === btn.dataset.editProj);
+        if(!p) return;
+        const newName = prompt('編輯專案名稱：', p.name);
+        if(newName === null) return;
+        const newPct = prompt('編輯進度（0-100）：', p.pct);
+        if(newPct === null) return;
+        if(newName.trim()) p.name = newName.trim();
+        const n = parseInt(newPct, 10);
+        if(!isNaN(n)) p.pct = Math.max(0, Math.min(100, n));
+        renderProjects();
+      });
+    });
+    el.querySelectorAll('[data-del-proj]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('確定要刪除這個專案嗎？')) return;
+        projects = projects.filter(x=>x.id !== btn.dataset.delProj);
+        renderProjects();
+      });
+    });
+  }
+  document.getElementById('projAddBtn').addEventListener('click', ()=>{
+    const nameEl = document.getElementById('projAddName');
+    const pctEl = document.getElementById('projAddPct');
+    const name = nameEl.value.trim();
+    let pct = parseInt(pctEl.value, 10);
+    if(!name){ return; }
+    if(isNaN(pct)) pct = 0;
+    pct = Math.max(0, Math.min(100, pct));
+    projects.push({ id: newId('p'), name, pct });
+    nameEl.value = ''; pctEl.value = '';
+    renderProjects();
+  });
+
+  /* ================= 待辦清單：新增／編輯／刪除／打勾 ================= */
+  function renderTodos(){
+    const el = document.getElementById('todoList');
+    el.innerHTML = todos.length === 0
+      ? '<div class="empty-state">還沒有任何待辦事項</div>'
+      : todos.map(t => `
+        <div class="full-todo-item">
+          <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
+          <span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>
+          <span class="todo-date">${t.date}</span>
+          <div class="item-actions">
+            <button class="icon-btn" data-edit-todo="${t.id}" title="編輯">✎</button>
+            <button class="icon-btn danger" data-del-todo="${t.id}" title="刪除">✕</button>
+          </div>
+        </div>`).join('');
+
+    const remaining = todos.filter(t=>!t.done).length;
+    document.getElementById('todoCount').textContent = `${remaining} 項待完成，共 ${todos.length} 項`;
+
+    el.querySelectorAll('[data-toggle-todo]').forEach(elx=>{
+      elx.addEventListener('click', ()=>{
+        const t = todos.find(x=>x.id === elx.dataset.toggleTodo);
+        if(t){ t.done = !t.done; renderTodos(); }
+      });
+    });
+    el.querySelectorAll('[data-edit-todo]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const t = todos.find(x=>x.id === btn.dataset.editTodo);
+        if(!t) return;
+        const newLabel = prompt('編輯待辦事項：', t.label);
+        if(newLabel === null) return;
+        const newDate = prompt('編輯日期（例如 08-27）：', t.date);
+        if(newDate === null) return;
+        if(newLabel.trim()) t.label = newLabel.trim();
+        if(newDate.trim()) t.date = newDate.trim();
+        renderTodos();
+      });
+    });
+    el.querySelectorAll('[data-del-todo]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('確定要刪除這項待辦事項嗎？')) return;
+        todos = todos.filter(x=>x.id !== btn.dataset.delTodo);
+        renderTodos();
+      });
+    });
+  }
+  document.getElementById('todoAddBtn').addEventListener('click', ()=>{
+    const labelEl = document.getElementById('todoAddLabel');
+    const dateEl = document.getElementById('todoAddDate');
+    const label = labelEl.value.trim();
+    if(!label){ return; }
+    const now = new Date();
+    const dateStr = dateEl.value
+      ? `${String(new Date(dateEl.value).getMonth()+1).padStart(2,'0')}-${String(new Date(dateEl.value).getDate()).padStart(2,'0')}`
+      : `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+    todos.push({ id: newId('t'), label, date: dateStr, done: false });
+    labelEl.value = ''; dateEl.value = '';
+    renderTodos();
+  });
+
+  /* ---------------- Google Calendar 串接 ---------------- */
+  const gcalBtn = document.getElementById('gcalBtn');
+  const gcalBtnText = document.getElementById('gcalBtnText');
+  const gcalStatus = document.getElementById('gcalStatus');
+
+  function setGcalStatus(text){ gcalStatus.textContent = text; }
+
+  function updateGcalButton(connected){
+    gcalBtn.classList.toggle('connected', connected);
+    gcalBtnText.textContent = connected ? '已連接 Google 日曆' : '連接 Google 日曆';
+  }
+
+  function initGoogleAuth(){
+    if(!window.google || !google.accounts || !google.accounts.oauth2){
+      setGcalStatus('Google 登入元件尚未載入，請確認網路連線。');
+      return;
+    }
+    if(GOOGLE_CLIENT_ID.includes('請填入')){
+      setGcalStatus('尚未設定 Google Client ID，請依照申請步驟取得後貼到程式碼中。');
+      return;
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_SCOPES,
+      callback: (resp)=>{
+        if(resp.error){
+          setGcalStatus('授權失敗：' + resp.error + '（常見原因：你的 Google 帳號不在「測試使用者」名單中，或授權來源網址設定不符）');
+          return;
+        }
+        gAccessToken = resp.access_token;
+        sessionStorage.setItem('gcal_access_token', gAccessToken);
+        updateGcalButton(true);
+        fetchGoogleEvents();
+      },
+      error_callback: (err)=>{
+        setGcalStatus('無法開啟 Google 登入視窗，可能被瀏覽器封鎖彈出視窗，請允許此網站的彈出視窗後再試一次。');
+      }
+    });
+    setGcalStatus('');
+    if(gAccessToken){
+      updateGcalButton(true);
+      fetchGoogleEvents();
+    }
+  }
+
+  // 網頁一開始就嘗試初始化，但 Google 的登入元件是非同步載入的，
+  // 需要輪詢等待載入完成再初始化，避免一開始就誤判成「尚未載入」
+  function waitForGoogleAndInit(retriesLeft){
+    if(retriesLeft === undefined) retriesLeft = 25;
+    if(window.google && google.accounts && google.accounts.oauth2){
+      initGoogleAuth();
+    } else if(retriesLeft > 0){
+      setTimeout(()=>waitForGoogleAndInit(retriesLeft - 1), 200);
+    } else {
+      setGcalStatus('Google 登入元件載入逾時，請重新整理頁面再試一次。');
+    }
+  }
+
+  async function fetchGoogleEvents(){
+    if(!gAccessToken) return;
+    setGcalStatus('同步中…');
+    const timeMin = new Date(); timeMin.setDate(1); timeMin.setHours(0,0,0,0);
+    const timeMax = new Date(timeMin); timeMax.setMonth(timeMax.getMonth()+2);
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=100`;
+    try{
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${gAccessToken}` } });
+      if(res.status === 401){
+        gAccessToken = null;
+        sessionStorage.removeItem('gcal_access_token');
+        updateGcalButton(false);
+        setGcalStatus('登入逾期，請重新連接。');
+        return;
+      }
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      googleEvents = (data.items || [])
+        .filter(ev => ev.start && (ev.start.dateTime || ev.start.date))
+        .map(ev => ({
+          id: 'g' + ev.id,
+          date: new Date(ev.start.dateTime || ev.start.date),
+          label: ev.summary || '(無標題)',
+          tag: 'work',
+          googleId: ev.id,
+        }));
+      setGcalStatus(`已從 Google 日曆同步 ${googleEvents.length} 筆行程`);
+      renderAllEvents();
+    }catch(err){
+      setGcalStatus('同步失敗，請稍後再試。');
+    }
+  }
+
+  async function addGoogleEvent(dateStr, label){
+    if(!gAccessToken){ setGcalStatus('尚未連接 Google 日曆，此筆行程僅新增在本機。'); return false; }
+    try{
+      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${gAccessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: label, start: { date: dateStr }, end: { date: dateStr } })
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      await fetchGoogleEvents();
+      return true;
+    }catch(err){
+      setGcalStatus('新增到 Google 日曆失敗，請稍後再試。');
+      return false;
+    }
+  }
+
+  gcalBtn.addEventListener('click', ()=>{
+    if(!tokenClient){
+      waitForGoogleAndInit();
+      setGcalStatus('正在準備 Google 登入，請稍等一秒再點一次...');
+      return;
+    }
+    try{
+      tokenClient.requestAccessToken();
+    }catch(e){
+      setGcalStatus('無法開啟 Google 登入視窗，請確認瀏覽器沒有封鎖彈出視窗。');
+    }
+  });
+
+  /* ================= 初始化 ================= */
+  function initDashboard(){
+    if(dashboardInitialized) return;
+    dashboardInitialized = true;
+
+    document.getElementById('logoutLink').addEventListener('click', logout);
+
+    function greetingWord(h){
+      if (h < 5) return "夜深了";
+      if (h < 12) return "早安";
+      if (h < 18) return "午安";
+      return "晚安";
+    }
+
+    const now = new Date();
+    const creds = getCreds();
+    const userName = creds ? creds.username : "你";
+    document.getElementById('greetName').textContent = `${greetingWord(now.getHours())}，${userName} 👋`;
+    const dowNames = ["日","一","二","三","四","五","六"];
+    document.getElementById('greetDate').textContent =
+      `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日・星期${dowNames[now.getDay()]}`;
+    document.getElementById('lastUpdate').textContent = now.toTimeString().slice(0,5);
+    document.getElementById('evAddDate').value = now.toISOString().slice(0,10);
+
+    renderProjects();
+    renderTodos();
+    renderAllEvents();
+    waitForGoogleAndInit();
+  }
+
+  // 一開始就把工作台內容渲染出來（模糊、鎖住），登入後再解鎖
+  initDashboard();
+
+  // 初始判斷：有沒有已設定的帳密 / 有沒有有效的本次瀏覽階段
+  (function initAuth(){
+    const creds = getCreds();
+    if(!creds){
+      showSetup();
+      return;
+    }
+    if(sessionStorage.getItem(SESSION_KEY) === '1'){
+      enterApp();
+    }else{
+      showLogin();
+    }
+  })();
+</script>
+</body>
+</html>
