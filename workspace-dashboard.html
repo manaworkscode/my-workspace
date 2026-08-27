@@ -6,6 +6,7 @@
 <title>工作台</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --bg: #EEF0E8;
@@ -160,7 +161,12 @@
   }
 
   /* ================= APP ================= */
-  #appRoot{ display: none; }
+  #appRoot{ display: block; transition: filter .2s ease; }
+  #appRoot.locked{
+    filter: blur(7px);
+    pointer-events: none;
+    user-select: none;
+  }
   .app{
     display: grid;
     grid-template-columns: 208px 1fr;
@@ -418,6 +424,68 @@
   .up-label{ font-size: 13px; }
   .up-date{ font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-faint); }
 
+  /* Google Calendar sync */
+  .gcal-btn{
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: all .15s ease;
+  }
+  .gcal-btn:hover{ background: var(--surface); border-color: var(--teal); }
+  .gcal-btn.connected{
+    background: var(--teal-soft);
+    color: var(--teal);
+    border-color: var(--teal);
+  }
+  .gcal-dot{
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--ink-faint);
+  }
+  .gcal-btn.connected .gcal-dot{ background: var(--teal); }
+  .gcal-status{
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    margin-top: 8px;
+  }
+  .quickadd{
+    display: flex; gap: 8px; margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .quickadd input{
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 7px 9px;
+    background: var(--surface-2);
+    color: var(--ink);
+    outline: none;
+  }
+  .quickadd input:focus{ border-color: var(--teal); }
+  .quickadd-date{ flex: 0 0 128px; }
+  .quickadd-label{ flex: 1; }
+  .quickadd-btn{
+    flex: 0 0 auto;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Noto Sans TC', sans-serif;
+  }
+  .quickadd-btn:hover{ opacity: .9; }
+  .quickadd-btn:disabled{ opacity: .5; cursor: not-allowed; }
+
   @media (max-width: 880px){
     .app{ grid-template-columns: 1fr; }
     .sidebar{ flex-direction: row; overflow-x: auto; padding: 14px 16px; gap: 16px; align-items: center; }
@@ -480,7 +548,7 @@
 </div>
 
 <!-- ================= APP ================= -->
-<div id="appRoot">
+<div id="appRoot" class="locked">
 <div class="app">
   <aside class="sidebar">
     <div class="brand">
@@ -547,9 +615,15 @@
       <div class="card cal-card">
         <div class="cal-head">
           <div class="cal-title" id="calTitle"></div>
-          <div class="card-badge">本月</div>
+          <button class="gcal-btn" id="gcalBtn"><span class="gcal-dot"></span><span id="gcalBtnText">連接 Google 日曆</span></button>
         </div>
         <div class="cal-grid" id="calGrid"></div>
+        <div class="gcal-status" id="gcalStatus"></div>
+        <div class="quickadd">
+          <input class="quickadd-date" id="quickAddDate" type="date">
+          <input class="quickadd-label" id="quickAddLabel" type="text" placeholder="輸入行程名稱，Enter 新增">
+          <button class="quickadd-btn" id="quickAddBtn">新增行程</button>
+        </div>
       </div>
 
       <div class="card upcoming-card">
@@ -579,6 +653,14 @@
     { label: "備份筆電資料", date: "09-02", done: false },
   ];
   /* ================================================= */
+
+  /* ---------------- Google 日曆同步設定 ----------------
+     1. 依照步驟申請 OAuth Client ID 後，貼到下面 GOOGLE_CLIENT_ID
+     2. 這個網頁必須用 http:// 或 https:// 開啟（不能是 file://），
+        且網址要跟 Google Cloud 後台「已授權的 JavaScript 來源」一致
+  --------------------------------------------------- */
+  const GOOGLE_CLIENT_ID = "561575427324-cju3vtq8v2nrkfanvpbvdac6441k3fe5.apps.googleusercontent.com";
+  const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar.events";
 
   /* ---------------- 簡易本機帳密驗證 ----------------
      注意：這是靜態網頁，沒有伺服器，帳密僅存在瀏覽器
@@ -639,9 +721,11 @@
 
   function enterApp(){
     authOverlay.style.display = 'none';
-    appRoot.style.display = 'block';
-    initDashboard();
+    appRoot.classList.remove('locked');
   }
+
+  // 一開始就把工作台內容渲染出來（模糊、鎖住），登入後再解鎖
+  initDashboard();
 
   // 初始判斷：有沒有已設定的帳密 / 有沒有有效的本次瀏覽階段
   (function initAuth(){
@@ -705,7 +789,7 @@
 
   function logout(){
     sessionStorage.removeItem(SESSION_KEY);
-    appRoot.style.display = 'none';
+    appRoot.classList.add('locked');
     document.getElementById('loginUser').value = '';
     document.getElementById('loginPass').value = '';
     authOverlay.style.display = 'flex';
@@ -714,13 +798,203 @@
 
   /* ================= 儀表板內容渲染 ================= */
   let dashboardInitialized = false;
+  let googleEvents = []; // 從 Google 日曆抓回來的行程
+  let gAccessToken = sessionStorage.getItem('gcal_access_token') || null;
+  let tokenClient = null;
+
+  const tagLabel = { personal: "個人", work: "工作", general: "一般" };
+
+  function allEvents(){
+    return events.concat(googleEvents);
+  }
+
+  function renderNear3(){
+    const now = new Date();
+    const near3El = document.getElementById('near3');
+    const in3days = allEvents().filter(e => {
+      const diff = (e.date - new Date(now.getFullYear(),now.getMonth(),now.getDate())) / 86400000;
+      return diff >= 0 && diff <= 3;
+    }).sort((a,b)=>a.date-b.date);
+    near3El.innerHTML = in3days.length === 0
+      ? '<div style="font-size:12.5px;color:var(--ink-faint);padding:6px 0;">近三日沒有安排</div>'
+      : in3days.map(e => `
+        <div class="sched-item">
+          <span class="tag tag-${e.tag}">${tagLabel[e.tag]}</span>
+          <span class="sched-label">${e.label}</span>
+          <span class="sched-date">${e.date.getMonth()+1}-${String(e.date.getDate()).padStart(2,'0')}</span>
+        </div>`).join('');
+  }
+
+  function renderCalendar(){
+    const now = new Date();
+    const calYear = now.getFullYear();
+    const calMonth = now.getMonth();
+    document.getElementById('calTitle').textContent = `${calYear} 年 ${calMonth+1} 月`;
+    const calGrid = document.getElementById('calGrid');
+    calGrid.innerHTML = '';
+    ["日","一","二","三","四","五","六"].forEach(d=>{
+      const el = document.createElement('div');
+      el.className = 'cal-dow';
+      el.textContent = d;
+      calGrid.appendChild(el);
+    });
+    const firstDow = new Date(calYear, calMonth, 1).getDay();
+    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+    for(let i=0;i<firstDow;i++){
+      const el = document.createElement('div');
+      el.className = 'cal-cell empty';
+      calGrid.appendChild(el);
+    }
+    for(let d=1; d<=daysInMonth; d++){
+      const el = document.createElement('div');
+      const isToday = d === now.getDate();
+      el.className = 'cal-cell' + (isToday ? ' today' : '');
+      const dayEvents = allEvents().filter(e => e.date.getMonth()===calMonth && e.date.getDate()===d && e.date.getFullYear()===calYear);
+      el.innerHTML = `<div class="cal-daynum">${d}</div>` +
+        dayEvents.slice(0,2).map(e=>`<div class="cal-event">${e.label}</div>`).join('');
+      calGrid.appendChild(el);
+    }
+  }
+
+  function renderUpcoming(){
+    const now = new Date();
+    const upcomingEl = document.getElementById('upcomingList');
+    const upcoming = allEvents().filter(e => e.date >= new Date(now.getFullYear(),now.getMonth(),now.getDate()))
+      .sort((a,b)=>a.date-b.date).slice(0,6);
+    upcomingEl.innerHTML = upcoming.map(e => `
+      <div class="up-item">
+        <div class="up-top">
+          <span class="tag tag-${e.tag}">${tagLabel[e.tag]}</span>
+          <span class="up-date">${e.date.getFullYear()}-${String(e.date.getMonth()+1).padStart(2,'0')}-${String(e.date.getDate()).padStart(2,'0')}</span>
+        </div>
+        <div class="up-label">${e.label}</div>
+      </div>`).join('');
+  }
+
+  function renderAllEvents(){
+    renderNear3();
+    renderCalendar();
+    renderUpcoming();
+  }
+
+  /* ---------------- Google Calendar 串接 ---------------- */
+  const gcalBtn = document.getElementById('gcalBtn');
+  const gcalBtnText = document.getElementById('gcalBtnText');
+  const gcalStatus = document.getElementById('gcalStatus');
+
+  function setGcalStatus(text){ gcalStatus.textContent = text; }
+
+  function updateGcalButton(connected){
+    gcalBtn.classList.toggle('connected', connected);
+    gcalBtnText.textContent = connected ? '已連接 Google 日曆' : '連接 Google 日曆';
+  }
+
+  function initGoogleAuth(){
+    if(!window.google || !google.accounts || !google.accounts.oauth2){
+      setGcalStatus('Google 登入元件尚未載入，請確認網路連線。');
+      return;
+    }
+    if(GOOGLE_CLIENT_ID.includes('請填入')){
+      setGcalStatus('尚未設定 Google Client ID，請依照申請步驟取得後貼到程式碼中。');
+      return;
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: GOOGLE_SCOPES,
+      callback: (resp)=>{
+        if(resp.error){
+          setGcalStatus('授權失敗：' + resp.error);
+          return;
+        }
+        gAccessToken = resp.access_token;
+        sessionStorage.setItem('gcal_access_token', gAccessToken);
+        updateGcalButton(true);
+        fetchGoogleEvents();
+      }
+    });
+    if(gAccessToken){
+      updateGcalButton(true);
+      fetchGoogleEvents();
+    }
+  }
+
+  async function fetchGoogleEvents(){
+    if(!gAccessToken) return;
+    setGcalStatus('同步中…');
+    const timeMin = new Date(); timeMin.setDate(1); timeMin.setHours(0,0,0,0);
+    const timeMax = new Date(timeMin); timeMax.setMonth(timeMax.getMonth()+2);
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=100`;
+    try{
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${gAccessToken}` } });
+      if(res.status === 401){
+        gAccessToken = null;
+        sessionStorage.removeItem('gcal_access_token');
+        updateGcalButton(false);
+        setGcalStatus('登入逾期，請重新連接。');
+        return;
+      }
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      googleEvents = (data.items || [])
+        .filter(ev => ev.start && (ev.start.dateTime || ev.start.date))
+        .map(ev => ({
+          date: new Date(ev.start.dateTime || ev.start.date),
+          label: ev.summary || '(無標題)',
+          tag: 'work',
+          googleId: ev.id,
+        }));
+      setGcalStatus(`已從 Google 日曆同步 ${googleEvents.length} 筆行程`);
+      renderAllEvents();
+    }catch(err){
+      setGcalStatus('同步失敗，請稍後再試。');
+    }
+  }
+
+  async function addGoogleEvent(dateStr, label){
+    if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆再新增行程。'); return false; }
+    try{
+      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${gAccessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: label, start: { date: dateStr }, end: { date: dateStr } })
+      });
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      await fetchGoogleEvents();
+      return true;
+    }catch(err){
+      setGcalStatus('新增到 Google 日曆失敗，請稍後再試。');
+      return false;
+    }
+  }
+
+  gcalBtn.addEventListener('click', ()=>{
+    if(!tokenClient){ initGoogleAuth(); }
+    if(tokenClient){ tokenClient.requestAccessToken(); }
+  });
+
+  document.getElementById('quickAddBtn').addEventListener('click', submitQuickAdd);
+  document.getElementById('quickAddLabel').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') submitQuickAdd();
+  });
+  async function submitQuickAdd(){
+    const dateEl = document.getElementById('quickAddDate');
+    const labelEl = document.getElementById('quickAddLabel');
+    const dateStr = dateEl.value;
+    const label = labelEl.value.trim();
+    if(!dateStr || !label){ setGcalStatus('請輸入日期和行程名稱。'); return; }
+    const btn = document.getElementById('quickAddBtn');
+    btn.disabled = true;
+    const ok = await addGoogleEvent(dateStr, label);
+    btn.disabled = false;
+    if(ok){ labelEl.value = ''; }
+  }
+
   function initDashboard(){
     if(dashboardInitialized) return;
     dashboardInitialized = true;
 
     document.getElementById('logoutLink').addEventListener('click', logout);
 
-    const tagLabel = { personal: "個人", work: "工作", general: "一般" };
     function greetingWord(h){
       if (h < 5) return "夜深了";
       if (h < 12) return "早安";
@@ -736,20 +1010,7 @@
     document.getElementById('greetDate').textContent =
       `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日・星期${dowNames[now.getDay()]}`;
     document.getElementById('lastUpdate').textContent = now.toTimeString().slice(0,5);
-
-    const near3El = document.getElementById('near3');
-    const in3days = events.filter(e => {
-      const diff = (e.date - new Date(now.getFullYear(),now.getMonth(),now.getDate())) / 86400000;
-      return diff >= 0 && diff <= 3;
-    }).sort((a,b)=>a.date-b.date);
-    near3El.innerHTML = in3days.length === 0
-      ? '<div style="font-size:12.5px;color:var(--ink-faint);padding:6px 0;">近三日沒有安排</div>'
-      : in3days.map(e => `
-        <div class="sched-item">
-          <span class="tag tag-${e.tag}">${tagLabel[e.tag]}</span>
-          <span class="sched-label">${e.label}</span>
-          <span class="sched-date">${e.date.getMonth()+1}-${String(e.date.getDate()).padStart(2,'0')}</span>
-        </div>`).join('');
+    document.getElementById('quickAddDate').value = now.toISOString().slice(0,10);
 
     const todoListEl = document.getElementById('todoList');
     function renderTodos(){
@@ -771,44 +1032,8 @@
     }
     renderTodos();
 
-    const calYear = now.getFullYear();
-    const calMonth = now.getMonth();
-    document.getElementById('calTitle').textContent = `${calYear} 年 ${calMonth+1} 月`;
-    const calGrid = document.getElementById('calGrid');
-    ["日","一","二","三","四","五","六"].forEach(d=>{
-      const el = document.createElement('div');
-      el.className = 'cal-dow';
-      el.textContent = d;
-      calGrid.appendChild(el);
-    });
-    const firstDow = new Date(calYear, calMonth, 1).getDay();
-    const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-    for(let i=0;i<firstDow;i++){
-      const el = document.createElement('div');
-      el.className = 'cal-cell empty';
-      calGrid.appendChild(el);
-    }
-    for(let d=1; d<=daysInMonth; d++){
-      const el = document.createElement('div');
-      const isToday = d === now.getDate();
-      el.className = 'cal-cell' + (isToday ? ' today' : '');
-      const dayEvents = events.filter(e => e.date.getMonth()===calMonth && e.date.getDate()===d && e.date.getFullYear()===calYear);
-      el.innerHTML = `<div class="cal-daynum">${d}</div>` +
-        dayEvents.slice(0,2).map(e=>`<div class="cal-event">${e.label}</div>`).join('');
-      calGrid.appendChild(el);
-    }
-
-    const upcomingEl = document.getElementById('upcomingList');
-    const upcoming = events.filter(e => e.date >= new Date(now.getFullYear(),now.getMonth(),now.getDate()))
-      .sort((a,b)=>a.date-b.date).slice(0,6);
-    upcomingEl.innerHTML = upcoming.map(e => `
-      <div class="up-item">
-        <div class="up-top">
-          <span class="tag tag-${e.tag}">${tagLabel[e.tag]}</span>
-          <span class="up-date">${e.date.getFullYear()}-${String(e.date.getMonth()+1).padStart(2,'0')}-${String(e.date.getDate()).padStart(2,'0')}</span>
-        </div>
-        <div class="up-label">${e.label}</div>
-      </div>`).join('');
+    renderAllEvents();
+    initGoogleAuth();
   }
 </script>
 </body>
