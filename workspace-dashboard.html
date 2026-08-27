@@ -665,6 +665,7 @@
       <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span>專案排程</div>
       <div class="nav-item" data-view="calendar"><span class="nav-icon">📅</span>行事曆</div>
       <div class="nav-item" data-view="todos"><span class="nav-icon">✅</span>待辦清單</div>
+      <div class="nav-item" data-view="settings"><span class="nav-icon">⚙️</span>設定</div>
     </nav>
     <div class="sidebar-foot">
       最後更新<br><span class="mono" id="lastUpdate"></span>
@@ -770,6 +771,25 @@
         <div id="todoList"></div>
       </div>
     </div>
+    <!-- ========== 設定 ========== -->
+    <div class="view" id="view-settings">
+      <div class="page-head">
+        <div class="page-title">設定</div>
+        <div class="page-sub">調整工作台的顯示名稱</div>
+      </div>
+
+      <div class="card" style="max-width:420px;">
+        <div class="card-head"><div class="card-title">👤 顯示名稱</div></div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
+          首頁問候語顯示的名字，跟登入帳號（<span id="settingsLoginUser" class="mono"></span>）是分開的，只是給自己看的稱呼，可以隨意取。
+        </div>
+        <div class="add-form" style="margin-bottom:0;">
+          <input class="f-name" id="settingsNameInput" type="text" placeholder="輸入你想顯示的名字">
+          <button class="add-form-btn" id="settingsNameSaveBtn">儲存</button>
+        </div>
+        <div class="gcal-status" id="settingsNameStatus" style="margin-top:10px;"></div>
+      </div>
+    </div>
   </main>
 </div>
 </div>
@@ -813,6 +833,17 @@
   --------------------------------------------------- */
   const STORAGE_KEY = "workspace_auth_v1";
   const SESSION_KEY = "workspace_session_v1";
+  const DISPLAY_NAME_KEY = "workspace_display_name";
+
+  function getDisplayName(){
+    const stored = localStorage.getItem(DISPLAY_NAME_KEY);
+    if(stored) return stored;
+    const creds = getCreds();
+    return creds ? creds.username : "你";
+  }
+  function setDisplayName(name){
+    localStorage.setItem(DISPLAY_NAME_KEY, name);
+  }
 
   function simpleHash(str){
     // 簡單雜湊，避免密碼以明文儲存（非加密級安全）
@@ -1323,8 +1354,7 @@
 
     const now = new Date();
     const creds = getCreds();
-    const userName = creds ? creds.username : "你";
-    document.getElementById('greetName').textContent = `${greetingWord(now.getHours())}，${userName} 👋`;
+    document.getElementById('greetName').textContent = `${greetingWord(now.getHours())}，${getDisplayName()} 👋`;
     const dowNames = ["日","一","二","三","四","五","六"];
     document.getElementById('greetDate').textContent =
       `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日・星期${dowNames[now.getDay()]}`;
@@ -1335,6 +1365,23 @@
     renderTodos();
     renderAllEvents();
     waitForGoogleAndInit();
+
+    // 設定頁：顯示目前登入帳號、預填顯示名稱
+    document.getElementById('settingsLoginUser').textContent = creds ? creds.username : '';
+    document.getElementById('settingsNameInput').value = getDisplayName();
+    document.getElementById('settingsNameSaveBtn').addEventListener('click', ()=>{
+      const input = document.getElementById('settingsNameInput');
+      const name = input.value.trim();
+      const status = document.getElementById('settingsNameStatus');
+      if(!name){ status.textContent = '請輸入名字。'; return; }
+      setDisplayName(name);
+      document.getElementById('greetName').textContent = `${greetingWord(new Date().getHours())}，${name} 👋`;
+      status.textContent = '已儲存！';
+      setTimeout(()=>{ status.textContent = ''; }, 2000);
+    });
+    document.getElementById('settingsNameInput').addEventListener('keydown', e=>{
+      if(e.key === 'Enter') document.getElementById('settingsNameSaveBtn').click();
+    });
   }
 
   // 一開始就把工作台內容渲染出來（模糊、鎖住），登入後再解鎖
