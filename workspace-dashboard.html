@@ -9,24 +9,27 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
-    --bg: #EBE7DF;
-    --bg-tex: #E2DDD0;
+    --bg: #F5F6F8;
+    --bg-tex: #EEF0F3;
     --surface: #FFFFFF;
-    --surface-2: #F4F1E9;
-    --ink: #1C1B17;
-    --ink-soft: #5C584C;
-    --ink-faint: #9B9481;
-    --line: #DBD5C4;
-    --gold: #B8963C;
-    --gold-soft: #F0E6C4;
-    --teal: #9C8A2E;
-    --teal-soft: #EFE9B8;
-    --seal: #1C1B17;
-    --seal-soft: #E8E4D8;
-    --yellow: #F2E23F;
-    --yellow-soft: #FBF7C9;
+    --surface-2: #F3F4F7;
+    --ink: #1B2430;
+    --ink-soft: #667085;
+    --ink-faint: #98A2B3;
+    --line: #E4E7EC;
+    --gold: #3B7FC4;
+    --gold-soft: #E3EEFA;
+    --teal: #3B7FC4;
+    --teal-soft: #E3EEFA;
+    --seal: #F2784B;
+    --seal-soft: #FDE9DF;
+    --yellow: #F2784B;
+    --yellow-soft: #FDE9DF;
+    --navy: #1E2A3D;
+    --navy-2: #263449;
+    --maroon: #7A3242;
     --radius: 12px;
-    --shadow: 0 1px 2px rgba(28,27,23,0.05), 0 6px 20px rgba(28,27,23,0.06);
+    --shadow: 0 1px 2px rgba(27,36,48,0.05), 0 6px 20px rgba(27,36,48,0.06);
   }
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
@@ -176,12 +179,16 @@
   }
 
   .sidebar{
-    background: var(--surface);
-    border-right: 1px solid var(--line);
+    background: var(--navy);
+    border-right: none;
     padding: 28px 18px;
     display: flex;
     flex-direction: column;
     gap: 26px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
   }
   .brand{
     display: flex;
@@ -199,17 +206,18 @@
     font-weight: 700;
     font-size: 15px;
     transform: rotate(-2deg);
-    box-shadow: 0 2px 6px rgba(28,27,23,0.28);
+    box-shadow: 0 2px 6px rgba(242,120,75,0.35);
   }
   .brand-name{
     font-family: 'Noto Serif TC', serif;
     font-size: 15px;
     font-weight: 600;
     line-height: 1.2;
+    color: #fff;
   }
   .brand-sub{
     font-size: 11px;
-    color: var(--ink-faint);
+    color: #8B96A8;
     letter-spacing: 0.05em;
   }
   nav{ display: flex; flex-direction: column; gap: 2px; }
@@ -220,29 +228,36 @@
     padding: 9px 10px;
     border-radius: 9px;
     font-size: 13.5px;
-    color: var(--ink-soft);
+    color: #B7C0CE;
     cursor: pointer;
     transition: background .15s ease, color .15s ease;
     user-select: none;
   }
-  .nav-item:hover{ background: var(--surface-2); color: var(--ink); }
+  .nav-item:hover{ background: var(--navy-2); color: #fff; }
   .nav-item.active{
-    background: var(--yellow);
-    color: #1C1B17;
+    background: var(--seal);
+    color: #fff;
     font-weight: 600;
   }
   .nav-icon{ width: 18px; text-align:center; font-size: 14px; }
+  .nav-section-label{
+    font-size: 10.5px;
+    color: #6B7690;
+    letter-spacing: 0.06em;
+    padding: 10px 10px 2px;
+    text-transform: uppercase;
+  }
   .sidebar-foot{
     margin-top: auto;
     font-size: 11px;
-    color: var(--ink-faint);
+    color: #7C8698;
     padding: 0 6px;
     line-height: 1.6;
   }
   .logout-link{
     text-decoration: underline;
     cursor: pointer;
-    color: var(--ink-soft);
+    color: #9AA5B5;
   }
 
   main{ padding: 34px 40px 60px; max-width: 1180px; }
@@ -414,7 +429,7 @@
   .cal-daynum{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; opacity: .85; }
   .cal-event{
     font-size: 10px; padding: 2px 5px; border-radius: 5px;
-    background: var(--gold-soft); color: #7A6420; line-height: 1.4;
+    background: var(--gold-soft); color: #1D5A8F; line-height: 1.4;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .cal-cell.today .cal-event{ background: rgba(255,255,255,0.22); color: #fff; }
@@ -590,11 +605,99 @@
     text-align: center;
   }
 
+  /* ============ 喜劇開港・活動財務模組 ============ */
+  .kg-tabs{ display: flex; gap: 8px; margin-bottom: 20px; }
+  .kg-tab{
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .kg-tab:hover{ border-color: var(--seal); color: var(--seal); }
+  .kg-tab.active{ background: var(--seal); border-color: var(--seal); color: #fff; font-weight: 500; }
+  .kg-metrics{ display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+  .kg-metric-card{
+    flex: 1 1 160px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .kg-metric-label{ font-size: 12px; color: var(--ink-soft); margin-bottom: 6px; }
+  .kg-metric-value{ font-family: 'Noto Serif TC', serif; font-size: 22px; color: var(--ink); }
+  .kg-metric-value.pos{ color: var(--teal); }
+  .kg-metric-value.neg{ color: var(--seal); }
+  .kg-metric-sub{ font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; }
+  .kg-event-row{
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 4px; cursor: pointer;
+    border-bottom: 1px solid var(--line);
+  }
+  .kg-event-row:last-child{ border-bottom: none; }
+  .kg-event-row:hover{ background: var(--surface-2); }
+  .kg-status{ font-size: 11.5px; }
+  .kg-status.planned{ color: var(--gold); }
+  .kg-status.ongoing{ color: var(--teal); }
+  .kg-status.completed{ color: var(--ink-faint); }
+  .kg-event-grid{ display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .kg-event-card{
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 16px 18px; cursor: pointer; transition: border-color .15s ease;
+  }
+  .kg-event-card:hover{ border-color: var(--seal); }
+  .kg-table{ width: 100%; border-collapse: collapse; font-size: 13px; }
+  .kg-table th{ padding: 6px 4px; font-weight: 400; color: var(--ink-soft); text-align: left; }
+  .kg-table th.r, .kg-table td.r{ text-align: right; }
+  .kg-table td{ padding: 8px 4px; border-top: 1px solid var(--line); color: var(--ink); }
+  .kg-table tr:first-child td{ border-top: none; }
+
+  .ai-preview-row{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .ai-preview-row:last-child{ border-bottom: none; }
+  .ai-preview-row input[type="date"], .ai-preview-row input[type="text"]{
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 12.5px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    padding: 6px 8px;
+    background: var(--surface);
+    color: var(--ink);
+    outline: none;
+  }
+  .ai-preview-row input[type="date"]{ width: 138px; flex-shrink: 0; }
+  .ai-preview-row input[type="text"]{ flex: 1; }
+  .ai-preview-row.unparsed input[type="date"]{ border-color: var(--gold); }
+  .ai-preview-flag{
+    font-size: 10.5px;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+  .ai-preview-actions{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+
   @media (max-width: 880px){
     .app{ grid-template-columns: 1fr; }
-    .sidebar{ flex-direction: row; overflow-x: auto; padding: 14px 16px; gap: 16px; align-items: center; }
+    .sidebar{ flex-direction: row; overflow-x: auto; overflow-y: visible; height: auto; padding: 14px 16px; gap: 16px; align-items: center; }
     nav{ flex-direction: row; }
-    .sidebar-foot{ display: none; }
+    .sidebar-foot{ margin-top: 0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .sidebar-foot-time{ display: none; }
+    .sidebar-foot .nav-item{ margin-top: 0 !important; white-space: nowrap; }
     main{ padding: 22px 18px 40px; }
     .grid-2, .grid-3{ grid-template-columns: 1fr; }
     .cal-wrap{ grid-template-columns: 1fr; }
@@ -612,8 +715,8 @@
 <!-- ================= AUTH OVERLAY ================= -->
 <div id="authOverlay">
   <div class="auth-card">
-    <div class="auth-seal" id="authSealIcon">封</div>
-    <div class="auth-title" id="authTitle">解封工作台</div>
+    <div class="auth-seal" id="authSealIcon">M</div>
+    <div class="auth-title" id="authTitle">mana work-space</div>
     <div class="auth-sub" id="authSub">輸入帳號密碼，進入你的工作台</div>
 
     <div id="loginForm">
@@ -625,7 +728,7 @@
         <label class="auth-label">密碼</label>
         <input class="auth-input" id="loginPass" type="password" autocomplete="current-password">
       </div>
-      <button class="auth-btn" id="loginBtn">解封進入</button>
+      <button class="auth-btn" id="loginBtn">登入</button>
       <div class="auth-error" id="loginError"></div>
       <div class="auth-switch">忘記密碼？<a id="resetLink">重新設定帳號</a></div>
     </div>
@@ -667,11 +770,13 @@
       <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span>專案排程</div>
       <div class="nav-item" data-view="calendar"><span class="nav-icon">📅</span>行事曆</div>
       <div class="nav-item" data-view="todos"><span class="nav-icon">✅</span>待辦清單</div>
-      <div class="nav-item" data-view="settings"><span class="nav-icon">⚙️</span>設定</div>
+      <div class="nav-section-label">喜劇開港</div>
+      <div class="nav-item" data-view="kaigang"><span class="nav-icon">⚓</span>財務管理</div>
     </nav>
     <div class="sidebar-foot">
-      最後更新<br><span class="mono" id="lastUpdate"></span>
-      <div style="margin-top:10px;"><span class="logout-link" id="logoutLink">登出</span></div>
+      <div class="sidebar-foot-time">最後更新<br><span class="mono" id="lastUpdate"></span></div>
+      <div class="nav-item" data-view="settings" style="margin-top:14px;color:#B7C0CE;"><span class="nav-icon">⚙️</span>設定</div>
+      <div style="margin-top:6px;"><span class="logout-link" id="logoutLink">登出</span></div>
     </div>
   </aside>
 
@@ -727,22 +832,51 @@
 
       <div class="add-form">
         <input class="f-date" id="evAddDate" type="date">
-        <input class="f-name" id="evAddLabel" type="text" placeholder="行程名稱">
+        <input class="f-name" id="evAddLabel" type="text" placeholder="行程名稱（套用範本時可留空）">
         <select class="f-tag" id="evAddTag">
           <option value="personal">個人</option>
           <option value="work">工作</option>
           <option value="general">一般</option>
+        </select>
+        <select class="f-tag" id="evAddTemplate" style="min-width:140px;">
+          <option value="">不套用範本</option>
         </select>
         <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);">
           <input type="checkbox" id="evAddSyncGoogle" style="width:auto;">同步到 Google
         </label>
         <button class="add-form-btn" id="evAddBtn">新增行程</button>
       </div>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin:-8px 0 16px 4px;">選了範本後，會用上面的日期當基準，直接展開整套規則行程；標籤與行程名稱欄位會被範本內容取代。</div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-head"><div class="card-title">🎯 活動規則範本管理</div></div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
+          在這裡設定範本內容（例如活動前 30 天定案、前 14 天報名貼文上線），設定好之後，上方「新增行程」選好範本即可直接套用。
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <select class="f-tag" id="ruleTemplateSelect" style="min-width:160px;"></select>
+          <button class="icon-btn" id="ruleTemplateNewBtn" title="新增範本">+</button>
+          <button class="icon-btn danger" id="ruleTemplateDeleteBtn" title="刪除此範本">✕</button>
+        </div>
+
+        <div id="ruleItemsList"></div>
+        <div class="add-form" style="margin-top:12px;margin-bottom:0;">
+          <input class="f-num" id="ruleItemOffset" type="number" placeholder="天數差（活動前用負數）">
+          <input class="f-name" id="ruleItemLabel" type="text" placeholder="行程名稱，例如：報名貼文上線">
+          <button class="add-form-btn" id="ruleItemAddBtn">新增規則列</button>
+        </div>
+      </div>
 
       <div class="cal-wrap">
         <div class="card cal-card">
           <div class="cal-head">
-            <div class="cal-title" id="calTitle"></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="icon-btn" id="calPrevBtn" title="上個月">‹</button>
+              <div class="cal-title" id="calTitle"></div>
+              <button class="icon-btn" id="calNextBtn" title="下個月">›</button>
+              <button class="icon-btn" id="calTodayBtn" title="回到本月" style="width:auto;padding:2px 8px;font-size:11px;">今</button>
+            </div>
             <button class="gcal-btn" id="gcalBtn"><span class="gcal-dot"></span><span id="gcalBtnText">連接 Google 日曆</span></button>
           </div>
           <div class="cal-grid" id="calGrid"></div>
@@ -773,6 +907,26 @@
         <div id="todoList"></div>
       </div>
     </div>
+
+    <!-- ========== 財務管理（喜劇開港） ========== -->
+    <div class="view" id="view-kaigang">
+      <div class="page-head">
+        <div style="font-size:11.5px;color:var(--seal);font-weight:600;letter-spacing:.05em;margin-bottom:4px;">⚓ 喜劇開港</div>
+        <div class="page-title">財務管理</div>
+        <div class="page-sub">管理活動預算、實際收支與月報表（資料存在此瀏覽器本機）</div>
+      </div>
+
+      <div class="kg-tabs">
+        <button class="kg-tab active" data-kg-tab="overview">總覽</button>
+        <button class="kg-tab" data-kg-tab="events">活動</button>
+        <button class="kg-tab" data-kg-tab="report">月報表</button>
+      </div>
+
+      <div id="kgOverview"></div>
+      <div id="kgEvents" style="display:none;"></div>
+      <div id="kgReport" style="display:none;"></div>
+    </div>
+
     <!-- ========== 設定 ========== -->
     <div class="view" id="view-settings">
       <div class="page-head">
@@ -893,7 +1047,7 @@
   function showLogin(){
     setupForm.style.display = 'none';
     loginForm.style.display = 'block';
-    authTitle.textContent = '解封工作台';
+    authTitle.textContent = 'mana work-space';
     authSub.textContent = '輸入帳號密碼，進入你的工作台';
   }
 
@@ -997,17 +1151,18 @@
       ? '<div class="empty-state">近一週沒有安排</div>'
       : inWeek.map(e => `
         <div class="sched-item">
-          <span class="tag tag-${e.tag}">${tagLabel[e.tag]}</span>
+          <span class="tag tag-${e.tag}">${e.source || tagLabel[e.tag]}</span>
           <span class="sched-label">${e.label}</span>
           <span class="sched-date">${e.date.getMonth()+1}-${String(e.date.getDate()).padStart(2,'0')}</span>
         </div>`).join('');
   }
 
   /* ---- 共用月曆繪製（首頁精簡版 / 行事曆完整版共用同一份邏輯） ---- */
-  function drawCalendarInto(titleId, gridId){
-    const now = new Date();
-    const calYear = now.getFullYear();
-    const calMonth = now.getMonth();
+  function drawCalendarInto(titleId, gridId, viewDate){
+    const base = viewDate || new Date();
+    const realToday = new Date();
+    const calYear = base.getFullYear();
+    const calMonth = base.getMonth();
     document.getElementById(titleId).textContent = `${calYear} 年 ${calMonth+1} 月`;
     const calGrid = document.getElementById(gridId);
     calGrid.innerHTML = '';
@@ -1026,7 +1181,7 @@
     }
     for(let d=1; d<=daysInMonth; d++){
       const el = document.createElement('div');
-      const isToday = d === now.getDate();
+      const isToday = d === realToday.getDate() && calMonth === realToday.getMonth() && calYear === realToday.getFullYear();
       el.className = 'cal-cell' + (isToday ? ' today' : '');
       const dayEvents = allEvents().filter(e => e.date.getMonth()===calMonth && e.date.getDate()===d && e.date.getFullYear()===calYear);
       el.innerHTML = `<div class="cal-daynum">${d}</div>` +
@@ -1035,21 +1190,21 @@
     }
   }
 
-  /* ---- 行事曆頁：所有行程列表（本機與 Google 行程都可編輯／刪除） ---- */
+  /* ---- 行事曆頁：所有行程列表（不管過去未來都顯示，本機與 Google 行程都可編輯／刪除） ---- */
   function renderEventList(){
-    const now = new Date();
+    const now = new Date(); now.setHours(0,0,0,0);
     const el = document.getElementById('upcomingList');
-    const upcoming = allEvents().filter(e => e.date >= new Date(now.getFullYear(),now.getMonth(),now.getDate()))
-      .sort((a,b)=>a.date-b.date).slice(0,50);
-    el.innerHTML = upcoming.length === 0
+    const all = allEvents().sort((a,b)=>a.date-b.date).slice(0,100);
+    el.innerHTML = all.length === 0
       ? '<div class="empty-state">還沒有任何行程</div>'
-      : upcoming.map(e => {
+      : all.map(e => {
         const isGoogle = !!e.googleId;
+        const isPast = e.date < now;
         return `
-        <div class="up-item">
+        <div class="up-item" style="${isPast ? 'opacity:.55;' : ''}">
           <div class="up-top">
-            <span class="tag tag-${e.tag}">${tagLabel[e.tag]}${isGoogle ? '・Google' : ''}</span>
-            <span class="up-date">${fmtDate(e.date)}</span>
+            <span class="tag tag-${e.tag}">${e.source || tagLabel[e.tag]}${isGoogle ? '・Google' : ''}</span>
+            <span class="up-date">${fmtDate(e.date)}${isPast ? '（已過）' : ''}</span>
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
             <div class="up-label">${e.label}</div>
@@ -1100,10 +1255,25 @@
     });
   }
 
+  let calendarViewDate = new Date();
+
+  document.getElementById('calPrevBtn').addEventListener('click', ()=>{
+    calendarViewDate.setMonth(calendarViewDate.getMonth() - 1);
+    renderAllEvents();
+  });
+  document.getElementById('calNextBtn').addEventListener('click', ()=>{
+    calendarViewDate.setMonth(calendarViewDate.getMonth() + 1);
+    renderAllEvents();
+  });
+  document.getElementById('calTodayBtn').addEventListener('click', ()=>{
+    calendarViewDate = new Date();
+    renderAllEvents();
+  });
+
   function renderAllEvents(){
     renderHomeWeek();
     drawCalendarInto('homeCalTitle', 'homeCalGrid');
-    drawCalendarInto('calTitle', 'calGrid');
+    drawCalendarInto('calTitle', 'calGrid', calendarViewDate);
     renderEventList();
   }
 
@@ -1113,7 +1283,45 @@
     const label = document.getElementById('evAddLabel').value.trim();
     const tag = document.getElementById('evAddTag').value;
     const syncGoogle = document.getElementById('evAddSyncGoogle').checked;
-    if(!dateStr || !label){ setGcalStatus('請輸入日期和行程名稱。'); return; }
+    const templateId = document.getElementById('evAddTemplate').value;
+
+    if(!dateStr){ setGcalStatus('請選擇日期。'); return; }
+
+    if(templateId){
+      // 套用範本模式：用選好的日期當基準，展開整套規則行程
+      const t = activityRules.find(r=>r.id === templateId);
+      if(!t || t.items.length === 0){ setGcalStatus('這個範本還沒有任何規則，請先到下面新增規則列。'); return; }
+      const baseDate = new Date(dateStr);
+      const btn = document.getElementById('evAddBtn');
+      btn.disabled = true; btn.textContent = '產生中…';
+      for(const it of t.items){
+        const d = new Date(baseDate);
+        d.setDate(d.getDate() + it.offset);
+        events.push({ id: newId('e'), date: d, label: it.label, tag: 'work', source: t.name });
+        if(syncGoogle){
+          await addGoogleEvent(fmtDate(d), it.label);
+        }
+      }
+      // 不管範本裡有沒有設定 offset=0 的規則，基準日本身一定要加進行事曆
+      let generatedCount = t.items.length;
+      const hasBaseDay = t.items.some(it => it.offset === 0);
+      if(!hasBaseDay){
+        const baseLabel = label || '活動當天';
+        events.push({ id: newId('e'), date: new Date(baseDate), label: baseLabel, tag: 'work', source: t.name });
+        if(syncGoogle){
+          await addGoogleEvent(fmtDate(baseDate), baseLabel);
+        }
+        generatedCount += 1;
+      }
+      btn.disabled = false; btn.textContent = '新增行程';
+      renderAllEvents();
+      setGcalStatus(`已套用「${t.name}」，產生 ${generatedCount} 筆行程${syncGoogle ? '，並同步到 Google' : ''}`);
+      document.getElementById('evAddLabel').value = '';
+      return;
+    }
+
+    // 一般模式：新增單筆行程
+    if(!label){ setGcalStatus('請輸入行程名稱，或選一個範本來套用。'); return; }
     events.push({ id: newId('e'), date: new Date(dateStr), label, tag });
     document.getElementById('evAddLabel').value = '';
     renderAllEvents();
@@ -1121,6 +1329,112 @@
       await addGoogleEvent(dateStr, label);
     }
   });
+
+  /* ================= 活動規則範本：設定規則 ================= */
+  let activityRules = [
+    { id: 'r1', name: '活動宣傳規劃', items: [
+      { id: 'i1', offset: -30, label: '活動企劃定案' },
+      { id: 'i2', offset: -21, label: '開始宣傳／發布消息' },
+      { id: 'i3', offset: -14, label: '報名貼文上線' },
+      { id: 'i4', offset: -7, label: '再次提醒／催報名' },
+      { id: 'i5', offset: -1, label: '最終確認與準備' },
+      { id: 'i6', offset: 0, label: '活動當天' },
+      { id: 'i7', offset: 3, label: '感謝貼文／成果整理' },
+    ]},
+  ];
+  let currentRuleTemplateId = activityRules[0].id;
+
+  function currentTemplate(){ return activityRules.find(r=>r.id === currentRuleTemplateId); }
+
+  function renderRuleTemplateSelect(){
+    const sel = document.getElementById('ruleTemplateSelect');
+    sel.innerHTML = activityRules.map(r=>`<option value="${r.id}" ${r.id===currentRuleTemplateId?'selected':''}>${r.name}</option>`).join('');
+    // 同步更新「新增行程」表單裡的範本選單
+    const evSel = document.getElementById('evAddTemplate');
+    const keepValue = evSel.value;
+    evSel.innerHTML = '<option value="">不套用範本</option>' +
+      activityRules.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
+    evSel.value = activityRules.some(r=>r.id===keepValue) ? keepValue : '';
+  }
+
+  function renderRuleItems(){
+    const t = currentTemplate();
+    const el = document.getElementById('ruleItemsList');
+    if(!t || t.items.length === 0){
+      el.innerHTML = '<div class="empty-state">這個範本還沒有規則，新增一列吧</div>';
+      return;
+    }
+    const sorted = [...t.items].sort((a,b)=>a.offset-b.offset);
+    el.innerHTML = sorted.map(it => `
+      <div class="ai-preview-row">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);width:66px;flex-shrink:0;">${it.offset>0?'+':''}${it.offset} 天</span>
+        <span style="flex:1;font-size:13px;">${it.label}</span>
+        <div class="item-actions">
+          <button class="icon-btn" data-edit-rule="${it.id}" title="編輯">✎</button>
+          <button class="icon-btn danger" data-del-rule="${it.id}" title="刪除">✕</button>
+        </div>
+      </div>`).join('');
+
+    el.querySelectorAll('[data-edit-rule]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const it = t.items.find(x=>x.id === btn.dataset.editRule);
+        if(!it) return;
+        const newOffset = prompt('天數差（活動前用負數，例如活動前 14 天輸入 -14）：', it.offset);
+        if(newOffset === null) return;
+        const newLabel = prompt('行程名稱：', it.label);
+        if(newLabel === null) return;
+        const n = parseInt(newOffset, 10);
+        if(!isNaN(n)) it.offset = n;
+        if(newLabel.trim()) it.label = newLabel.trim();
+        renderRuleItems();
+      });
+    });
+    el.querySelectorAll('[data-del-rule]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('確定要刪除這條規則嗎？')) return;
+        t.items = t.items.filter(x=>x.id !== btn.dataset.delRule);
+        renderRuleItems();
+      });
+    });
+  }
+
+  document.getElementById('ruleTemplateSelect').addEventListener('change', e=>{
+    currentRuleTemplateId = e.target.value;
+    renderRuleItems();
+  });
+
+  document.getElementById('ruleTemplateNewBtn').addEventListener('click', ()=>{
+    const name = prompt('新範本名稱：', '新的活動規則');
+    if(!name || !name.trim()) return;
+    const newT = { id: newId('r'), name: name.trim(), items: [] };
+    activityRules.push(newT);
+    currentRuleTemplateId = newT.id;
+    renderRuleTemplateSelect();
+    renderRuleItems();
+  });
+
+  document.getElementById('ruleTemplateDeleteBtn').addEventListener('click', ()=>{
+    if(activityRules.length <= 1){ alert('至少要保留一個範本。'); return; }
+    if(!confirm('確定要刪除這個範本嗎？裡面的規則也會一併刪除。')) return;
+    activityRules = activityRules.filter(r=>r.id !== currentRuleTemplateId);
+    currentRuleTemplateId = activityRules[0].id;
+    renderRuleTemplateSelect();
+    renderRuleItems();
+  });
+
+  document.getElementById('ruleItemAddBtn').addEventListener('click', ()=>{
+    const offsetEl = document.getElementById('ruleItemOffset');
+    const labelEl = document.getElementById('ruleItemLabel');
+    const offset = parseInt(offsetEl.value, 10);
+    const label = labelEl.value.trim();
+    if(isNaN(offset) || !label) return;
+    currentTemplate().items.push({ id: newId('i'), offset, label });
+    offsetEl.value = ''; labelEl.value = '';
+    renderRuleItems();
+  });
+
+  renderRuleTemplateSelect();
+  renderRuleItems();
 
   /* ================= 專案排程：新增／編輯／刪除 ================= */
   function renderProjects(){
@@ -1388,6 +1702,438 @@
     }
   });
 
+  /* ================= 喜劇開港・活動財務模組 =================
+     注意：資料存在瀏覽器本機的 localStorage（不是雲端），
+     換裝置或清除瀏覽器資料就不會同步過去。
+  ==================================================== */
+  const KG_EVENTS_KEY = 'kaigang_events_v1';
+  const KG_TX_KEY = 'kaigang_transactions_v1';
+  const KG_STATUS_LABEL = { planned: '籌備中', ongoing: '進行中', completed: '已結案' };
+
+  function kgLoad(key, seedFn){
+    try{
+      const raw = localStorage.getItem(key);
+      if(raw) return JSON.parse(raw);
+    }catch(e){}
+    const seeded = seedFn();
+    localStorage.setItem(key, JSON.stringify(seeded));
+    return seeded;
+  }
+  function kgSave(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+  function kgSeedEvents(){
+    const now = new Date();
+    const daysAgo = n => { const d = new Date(now); d.setDate(d.getDate()-n); return fmtDate(d); };
+    const daysFromNow = n => { const d = new Date(now); d.setDate(d.getDate()+n); return fmtDate(d); };
+    return [
+      { id: 'kge1', name: '夏日市集音樂會', date: daysFromNow(20), status: 'planned', note: '戶外場地，預計 500 人', budgetExpense: 100000, budgetIncome: 150000 },
+      { id: 'kge2', name: '品牌新品發表會', date: daysAgo(5), status: 'completed', note: '', budgetExpense: 32000, budgetIncome: 40000 },
+    ];
+  }
+  function kgSeedTx(){
+    return [
+      { id: newId('kgt'), eventId: 'kge1', type: 'expense', category: '場地租借', amount: 30000, note: '訂金' },
+      { id: newId('kgt'), eventId: 'kge1', type: 'income', category: '售票收入', amount: 30000, note: '早鳥票銷售' },
+      { id: newId('kgt'), eventId: 'kge2', type: 'expense', category: '場地租借', amount: 20000, note: '' },
+      { id: newId('kgt'), eventId: 'kge2', type: 'expense', category: '視覺設計', amount: 13500, note: '現場物料，略超支' },
+      { id: newId('kgt'), eventId: 'kge2', type: 'income', category: '其他收入', amount: 40000, note: '' },
+    ];
+  }
+
+  let kgEvents = [];
+  let kgTransactions = [];
+  let kgSelectedEventId = null;
+  let kgCurrentTab = 'overview';
+
+  function kgFmt(n){ return 'NT$ ' + Math.round(Number(n)||0).toLocaleString('zh-TW'); }
+
+  function kgEventStats(ev){
+    const tx = kgTransactions.filter(t=>t.eventId === ev.id);
+    const actualIncome = tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
+    const actualExpense = tx.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
+    const budgetIncome = Number(ev.budgetIncome)||0;
+    const budgetExpense = Number(ev.budgetExpense)||0;
+    return { budgetIncome, budgetExpense, actualIncome, actualExpense, budgetNet: budgetIncome-budgetExpense, actualNet: actualIncome-actualExpense };
+  }
+
+  function kgSumTotals(evList){
+    return evList.reduce((acc, ev)=>{
+      const s = kgEventStats(ev);
+      acc.budgetExpense += s.budgetExpense;
+      acc.actualExpense += s.actualExpense;
+      acc.budgetIncome += s.budgetIncome;
+      acc.actualIncome += s.actualIncome;
+      return acc;
+    }, { budgetExpense:0, actualExpense:0, budgetIncome:0, actualIncome:0 });
+  }
+
+  function kgMetricCard(label, value, tone, sub){
+    const cls = tone === 'pos' ? 'pos' : (tone === 'neg' ? 'neg' : '');
+    return `
+      <div class="kg-metric-card">
+        <div class="kg-metric-label">${label}</div>
+        <div class="kg-metric-value ${cls}">${value}</div>
+        ${sub ? `<div class="kg-metric-sub">${sub}</div>` : ''}
+      </div>`;
+  }
+
+  function kgSwitchTab(tab){
+    kgCurrentTab = tab;
+    document.querySelectorAll('.kg-tab').forEach(b=>b.classList.toggle('active', b.dataset.kgTab === tab));
+    document.getElementById('kgOverview').style.display = tab === 'overview' ? 'block' : 'none';
+    document.getElementById('kgEvents').style.display = tab === 'events' ? 'block' : 'none';
+    document.getElementById('kgReport').style.display = tab === 'report' ? 'block' : 'none';
+    if(tab === 'overview') kgRenderOverview();
+    if(tab === 'events') kgRenderEvents();
+    if(tab === 'report') kgRenderReport();
+  }
+  document.querySelectorAll('.kg-tab').forEach(btn=>{
+    btn.addEventListener('click', ()=> kgSwitchTab(btn.dataset.kgTab));
+  });
+
+  function kgRenderOverview(){
+    const el = document.getElementById('kgOverview');
+    const totals = kgSumTotals(kgEvents);
+    const netActual = totals.actualIncome - totals.actualExpense;
+    let html = `
+      <div class="kg-metrics">
+        ${kgMetricCard('活動數量', kgEvents.length)}
+        ${kgMetricCard('總預算支出', kgFmt(totals.budgetExpense), null, `實際 ${kgFmt(totals.actualExpense)}`)}
+        ${kgMetricCard('總預算收入', kgFmt(totals.budgetIncome), null, `實際 ${kgFmt(totals.actualIncome)}`)}
+        ${kgMetricCard('實際淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
+      </div>`;
+    if(kgEvents.length === 0){
+      html += '<div class="card"><div class="empty-state">還沒有任何活動，切換到「活動」新增一場吧。</div></div>';
+    }else{
+      html += '<div class="card">' + kgEvents.map(ev=>{
+        const s = kgEventStats(ev);
+        const overBudget = s.actualExpense > s.budgetExpense && s.budgetExpense > 0;
+        return `
+          <div class="kg-event-row" data-kg-open="${ev.id}">
+            <div style="min-width:160px;">
+              <div style="font-size:14.5px;color:var(--ink);">${ev.name}</div>
+              <div style="font-size:12px;color:var(--ink-soft);margin-top:2px;">
+                📅 ${ev.date} <span class="kg-status ${ev.status}">・${KG_STATUS_LABEL[ev.status]}</span>
+              </div>
+            </div>
+            <div style="text-align:right;font-size:13px;">
+              <div style="color:${overBudget?'var(--seal)':'var(--ink-soft)'};">支出 ${kgFmt(s.actualExpense)} / ${kgFmt(s.budgetExpense)}</div>
+              <div style="color:${s.actualNet>=0?'var(--teal)':'var(--seal)'};margin-top:2px;">淨損益 ${(s.actualNet>=0?'+':'')+kgFmt(s.actualNet)}</div>
+            </div>
+          </div>`;
+      }).join('') + '</div>';
+    }
+    el.innerHTML = html;
+    el.querySelectorAll('[data-kg-open]').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        kgSelectedEventId = row.dataset.kgOpen;
+        kgSwitchTab('events');
+      });
+    });
+  }
+
+  function kgRenderEvents(){
+    const el = document.getElementById('kgEvents');
+    const selected = kgEvents.find(e=>e.id === kgSelectedEventId);
+    if(selected){
+      kgRenderEventDetail(el, selected);
+    }else{
+      kgRenderEventList(el);
+    }
+  }
+
+  function kgRenderEventList(el){
+    el.innerHTML = `
+      <div class="add-form">
+        <input class="f-name" id="kgEvName" type="text" placeholder="活動名稱，例如：夏日市集音樂會">
+        <input class="f-date" id="kgEvDate" type="date">
+        <select class="f-tag" id="kgEvStatus">
+          <option value="planned">籌備中</option>
+          <option value="ongoing">進行中</option>
+          <option value="completed">已結案</option>
+        </select>
+        <input class="f-num" id="kgEvBudgetExpense" type="number" placeholder="預算支出">
+        <input class="f-num" id="kgEvBudgetIncome" type="number" placeholder="預算收入">
+        <button class="add-form-btn" id="kgEvAddBtn">新增活動</button>
+      </div>
+      <div id="kgEvGrid"></div>`;
+
+    const grid = el.querySelector('#kgEvGrid');
+    if(kgEvents.length === 0){
+      grid.innerHTML = '<div class="card"><div class="empty-state">還沒有活動，先在上面新增一場。</div></div>';
+    }else{
+      grid.className = 'kg-event-grid';
+      grid.innerHTML = kgEvents.map(ev => `
+        <div class="kg-event-card" data-kg-card="${ev.id}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="font-family:'Noto Serif TC',serif;font-size:16px;color:var(--ink);">${ev.name}</div>
+            <button class="icon-btn danger" data-kg-del-event="${ev.id}" title="刪除">✕</button>
+          </div>
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;display:flex;align-items:center;gap:6px;">
+            📅 ${ev.date}
+            <select class="kg-status-select kg-status ${ev.status}" data-kg-status="${ev.id}" style="font-family:'Noto Sans TC',sans-serif;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);cursor:pointer;">
+              <option value="planned" ${ev.status==='planned'?'selected':''}>籌備中</option>
+              <option value="ongoing" ${ev.status==='ongoing'?'selected':''}>進行中</option>
+              <option value="completed" ${ev.status==='completed'?'selected':''}>已結案</option>
+            </select>
+          </div>
+          <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">
+            預算支出 ${kgFmt(ev.budgetExpense)} · 預算收入 ${kgFmt(ev.budgetIncome)}
+          </div>
+          ${ev.note ? `<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">${ev.note}</div>` : ''}
+        </div>`).join('');
+    }
+
+    grid.querySelectorAll('[data-kg-status]').forEach(sel=>{
+      sel.addEventListener('click', e=>e.stopPropagation());
+      sel.addEventListener('change', e=>{
+        e.stopPropagation();
+        const ev = kgEvents.find(x=>x.id === sel.dataset.kgStatus);
+        if(!ev) return;
+        ev.status = sel.value;
+        kgSave(KG_EVENTS_KEY, kgEvents);
+        sel.className = `kg-status-select kg-status ${ev.status}`;
+      });
+    });
+
+    grid.querySelectorAll('[data-kg-card]').forEach(card=>{
+      card.addEventListener('click', (e)=>{
+        if(e.target.closest('[data-kg-del-event]')) return;
+        if(e.target.closest('[data-kg-status]')) return;
+        kgSelectedEventId = card.dataset.kgCard;
+        kgRenderEvents();
+      });
+    });
+    grid.querySelectorAll('[data-kg-del-event]').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        if(!confirm('刪除活動會一併移除其收支紀錄，確定嗎？')) return;
+        const id = btn.dataset.kgDelEvent;
+        kgEvents = kgEvents.filter(ev=>ev.id !== id);
+        kgTransactions = kgTransactions.filter(t=>t.eventId !== id);
+        kgSave(KG_EVENTS_KEY, kgEvents);
+        kgSave(KG_TX_KEY, kgTransactions);
+        kgRenderEventList(el);
+      });
+    });
+
+    document.getElementById('kgEvAddBtn').addEventListener('click', ()=>{
+      const name = document.getElementById('kgEvName').value.trim();
+      if(!name) return;
+      const ev = {
+        id: newId('kge'),
+        name,
+        date: document.getElementById('kgEvDate').value || fmtDate(new Date()),
+        status: document.getElementById('kgEvStatus').value,
+        note: '',
+        budgetExpense: Number(document.getElementById('kgEvBudgetExpense').value) || 0,
+        budgetIncome: Number(document.getElementById('kgEvBudgetIncome').value) || 0,
+      };
+      kgEvents.push(ev);
+      kgSave(KG_EVENTS_KEY, kgEvents);
+      kgRenderEventList(el);
+    });
+  }
+
+  function kgRenderEventDetail(el, event){
+    const s = kgEventStats(event);
+    const myTx = kgTransactions.filter(t=>t.eventId === event.id);
+    el.innerHTML = `
+      <button class="icon-btn" id="kgBackBtn" style="width:auto;padding:6px 12px;margin-bottom:14px;">← 返回活動列表</button>
+      <div style="margin-bottom:16px;">
+        <div style="font-family:'Noto Serif TC',serif;font-size:20px;color:var(--ink);">${event.name}</div>
+        <div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;display:flex;align-items:center;gap:6px;">
+          📅 ${event.date}
+          <select id="kgDetailStatusSelect" class="kg-status ${event.status}" style="font-family:'Noto Sans TC',sans-serif;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);cursor:pointer;">
+            <option value="planned" ${event.status==='planned'?'selected':''}>籌備中</option>
+            <option value="ongoing" ${event.status==='ongoing'?'selected':''}>進行中</option>
+            <option value="completed" ${event.status==='completed'?'selected':''}>已結案</option>
+          </select>
+        </div>
+      </div>
+      <div class="kg-metrics">
+        ${kgMetricCard('支出', kgFmt(s.actualExpense), s.actualExpense>s.budgetExpense?'neg':null, `預算 ${kgFmt(s.budgetExpense)}`)}
+        ${kgMetricCard('收入', kgFmt(s.actualIncome), null, `預算 ${kgFmt(s.budgetIncome)}`)}
+        ${kgMetricCard('淨損益（實際）', (s.actualNet>=0?'+':'')+kgFmt(s.actualNet), s.actualNet>=0?'pos':'neg', `預算淨損益 ${(s.budgetNet>=0?'+':'')+kgFmt(s.budgetNet)}`)}
+      </div>
+      <div class="add-form">
+        <select class="f-tag" id="kgTxType">
+          <option value="expense">支出</option>
+          <option value="income">收入</option>
+        </select>
+        <input class="f-name" id="kgTxCategory" type="text" list="kgTxCategorySugg" placeholder="名稱，例如：場地收入／售票收入">
+        <datalist id="kgTxCategorySugg">
+          <option value="場地收入"></option>
+          <option value="售票收入"></option>
+          <option value="周邊銷售"></option>
+          <option value="場地租借"></option>
+          <option value="器材設備"></option>
+          <option value="視覺設計"></option>
+          <option value="演員費"></option>
+          <option value="交通住宿"></option>
+        </datalist>
+        <input class="f-name" id="kgTxContent" type="text" placeholder="內容（選填）">
+        <input class="f-num" id="kgTxAmount" type="number" placeholder="金額">
+        <input class="f-name" id="kgTxNote" type="text" placeholder="備註（選填）">
+        <button class="add-form-btn" id="kgTxAddBtn">新增收支</button>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;color:var(--ink-soft);margin-bottom:10px;">實際收支明細</div>
+        <div id="kgTxTableWrap"></div>
+      </div>`;
+
+    el.querySelector('#kgDetailStatusSelect').addEventListener('change', e=>{
+      event.status = e.target.value;
+      kgSave(KG_EVENTS_KEY, kgEvents);
+      e.target.className = `kg-status ${event.status}`;
+    });
+
+    const tableWrap = el.querySelector('#kgTxTableWrap');
+    function renderTxTable(){
+      if(myTxLive().length === 0){
+        tableWrap.innerHTML = '<div class="empty-state">尚無收支紀錄</div>';
+        return;
+      }
+      tableWrap.innerHTML = `
+        <table class="kg-table">
+          <thead><tr><th>類別</th><th>名稱</th><th>內容</th><th>備註</th><th class="r">金額</th><th></th></tr></thead>
+          <tbody>
+            ${myTxLive().map(t => `
+              <tr>
+                <td style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'收入':'支出'}</td>
+                <td>${t.category}</td>
+                <td style="color:var(--ink-soft);">${t.content || '—'}</td>
+                <td style="color:var(--ink-soft);">${t.note || '—'}</td>
+                <td class="r" style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'+':'-'}${kgFmt(t.amount)}</td>
+                <td class="r"><button class="icon-btn danger" data-kg-del-tx="${t.id}" title="刪除">✕</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+      tableWrap.querySelectorAll('[data-kg-del-tx]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          kgTransactions = kgTransactions.filter(t=>t.id !== btn.dataset.kgDelTx);
+          kgSave(KG_TX_KEY, kgTransactions);
+          renderTxTable();
+          kgRenderEventDetail(el, event); // 重新整理上方金額統計
+        });
+      });
+    }
+    function myTxLive(){ return kgTransactions.filter(t=>t.eventId === event.id); }
+    renderTxTable();
+
+    el.querySelector('#kgBackBtn').addEventListener('click', ()=>{
+      kgSelectedEventId = null;
+      kgRenderEvents();
+    });
+    el.querySelector('#kgTxAddBtn').addEventListener('click', ()=>{
+      const category = document.getElementById('kgTxCategory').value.trim();
+      const amount = Number(document.getElementById('kgTxAmount').value);
+      if(!category || !amount || amount <= 0) return;
+      kgTransactions.push({
+        id: newId('kgt'), eventId: event.id,
+        type: document.getElementById('kgTxType').value,
+        category, amount,
+        content: document.getElementById('kgTxContent').value.trim(),
+        note: document.getElementById('kgTxNote').value.trim(),
+      });
+      kgSave(KG_TX_KEY, kgTransactions);
+      kgRenderEventDetail(el, event);
+    });
+  }
+
+  function kgExportCsv(monthEvents, currentMonth){
+    const header = ['活動', '狀態', '日期', '支出(實際)', '支出(預算)', '收入(實際)', '收入(預算)', '淨損益(實際)'];
+    const rows = monthEvents.map(ev => {
+      const s = kgEventStats(ev);
+      return [
+        ev.name,
+        KG_STATUS_LABEL[ev.status],
+        ev.date,
+        s.actualExpense, s.budgetExpense,
+        s.actualIncome, s.budgetIncome,
+        s.actualNet,
+      ];
+    });
+    const totals = kgSumTotals(monthEvents);
+    const netActual = totals.actualIncome - totals.actualExpense;
+    rows.push(['總計', '', '', totals.actualExpense, totals.budgetExpense, totals.actualIncome, totals.budgetIncome, netActual]);
+
+    const csvLines = [header, ...rows].map(row =>
+      row.map(cell => {
+        const str = String(cell);
+        return /[",\n]/.test(str) ? '"' + str.replace(/"/g,'""') + '"' : str;
+      }).join(',')
+    );
+    // 加上 UTF-8 BOM，避免 Excel 開啟時中文亂碼
+    const csvContent = '\uFEFF' + csvLines.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `喜劇開港月報表_${currentMonth}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function kgRenderReport(){
+    const el = document.getElementById('kgReport');
+    const now = new Date();
+    const defaultMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    const currentMonth = el.dataset.month || defaultMonth;
+    const monthEvents = kgEvents.filter(ev => ev.date.slice(0,7) === currentMonth);
+    const totals = kgSumTotals(monthEvents);
+    const netActual = totals.actualIncome - totals.actualExpense;
+
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;color:var(--ink-soft);">選擇月份</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="month" id="kgReportMonth" value="${currentMonth}" style="font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);color:var(--ink);">
+          <button class="add-form-btn" id="kgExportBtn" ${monthEvents.length===0 ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''}>⬇ 匯出報表</button>
+        </div>
+      </div>
+      <div class="kg-metrics">
+        ${kgMetricCard('本月活動數', monthEvents.length)}
+        ${kgMetricCard('支出 實際/預算', kgFmt(totals.actualExpense), null, `預算 ${kgFmt(totals.budgetExpense)}`)}
+        ${kgMetricCard('收入 實際/預算', kgFmt(totals.actualIncome), null, `預算 ${kgFmt(totals.budgetIncome)}`)}
+        ${kgMetricCard('本月淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
+      </div>
+      ${monthEvents.length === 0
+        ? '<div class="card"><div class="empty-state">此月份沒有活動紀錄</div></div>'
+        : `<div class="card"><table class="kg-table">
+            <thead><tr><th>活動</th><th>狀態</th><th class="r">支出 實際/預算</th><th class="r">收入 實際/預算</th><th class="r">淨損益</th></tr></thead>
+            <tbody>
+              ${monthEvents.map(ev=>{
+                const s = kgEventStats(ev);
+                return `<tr>
+                  <td>${ev.name}</td>
+                  <td class="kg-status ${ev.status}">${KG_STATUS_LABEL[ev.status]}</td>
+                  <td class="r" style="color:${s.actualExpense>s.budgetExpense?'var(--seal)':'var(--ink-soft)'};">${kgFmt(s.actualExpense)} / ${kgFmt(s.budgetExpense)}</td>
+                  <td class="r" style="color:var(--ink-soft);">${kgFmt(s.actualIncome)} / ${kgFmt(s.budgetIncome)}</td>
+                  <td class="r" style="color:${s.actualNet>=0?'var(--teal)':'var(--seal)'};">${(s.actualNet>=0?'+':'')+kgFmt(s.actualNet)}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table></div>`}`;
+
+    el.querySelector('#kgReportMonth').addEventListener('change', (e)=>{
+      el.dataset.month = e.target.value;
+      kgRenderReport();
+    });
+    const exportBtn = el.querySelector('#kgExportBtn');
+    if(exportBtn && !exportBtn.disabled){
+      exportBtn.addEventListener('click', ()=> kgExportCsv(monthEvents, currentMonth));
+    }
+  }
+
+  function kgInit(){
+    kgEvents = kgLoad(KG_EVENTS_KEY, kgSeedEvents);
+    kgTransactions = kgLoad(KG_TX_KEY, kgSeedTx);
+    kgRenderOverview();
+  }
+
   /* ================= 初始化 ================= */
   function initDashboard(){
     if(dashboardInitialized) return;
@@ -1415,6 +2161,7 @@
     renderTodos();
     renderAllEvents();
     waitForGoogleAndInit();
+    kgInit();
 
     // 設定頁：顯示目前登入帳號、預填顯示名稱
     document.getElementById('settingsLoginUser').textContent = creds ? creds.username : '';
