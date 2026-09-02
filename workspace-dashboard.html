@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
 <style>
   :root{
     --bg: #F5F6F8;
@@ -730,7 +733,7 @@
       </div>
       <button class="auth-btn" id="loginBtn">登入</button>
       <div class="auth-error" id="loginError"></div>
-      <div class="auth-switch">忘記密碼？<a id="resetLink">重新設定帳號</a></div>
+      <div class="auth-switch">還沒有帳號？<a id="toSetupLink">建立新帳號</a></div>
     </div>
 
     <div id="setupForm" style="display:none;">
@@ -746,11 +749,12 @@
         <label class="auth-label">再輸入一次密碼</label>
         <input class="auth-input" id="setupPass2" type="password" autocomplete="new-password">
       </div>
-      <button class="auth-btn" id="setupBtn">建立並蓋印</button>
+      <button class="auth-btn" id="setupBtn">建立並登入</button>
       <div class="auth-error" id="setupError"></div>
+      <div class="auth-switch">已經有帳號了？<a id="toLoginLink">直接登入</a></div>
     </div>
 
-    <div class="auth-note">帳密僅儲存在此瀏覽器本機，屬於基本防護，並非加密保護等級的安全機制。</div>
+    <div class="auth-note">帳號密碼與資料存放在雲端，登入後任何裝置都能同步使用；請記住你的密碼，目前沒有提供忘記密碼救援機制。</div>
   </div>
 </div>
 
@@ -951,27 +955,53 @@
 </div>
 
 <script>
-  /* ================= 可自訂內容區 ================= */
-  let events = [
-    { id: "e1", date: new Date(2026,7,27), label: "看電影", tag: "personal" },
-    { id: "e2", date: new Date(2026,7,28), label: "團隊週會", tag: "work" },
-    { id: "e3", date: new Date(2026,7,29), label: "健身房", tag: "personal" },
-    { id: "e4", date: new Date(2026,7,31), label: "月底結算", tag: "general" },
-    { id: "e5", date: new Date(2026,8,3), label: "牙醫回診", tag: "personal" },
-    { id: "e6", date: new Date(2026,8,5), label: "專案交付", tag: "work" },
-    { id: "e7", date: new Date(2026,8,12), label: "朋友聚餐", tag: "personal" },
-  ];
-  let todos = [
-    { id: "t1", label: "整理本週工作紀錄", date: "08-27", done: false },
-    { id: "t2", label: "回覆客戶提案信件", date: "08-28", done: false },
-    { id: "t3", label: "預約健康檢查", date: "08-31", done: true },
-    { id: "t4", label: "備份筆電資料", date: "09-02", done: false },
-  ];
-  let projects = [
-    { id: "p1", name: "個人網站改版", pct: 70 },
-    { id: "p2", name: "秋季旅行計畫", pct: 35 },
-  ];
-  /* ================================================= */
+  /* ================= 預設示範資料（僅供新帳號第一次登入時使用） ================= */
+  function defaultEvents(){
+    return [
+      { id: "e1", date: new Date(2026,7,27), label: "看電影", tag: "personal" },
+      { id: "e2", date: new Date(2026,7,28), label: "團隊週會", tag: "work" },
+      { id: "e3", date: new Date(2026,7,29), label: "健身房", tag: "personal" },
+      { id: "e4", date: new Date(2026,7,31), label: "月底結算", tag: "general" },
+      { id: "e5", date: new Date(2026,8,3), label: "牙醫回診", tag: "personal" },
+      { id: "e6", date: new Date(2026,8,5), label: "專案交付", tag: "work" },
+      { id: "e7", date: new Date(2026,8,12), label: "朋友聚餐", tag: "personal" },
+    ];
+  }
+  function defaultTodos(){
+    return [
+      { id: "t1", label: "整理本週工作紀錄", date: "08-27", done: false },
+      { id: "t2", label: "回覆客戶提案信件", date: "08-28", done: false },
+      { id: "t3", label: "預約健康檢查", date: "08-31", done: true },
+      { id: "t4", label: "備份筆電資料", date: "09-02", done: false },
+    ];
+  }
+  function defaultProjects(){
+    return [
+      { id: "p1", name: "個人網站改版", pct: 70 },
+      { id: "p2", name: "秋季旅行計畫", pct: 35 },
+    ];
+  }
+  function defaultActivityRules(){
+    return [
+      { id: 'r1', name: '活動宣傳規劃', items: [
+        { id: 'i1', offset: -30, label: '活動企劃定案' },
+        { id: 'i2', offset: -21, label: '開始宣傳／發布消息' },
+        { id: 'i3', offset: -14, label: '報名貼文上線' },
+        { id: 'i4', offset: -7, label: '再次提醒／催報名' },
+        { id: 'i5', offset: -1, label: '最終確認與準備' },
+        { id: 'i6', offset: 0, label: '活動當天' },
+        { id: 'i7', offset: 3, label: '感謝貼文／成果整理' },
+      ]},
+    ];
+  }
+
+  /* 資料變數，實際內容會在登入後從 Firestore 載入 */
+  let events = [];
+  let todos = [];
+  let projects = [];
+  let activityRules = [];
+  let currentRuleTemplateId = null;
+  let displayNameValue = '';
 
   function newId(prefix){ return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
@@ -983,52 +1013,123 @@
   const GOOGLE_CLIENT_ID = "561575427324-cju3vtq8v2nrkfanvpbvdac6441k3fe5.apps.googleusercontent.com";
   const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar.events";
 
-  /* ---------------- 簡易本機帳密驗證 ----------------
-     注意：這是靜態網頁，沒有伺服器，帳密僅存在瀏覽器
-     的 localStorage，屬於基本防護，不是加密等級的安全機制。
-  --------------------------------------------------- */
-  const STORAGE_KEY = "workspace_auth_v1";
-  const SESSION_KEY = "workspace_session_v1";
-  const DISPLAY_NAME_KEY = "workspace_display_name";
-
   function getDisplayName(){
-    const stored = localStorage.getItem(DISPLAY_NAME_KEY);
-    if(stored) return stored;
-    const creds = getCreds();
-    return creds ? creds.username : "你";
+    return displayNameValue || (currentUser ? usernameFromUser(currentUser) : '你');
   }
   function setDisplayName(name){
-    localStorage.setItem(DISPLAY_NAME_KEY, name);
+    displayNameValue = name;
+    scheduleCloudSave();
   }
 
-  function simpleHash(str){
-    // 簡單雜湊，避免密碼以明文儲存（非加密級安全）
-    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
-    for (let i = 0; i < str.length; i++){
-      const ch = str.charCodeAt(i);
-      h1 = Math.imul(h1 ^ ch, 2654435761);
-      h2 = Math.imul(h2 ^ ch, 1597334677);
-    }
-    h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
-    h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
-    return (4294967296 * (2097151 & h2) + (h1>>>0)).toString(16);
+  /* ---------------- Firebase：帳號登入與雲端資料儲存 ----------------
+     帳密與所有工作台資料（專案、待辦、行事曆、活動規則、喜劇開港財務資料）
+     都存在 Firebase 雲端，登入後任何裝置都能同步使用。
+  --------------------------------------------------- */
+  const firebaseConfig = {
+    apiKey: "AIzaSyCbORQ-DoTg05uUH-dJ-kBhsagldGyNwJU",
+    authDomain: "mana-workspace.firebaseapp.com",
+    projectId: "mana-workspace",
+    storageBucket: "mana-workspace.firebasestorage.app",
+    messagingSenderId: "295533107302",
+    appId: "1:295533107302:web:b7660bffd0cddffbe635a7"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const fbAuth = firebase.auth();
+  const fbDb = firebase.firestore();
+
+  let currentUser = null;
+  let dataLoadedOnce = false;
+
+  // Firebase 帳號登入需要 email 格式，這裡把使用者輸入的簡單帳號名稱轉成內部用的假 email
+  function usernameToEmail(u){
+    return u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') + '@manaworkspace.local';
+  }
+  function usernameFromUser(user){
+    if(user.displayName) return user.displayName;
+    return (user.email || '').split('@')[0];
   }
 
-  function getCreds(){
+  function firebaseErrorToZh(code){
+    const map = {
+      'auth/email-already-in-use': '這個帳號名稱已經被註冊過了，請直接登入，或換一個帳號名稱。',
+      'auth/invalid-email': '帳號名稱格式不正確，請只使用英文字母、數字。',
+      'auth/weak-password': '密碼太簡單，至少需要 6 個字元。',
+      'auth/user-not-found': '帳號或密碼不正確。',
+      'auth/wrong-password': '帳號或密碼不正確。',
+      'auth/invalid-credential': '帳號或密碼不正確。',
+      'auth/too-many-requests': '嘗試次數過多，請稍後再試。',
+      'auth/network-request-failed': '網路連線失敗，請檢查網路連線後再試一次。',
+    };
+    return map[code] || ('發生錯誤，請稍後再試（' + code + '）');
+  }
+
+  // 把行事曆的 Date 物件轉成字串以便存進 Firestore，讀取時再轉回 Date
+  function serializeEvents(arr){
+    return (arr || []).map(e => ({ ...e, date: e.date instanceof Date ? e.date.toISOString() : e.date }));
+  }
+  function deserializeEvents(arr){
+    return (arr || []).map(e => ({ ...e, date: new Date(e.date) }));
+  }
+
+  let cloudSaveTimer = null;
+  function scheduleCloudSave(){
+    if(!currentUser) return;
+    clearTimeout(cloudSaveTimer);
+    cloudSaveTimer = setTimeout(saveUserData, 700);
+  }
+
+  async function saveUserData(){
+    if(!currentUser) return;
     try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    }catch(e){ return null; }
+      await fbDb.collection('users').doc(currentUser.uid).set({
+        displayName: displayNameValue,
+        projects, todos,
+        events: serializeEvents(events),
+        activityRules,
+        kgEvents, kgTransactions,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }catch(err){
+      console.error('雲端儲存失敗', err);
+    }
   }
-  function setCreds(username, password){
-    const salt = Math.random().toString(36).slice(2);
-    const hash = simpleHash(salt + password);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ username, salt, hash }));
-  }
-  function checkCreds(username, password){
-    const c = getCreds();
-    if(!c) return false;
-    return c.username === username && simpleHash(c.salt + password) === c.hash;
+
+  async function loadUserData(uid){
+    try{
+      const snap = await fbDb.collection('users').doc(uid).get();
+      if(snap.exists){
+        const d = snap.data();
+        displayNameValue = d.displayName || '';
+        projects = (d.projects && d.projects.length) ? d.projects : defaultProjects();
+        todos = (d.todos && d.todos.length) ? d.todos : defaultTodos();
+        events = (d.events && d.events.length) ? deserializeEvents(d.events) : defaultEvents();
+        activityRules = (d.activityRules && d.activityRules.length) ? d.activityRules : defaultActivityRules();
+        kgEvents = (d.kgEvents && d.kgEvents.length) ? d.kgEvents : kgSeedEvents();
+        kgTransactions = d.kgTransactions || kgSeedTx();
+      }else{
+        // 第一次登入的新帳號：套用預設示範資料，並立刻存一份到雲端
+        displayNameValue = '';
+        projects = defaultProjects();
+        todos = defaultTodos();
+        events = defaultEvents();
+        activityRules = defaultActivityRules();
+        kgEvents = kgSeedEvents();
+        kgTransactions = kgSeedTx();
+        await saveUserData();
+      }
+      currentRuleTemplateId = activityRules[0] ? activityRules[0].id : null;
+    }catch(err){
+      console.error('雲端資料載入失敗', err);
+      // 載入失敗時退回預設資料，至少工作台還能用
+      displayNameValue = '';
+      projects = defaultProjects();
+      todos = defaultTodos();
+      events = defaultEvents();
+      activityRules = defaultActivityRules();
+      kgEvents = kgSeedEvents();
+      kgTransactions = kgSeedTx();
+      currentRuleTemplateId = activityRules[0].id;
+    }
   }
 
   const authOverlay = document.getElementById('authOverlay');
@@ -1041,8 +1142,8 @@
   function showSetup(){
     loginForm.style.display = 'none';
     setupForm.style.display = 'block';
-    authTitle.textContent = '建立你的工作台';
-    authSub.textContent = '第一次使用，先設定帳號密碼';
+    authTitle.textContent = '建立你的工作台帳號';
+    authSub.textContent = '這組帳密之後在任何裝置都能登入使用';
   }
   function showLogin(){
     setupForm.style.display = 'none';
@@ -1056,31 +1157,52 @@
     appRoot.classList.remove('locked');
   }
 
-  document.getElementById('setupBtn').addEventListener('click', ()=>{
+  document.getElementById('toSetupLink').addEventListener('click', ()=>{
+    document.getElementById('setupError').textContent = '';
+    showSetup();
+  });
+  document.getElementById('toLoginLink').addEventListener('click', ()=>{
+    document.getElementById('loginError').textContent = '';
+    showLogin();
+  });
+
+  document.getElementById('setupBtn').addEventListener('click', async ()=>{
     const u = document.getElementById('setupUser').value.trim();
     const p = document.getElementById('setupPass').value;
     const p2 = document.getElementById('setupPass2').value;
     const err = document.getElementById('setupError');
+    const btn = document.getElementById('setupBtn');
     if(!u || !p){ err.textContent = '請輸入帳號與密碼'; return; }
-    if(p.length < 4){ err.textContent = '密碼至少需要 4 個字元'; return; }
+    if(p.length < 6){ err.textContent = '密碼至少需要 6 個字元'; return; }
     if(p !== p2){ err.textContent = '兩次輸入的密碼不一致'; return; }
-    setCreds(u, p);
-    sessionStorage.setItem(SESSION_KEY, '1');
-    err.textContent = '';
-    enterApp();
+    err.textContent = '建立中…';
+    btn.disabled = true;
+    try{
+      const cred = await fbAuth.createUserWithEmailAndPassword(usernameToEmail(u), p);
+      await cred.user.updateProfile({ displayName: u });
+      err.textContent = '';
+      // 後續流程交給 onAuthStateChanged 處理（載入資料、解鎖畫面）
+    }catch(e){
+      err.textContent = firebaseErrorToZh(e.code);
+    }
+    btn.disabled = false;
   });
 
-  document.getElementById('loginBtn').addEventListener('click', ()=>{
+  document.getElementById('loginBtn').addEventListener('click', async ()=>{
     const u = document.getElementById('loginUser').value.trim();
     const p = document.getElementById('loginPass').value;
     const err = document.getElementById('loginError');
-    if(checkCreds(u, p)){
-      sessionStorage.setItem(SESSION_KEY, '1');
+    const btn = document.getElementById('loginBtn');
+    if(!u || !p){ err.textContent = '請輸入帳號與密碼'; return; }
+    err.textContent = '登入中…';
+    btn.disabled = true;
+    try{
+      await fbAuth.signInWithEmailAndPassword(usernameToEmail(u), p);
       err.textContent = '';
-      enterApp();
-    }else{
-      err.textContent = '帳號或密碼不正確';
+    }catch(e){
+      err.textContent = firebaseErrorToZh(e.code);
     }
+    btn.disabled = false;
   });
 
   ['loginUser','loginPass'].forEach(id=>{
@@ -1094,22 +1216,36 @@
     });
   });
 
-  document.getElementById('resetLink').addEventListener('click', ()=>{
-    if(confirm('這會清除目前儲存的帳號密碼，需要重新設定。確定要繼續嗎？')){
-      localStorage.removeItem(STORAGE_KEY);
-      sessionStorage.removeItem(SESSION_KEY);
-      showSetup();
+  function logout(){
+    fbAuth.signOut();
+  }
+
+  // Firebase 會自動判斷目前有沒有已登入的使用者（同裝置重開瀏覽器也會記得），
+  // 這裡統一處理登入/登出後的畫面切換與資料載入
+  fbAuth.onAuthStateChanged(async (user)=>{
+    if(user){
+      currentUser = user;
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('setupError').textContent = '';
+      await loadUserData(user.uid);
+      dataLoadedOnce = true;
+      renderProjects();
+      renderTodos();
+      renderRuleTemplateSelect();
+      renderRuleItems();
+      renderAllEvents();
+      kgRenderOverview();
+      refreshGreeting();
+      enterApp();
+    }else{
+      currentUser = null;
+      appRoot.classList.add('locked');
+      authOverlay.style.display = 'flex';
+      document.getElementById('loginUser').value = '';
+      document.getElementById('loginPass').value = '';
+      showLogin();
     }
   });
-
-  function logout(){
-    sessionStorage.removeItem(SESSION_KEY);
-    appRoot.classList.add('locked');
-    document.getElementById('loginUser').value = '';
-    document.getElementById('loginPass').value = '';
-    authOverlay.style.display = 'flex';
-    showLogin();
-  }
 
   /* ================= 分頁視圖切換 ================= */
   function switchView(viewName){
@@ -1271,6 +1407,7 @@
   });
 
   function renderAllEvents(){
+    scheduleCloudSave();
     renderHomeWeek();
     drawCalendarInto('homeCalTitle', 'homeCalGrid');
     drawCalendarInto('calTitle', 'calGrid', calendarViewDate);
@@ -1331,19 +1468,6 @@
   });
 
   /* ================= 活動規則範本：設定規則 ================= */
-  let activityRules = [
-    { id: 'r1', name: '活動宣傳規劃', items: [
-      { id: 'i1', offset: -30, label: '活動企劃定案' },
-      { id: 'i2', offset: -21, label: '開始宣傳／發布消息' },
-      { id: 'i3', offset: -14, label: '報名貼文上線' },
-      { id: 'i4', offset: -7, label: '再次提醒／催報名' },
-      { id: 'i5', offset: -1, label: '最終確認與準備' },
-      { id: 'i6', offset: 0, label: '活動當天' },
-      { id: 'i7', offset: 3, label: '感謝貼文／成果整理' },
-    ]},
-  ];
-  let currentRuleTemplateId = activityRules[0].id;
-
   function currentTemplate(){ return activityRules.find(r=>r.id === currentRuleTemplateId); }
 
   function renderRuleTemplateSelect(){
@@ -1358,6 +1482,7 @@
   }
 
   function renderRuleItems(){
+    scheduleCloudSave();
     const t = currentTemplate();
     const el = document.getElementById('ruleItemsList');
     if(!t || t.items.length === 0){
@@ -1433,11 +1558,9 @@
     renderRuleItems();
   });
 
-  renderRuleTemplateSelect();
-  renderRuleItems();
-
   /* ================= 專案排程：新增／編輯／刪除 ================= */
   function renderProjects(){
+    scheduleCloudSave();
     const el = document.getElementById('projList');
     el.innerHTML = projects.length === 0
       ? '<div class="empty-state">還沒有任何專案，新增一個吧</div>'
@@ -1490,6 +1613,7 @@
 
   /* ================= 待辦清單：新增／編輯／刪除／打勾 ================= */
   function renderTodos(){
+    scheduleCloudSave();
     const el = document.getElementById('todoList');
     el.innerHTML = todos.length === 0
       ? '<div class="empty-state">還沒有任何待辦事項</div>'
@@ -1703,23 +1827,13 @@
   });
 
   /* ================= 喜劇開港・活動財務模組 =================
-     注意：資料存在瀏覽器本機的 localStorage（不是雲端），
-     換裝置或清除瀏覽器資料就不會同步過去。
+     資料存放在 Firebase 雲端（跟其他工作台資料一起存），
+     登入後任何裝置都能同步使用。
   ==================================================== */
-  const KG_EVENTS_KEY = 'kaigang_events_v1';
-  const KG_TX_KEY = 'kaigang_transactions_v1';
   const KG_STATUS_LABEL = { planned: '籌備中', ongoing: '進行中', completed: '已結案' };
 
-  function kgLoad(key, seedFn){
-    try{
-      const raw = localStorage.getItem(key);
-      if(raw) return JSON.parse(raw);
-    }catch(e){}
-    const seeded = seedFn();
-    localStorage.setItem(key, JSON.stringify(seeded));
-    return seeded;
-  }
-  function kgSave(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+  // 呼叫這個函式取代原本的 localStorage 寫入，資料改成排程存到 Firebase
+  function kgSave(){ scheduleCloudSave(); }
 
   function kgSeedEvents(){
     const now = new Date();
@@ -1891,7 +2005,7 @@
         const ev = kgEvents.find(x=>x.id === sel.dataset.kgStatus);
         if(!ev) return;
         ev.status = sel.value;
-        kgSave(KG_EVENTS_KEY, kgEvents);
+        kgSave();
         sel.className = `kg-status-select kg-status ${ev.status}`;
       });
     });
@@ -1911,8 +2025,8 @@
         const id = btn.dataset.kgDelEvent;
         kgEvents = kgEvents.filter(ev=>ev.id !== id);
         kgTransactions = kgTransactions.filter(t=>t.eventId !== id);
-        kgSave(KG_EVENTS_KEY, kgEvents);
-        kgSave(KG_TX_KEY, kgTransactions);
+        kgSave();
+        kgSave();
         kgRenderEventList(el);
       });
     });
@@ -1930,7 +2044,7 @@
         budgetIncome: Number(document.getElementById('kgEvBudgetIncome').value) || 0,
       };
       kgEvents.push(ev);
-      kgSave(KG_EVENTS_KEY, kgEvents);
+      kgSave();
       kgRenderEventList(el);
     });
   }
@@ -1984,7 +2098,7 @@
 
     el.querySelector('#kgDetailStatusSelect').addEventListener('change', e=>{
       event.status = e.target.value;
-      kgSave(KG_EVENTS_KEY, kgEvents);
+      kgSave();
       e.target.className = `kg-status ${event.status}`;
     });
 
@@ -2012,7 +2126,7 @@
       tableWrap.querySelectorAll('[data-kg-del-tx]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
           kgTransactions = kgTransactions.filter(t=>t.id !== btn.dataset.kgDelTx);
-          kgSave(KG_TX_KEY, kgTransactions);
+          kgSave();
           renderTxTable();
           kgRenderEventDetail(el, event); // 重新整理上方金額統計
         });
@@ -2036,7 +2150,7 @@
         content: document.getElementById('kgTxContent').value.trim(),
         note: document.getElementById('kgTxNote').value.trim(),
       });
-      kgSave(KG_TX_KEY, kgTransactions);
+      kgSave();
       kgRenderEventDetail(el, event);
     });
   }
@@ -2128,51 +2242,43 @@
     }
   }
 
-  function kgInit(){
-    kgEvents = kgLoad(KG_EVENTS_KEY, kgSeedEvents);
-    kgTransactions = kgLoad(KG_TX_KEY, kgSeedTx);
-    kgRenderOverview();
+  /* ================= 初始化 ================= */
+  function greetingWord(h){
+    if (h < 5) return "夜深了";
+    if (h < 12) return "早安";
+    if (h < 18) return "午安";
+    return "晚安";
   }
 
-  /* ================= 初始化 ================= */
+  function refreshGreeting(){
+    const now = new Date();
+    document.getElementById('greetName').textContent = `${greetingWord(now.getHours())}，${getDisplayName()} 👋`;
+    const dowNames = ["日","一","二","三","四","五","六"];
+    document.getElementById('greetDate').textContent =
+      `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日・星期${dowNames[now.getDay()]}`;
+    document.getElementById('lastUpdate').textContent = now.toTimeString().slice(0,5);
+    document.getElementById('settingsLoginUser').textContent = currentUser ? usernameFromUser(currentUser) : '';
+    document.getElementById('settingsNameInput').value = getDisplayName();
+  }
+
   function initDashboard(){
     if(dashboardInitialized) return;
     dashboardInitialized = true;
 
     document.getElementById('logoutLink').addEventListener('click', logout);
 
-    function greetingWord(h){
-      if (h < 5) return "夜深了";
-      if (h < 12) return "早安";
-      if (h < 18) return "午安";
-      return "晚安";
-    }
-
     const now = new Date();
-    const creds = getCreds();
-    document.getElementById('greetName').textContent = `${greetingWord(now.getHours())}，${getDisplayName()} 👋`;
-    const dowNames = ["日","一","二","三","四","五","六"];
-    document.getElementById('greetDate').textContent =
-      `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日・星期${dowNames[now.getDay()]}`;
-    document.getElementById('lastUpdate').textContent = now.toTimeString().slice(0,5);
     document.getElementById('evAddDate').value = now.toISOString().slice(0,10);
 
-    renderProjects();
-    renderTodos();
-    renderAllEvents();
     waitForGoogleAndInit();
-    kgInit();
 
-    // 設定頁：顯示目前登入帳號、預填顯示名稱
-    document.getElementById('settingsLoginUser').textContent = creds ? creds.username : '';
-    document.getElementById('settingsNameInput').value = getDisplayName();
     document.getElementById('settingsNameSaveBtn').addEventListener('click', ()=>{
       const input = document.getElementById('settingsNameInput');
       const name = input.value.trim();
       const status = document.getElementById('settingsNameStatus');
       if(!name){ status.textContent = '請輸入名字。'; return; }
       setDisplayName(name);
-      document.getElementById('greetName').textContent = `${greetingWord(new Date().getHours())}，${name} 👋`;
+      refreshGreeting();
       status.textContent = '已儲存！';
       setTimeout(()=>{ status.textContent = ''; }, 2000);
     });
@@ -2181,22 +2287,8 @@
     });
   }
 
-  // 一開始就把工作台內容渲染出來（模糊、鎖住），登入後再解鎖
+  // 一開始就把基本 UI 綁定好（這步不需要登入資料）
   initDashboard();
-
-  // 初始判斷：有沒有已設定的帳密 / 有沒有有效的本次瀏覽階段
-  (function initAuth(){
-    const creds = getCreds();
-    if(!creds){
-      showSetup();
-      return;
-    }
-    if(sessionStorage.getItem(SESSION_KEY) === '1'){
-      enterApp();
-    }else{
-      showLogin();
-    }
-  })();
 </script>
 </body>
 </html>
