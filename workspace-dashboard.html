@@ -881,10 +881,14 @@
               <button class="icon-btn" id="calNextBtn" title="下個月">›</button>
               <button class="icon-btn" id="calTodayBtn" title="回到本月" style="width:auto;padding:2px 8px;font-size:11px;">今</button>
             </div>
-            <button class="gcal-btn" id="gcalBtn"><span class="gcal-dot"></span><span id="gcalBtnText">連接 Google 日曆</span></button>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button class="gcal-btn" id="gcalChooseCalBtn" style="display:none;">選擇日曆</button>
+              <button class="gcal-btn" id="gcalBtn"><span class="gcal-dot"></span><span id="gcalBtnText">連接 Google 日曆</span></button>
+            </div>
           </div>
           <div class="cal-grid" id="calGrid"></div>
           <div class="gcal-status" id="gcalStatus"></div>
+          <div id="gcalCalendarPicker" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);"></div>
         </div>
 
         <div class="card upcoming-card">
@@ -1087,6 +1091,7 @@
         events: serializeEvents(events),
         activityRules,
         kgEvents, kgTransactions,
+        selectedCalendarIds,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
     }catch(err){
@@ -1106,6 +1111,7 @@
         activityRules = (d.activityRules && d.activityRules.length) ? d.activityRules : defaultActivityRules();
         kgEvents = (d.kgEvents && d.kgEvents.length) ? d.kgEvents : kgSeedEvents();
         kgTransactions = d.kgTransactions || kgSeedTx();
+        selectedCalendarIds = d.selectedCalendarIds || null;
       }else{
         // 第一次登入的新帳號：套用預設示範資料，並立刻存一份到雲端
         displayNameValue = '';
@@ -1264,6 +1270,7 @@
   let googleEvents = []; // 從 Google 日曆抓回來的行程（唯讀，不能在此編輯／刪除）
   let gAccessToken = sessionStorage.getItem('gcal_access_token') || null;
   let tokenClient = null;
+  let selectedCalendarIds = null; // null = 尚未選過，預設抓 Google 裡「有勾選顯示」的日曆；設定過後存陣列
 
   const tagLabel = { personal: "個人", work: "工作", general: "一般" };
 
@@ -1682,6 +1689,7 @@
   function updateGcalButton(connected){
     gcalBtn.classList.toggle('connected', connected);
     gcalBtnText.textContent = connected ? '已連接 Google 日曆' : '連接 Google 日曆';
+    document.getElementById('gcalChooseCalBtn').style.display = connected ? 'inline-flex' : 'none';
   }
 
   function initGoogleAuth(){
@@ -1731,6 +1739,54 @@
     }
   }
 
+  async function fetchCalendarListRaw(){
+    const res = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+      headers: { Authorization: `Bearer ${gAccessToken}` }
+    });
+    if(res.status === 401 || res.status === 403){
+      gAccessToken = null;
+      sessionStorage.removeItem('gcal_access_token');
+      updateGcalButton(false);
+      setGcalStatus('權限不足或登入逾期，請重新點一次「連接 Google 日曆」重新授權。');
+      throw new Error('unauthorized');
+    }
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    return data.items || [];
+  }
+
+  async function openCalendarPicker(){
+    if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆。'); return; }
+    let allCals;
+    try{ allCals = await fetchCalendarListRaw(); }
+    catch(e){ return; }
+    const picked = selectedCalendarIds || allCals.filter(c=>c.selected !== false).map(c=>c.id);
+    const el = document.getElementById('gcalCalendarPicker');
+    el.style.display = 'block';
+    el.innerHTML = `
+      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">勾選要同步進工作台的日曆：</div>
+      ${allCals.map(c => `
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;">
+          <input type="checkbox" data-cal-id="${c.id}" ${picked.includes(c.id) ? 'checked' : ''} style="width:auto;">
+          ${c.summary}${c.primary ? '（主要）' : ''}
+        </label>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="add-form-btn" id="gcalCalSaveBtn">儲存並同步</button>
+        <button class="icon-btn" id="gcalCalCancelBtn" style="width:auto;padding:0 12px;">取消</button>
+      </div>`;
+    document.getElementById('gcalCalSaveBtn').addEventListener('click', async ()=>{
+      const checked = Array.from(el.querySelectorAll('[data-cal-id]')).filter(c=>c.checked).map(c=>c.dataset.calId);
+      selectedCalendarIds = checked;
+      scheduleCloudSave();
+      el.style.display = 'none';
+      await fetchGoogleEvents();
+    });
+    document.getElementById('gcalCalCancelBtn').addEventListener('click', ()=>{
+      el.style.display = 'none';
+    });
+  }
+  document.getElementById('gcalChooseCalBtn').addEventListener('click', openCalendarPicker);
+
   async function fetchGoogleEvents(){
     if(!gAccessToken) return;
     setGcalStatus('同步中…');
@@ -1738,19 +1794,10 @@
     const timeMax = new Date(timeMin); timeMax.setMonth(timeMax.getMonth()+7);
     try{
       // 先取得使用者所有的日曆清單（不是只有主要日曆）
-      const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
-        headers: { Authorization: `Bearer ${gAccessToken}` }
-      });
-      if(listRes.status === 401 || listRes.status === 403){
-        gAccessToken = null;
-        sessionStorage.removeItem('gcal_access_token');
-        updateGcalButton(false);
-        setGcalStatus('權限不足或登入逾期，請重新點一次「連接 Google 日曆」重新授權。');
-        return;
-      }
-      if(!listRes.ok) throw new Error('HTTP ' + listRes.status);
-      const listData = await listRes.json();
-      const calendars = (listData.items || []).filter(c => c.selected !== false);
+      const allCals = await fetchCalendarListRaw();
+      const calendars = selectedCalendarIds && selectedCalendarIds.length > 0
+        ? allCals.filter(c => selectedCalendarIds.includes(c.id))
+        : allCals.filter(c => c.selected !== false);
 
       // 逐一從每個日曆抓行程，全部合併起來
       const allItems = [];
@@ -1774,7 +1821,7 @@
           googleId: ev.id,
           source: calendarName,
         }));
-      setGcalStatus(`已從 ${calendars.length} 個 Google 日曆同步 ${googleEvents.length} 筆行程（前一個月～後六個月）`);
+      setGcalStatus(`已從 ${calendars.length} 個 Google 日曆同步 ${googleEvents.length} 筆行程（前一個月～後六個月），可點右上角「選擇日曆」調整同步範圍。`);
       renderAllEvents();
     }catch(err){
       setGcalStatus('同步失敗，請稍後再試。');
