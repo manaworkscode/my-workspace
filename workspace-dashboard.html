@@ -1011,7 +1011,7 @@
         且網址要跟 Google Cloud 後台「已授權的 JavaScript 來源」一致
   --------------------------------------------------- */
   const GOOGLE_CLIENT_ID = "561575427324-cju3vtq8v2nrkfanvpbvdac6441k3fe5.apps.googleusercontent.com";
-  const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar.events";
+  const GOOGLE_SCOPES = "https://www.googleapis.com/auth/calendar";
 
   function getDisplayName(){
     return displayNameValue || (currentUser ? usernameFromUser(currentUser) : '你');
@@ -1735,28 +1735,45 @@
     setGcalStatus('同步中…');
     const timeMin = new Date(); timeMin.setMonth(timeMin.getMonth()-1); timeMin.setDate(1); timeMin.setHours(0,0,0,0);
     const timeMax = new Date(timeMin); timeMax.setMonth(timeMax.getMonth()+7);
-    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`;
     try{
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${gAccessToken}` } });
-      if(res.status === 401){
+      // 先取得使用者所有的日曆清單（不是只有主要日曆）
+      const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
+        headers: { Authorization: `Bearer ${gAccessToken}` }
+      });
+      if(listRes.status === 401){
         gAccessToken = null;
         sessionStorage.removeItem('gcal_access_token');
         updateGcalButton(false);
         setGcalStatus('登入逾期，請重新連接。');
         return;
       }
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      const data = await res.json();
-      googleEvents = (data.items || [])
-        .filter(ev => ev.start && (ev.start.dateTime || ev.start.date))
-        .map(ev => ({
+      if(!listRes.ok) throw new Error('HTTP ' + listRes.status);
+      const listData = await listRes.json();
+      const calendars = (listData.items || []).filter(c => c.selected !== false);
+
+      // 逐一從每個日曆抓行程，全部合併起來
+      const allItems = [];
+      for(const cal of calendars){
+        const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${timeMin.toISOString()}&timeMax=${timeMax.toISOString()}&singleEvents=true&orderBy=startTime&maxResults=250`;
+        try{
+          const res = await fetch(url, { headers: { Authorization: `Bearer ${gAccessToken}` } });
+          if(!res.ok) continue; // 某個日曆抓失敗就跳過，不要整個中斷
+          const data = await res.json();
+          (data.items || []).forEach(ev => allItems.push({ ev, calendarName: cal.summary }));
+        }catch(e){ /* 單一日曆失敗就跳過 */ }
+      }
+
+      googleEvents = allItems
+        .filter(({ev}) => ev.start && (ev.start.dateTime || ev.start.date))
+        .map(({ev, calendarName}) => ({
           id: 'g' + ev.id,
           date: new Date(ev.start.dateTime || ev.start.date),
           label: ev.summary || '(無標題)',
           tag: 'work',
           googleId: ev.id,
+          source: calendarName,
         }));
-      setGcalStatus(`已從 Google 日曆同步 ${googleEvents.length} 筆行程（前一個月～後六個月）`);
+      setGcalStatus(`已從 ${calendars.length} 個 Google 日曆同步 ${googleEvents.length} 筆行程（前一個月～後六個月）`);
       renderAllEvents();
     }catch(err){
       setGcalStatus('同步失敗，請稍後再試。');
