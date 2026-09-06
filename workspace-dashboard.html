@@ -263,7 +263,7 @@
     color: #9AA5B5;
   }
 
-  main{ padding: 34px 40px 60px; max-width: 1180px; }
+  main{ padding: 34px 40px 60px; max-width: 1180px; overflow-x: hidden; }
 
   .top{
     display: flex;
@@ -397,7 +397,7 @@
   }
   .todo-item.done .todo-check{ background: var(--teal); border-color: var(--teal); color: #fff; }
   .todo-item.done .todo-label{ color: var(--ink-faint); text-decoration: line-through; }
-  .todo-label{ flex: 1; }
+  .todo-label{ flex: 1; min-width: 0; overflow-wrap: break-word; word-break: break-word; }
   .todo-date{ font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-faint); }
 
   .sched-item{ display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
@@ -406,7 +406,7 @@
   .tag-personal{ background: var(--seal-soft); color: var(--seal); }
   .tag-work{ background: var(--teal-soft); color: var(--teal); }
   .tag-general{ background: var(--gold-soft); color: var(--gold); }
-  .sched-label{ flex: 1; }
+  .sched-label{ flex: 1; min-width: 0; overflow-wrap: break-word; word-break: break-word; }
   .sched-date{ font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-faint); }
 
   .fin-card{ display: flex; flex-direction: column; }
@@ -437,11 +437,11 @@
   }
   .cal-cell.today .cal-event{ background: rgba(255,255,255,0.22); color: #fff; }
 
-  .upcoming-card{ padding: 20px; }
+  .upcoming-card{ padding: 20px; min-width: 0; }
   .up-item{ padding: 10px 0; border-bottom: 1px solid var(--line); }
   .up-item:last-child{ border-bottom: none; }
   .up-top{ display:flex; justify-content: space-between; align-items:center; margin-bottom: 3px;}
-  .up-label{ font-size: 13px; }
+  .up-label{ font-size: 13px; min-width: 0; overflow-wrap: break-word; word-break: break-word; }
   .up-date{ font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-faint); }
 
   /* Google Calendar sync */
