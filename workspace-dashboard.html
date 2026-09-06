@@ -1696,6 +1696,7 @@
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
       scope: GOOGLE_SCOPES,
+      prompt: 'consent',
       callback: (resp)=>{
         if(resp.error){
           setGcalStatus('授權失敗：' + resp.error + '（常見原因：你的 Google 帳號不在「測試使用者」名單中，或授權來源網址設定不符）');
@@ -1740,11 +1741,11 @@
       const listRes = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList', {
         headers: { Authorization: `Bearer ${gAccessToken}` }
       });
-      if(listRes.status === 401){
+      if(listRes.status === 401 || listRes.status === 403){
         gAccessToken = null;
         sessionStorage.removeItem('gcal_access_token');
         updateGcalButton(false);
-        setGcalStatus('登入逾期，請重新連接。');
+        setGcalStatus('權限不足或登入逾期，請重新點一次「連接 Google 日曆」重新授權。');
         return;
       }
       if(!listRes.ok) throw new Error('HTTP ' + listRes.status);
