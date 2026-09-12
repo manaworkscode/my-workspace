@@ -1080,8 +1080,16 @@
   function scheduleCloudSave(){
     if(!currentUser) return;
     clearTimeout(cloudSaveTimer);
-    cloudSaveTimer = setTimeout(saveUserData, 700);
+    cloudSaveTimer = setTimeout(saveUserData, 500);
   }
+
+  // 如果使用者直接關閉分頁/瀏覽器（沒有點登出），盡力嘗試把還沒存檔的修改存掉
+  window.addEventListener('beforeunload', ()=>{
+    if(cloudSaveTimer && currentUser){
+      clearTimeout(cloudSaveTimer);
+      saveUserData();
+    }
+  });
 
   async function saveUserData(){
     if(!currentUser) return;
@@ -1223,7 +1231,12 @@
     });
   });
 
-  function logout(){
+  async function logout(){
+    // 如果剛好有修改還在 700ms 的延遲存檔中，先強制立刻存完，避免登出後資料遺失
+    if(cloudSaveTimer){
+      clearTimeout(cloudSaveTimer);
+      await saveUserData();
+    }
     fbAuth.signOut();
   }
 
@@ -1896,7 +1909,14 @@
      資料存放在 Firebase 雲端（跟其他工作台資料一起存），
      登入後任何裝置都能同步使用。
   ==================================================== */
-  const KG_STATUS_LABEL = { planned: '籌備中', ongoing: '進行中', completed: '已結案' };
+  const KG_STATUS_LABEL = { planned: '籌備中', ongoing: '進行中', ended: '已結束', completed: '已結案' };
+  const KG_STATUS_OPTIONS = ['planned','ongoing','ended','completed'];
+  const KG_EXPENSE_CATEGORIES = ['場地租借', '器材設備', '視覺設計', '交通住宿'];
+  const KG_INCOME_CATEGORIES = ['週邊銷售', '售票收入', '其他'];
+
+  function kgStatusOptionsHtml(current){
+    return KG_STATUS_OPTIONS.map(s => `<option value="${s}" ${s===current?'selected':''}>${KG_STATUS_LABEL[s]}</option>`).join('');
+  }
 
   // 呼叫這個函式取代原本的 localStorage 寫入，資料改成排程存到 Firebase
   function kgSave(){ scheduleCloudSave(); }
@@ -1906,8 +1926,8 @@
     const daysAgo = n => { const d = new Date(now); d.setDate(d.getDate()-n); return fmtDate(d); };
     const daysFromNow = n => { const d = new Date(now); d.setDate(d.getDate()+n); return fmtDate(d); };
     return [
-      { id: 'kge1', name: '夏日市集音樂會', date: daysFromNow(20), status: 'planned', note: '戶外場地，預計 500 人', budgetExpense: 100000, budgetIncome: 150000 },
-      { id: 'kge2', name: '品牌新品發表會', date: daysAgo(5), status: 'completed', note: '', budgetExpense: 32000, budgetIncome: 40000 },
+      { id: 'kge1', name: '夏日市集音樂會', date: daysFromNow(20), status: 'planned', note: '戶外場地，預計 500 人' },
+      { id: 'kge2', name: '品牌新品發表會', date: daysAgo(5), status: 'completed', note: '' },
     ];
   }
   function kgSeedTx(){
@@ -1915,8 +1935,8 @@
       { id: newId('kgt'), eventId: 'kge1', type: 'expense', category: '場地租借', amount: 30000, note: '訂金' },
       { id: newId('kgt'), eventId: 'kge1', type: 'income', category: '售票收入', amount: 30000, note: '早鳥票銷售' },
       { id: newId('kgt'), eventId: 'kge2', type: 'expense', category: '場地租借', amount: 20000, note: '' },
-      { id: newId('kgt'), eventId: 'kge2', type: 'expense', category: '視覺設計', amount: 13500, note: '現場物料，略超支' },
-      { id: newId('kgt'), eventId: 'kge2', type: 'income', category: '其他收入', amount: 40000, note: '' },
+      { id: newId('kgt'), eventId: 'kge2', type: 'expense', category: '視覺設計', amount: 13500, note: '現場物料' },
+      { id: newId('kgt'), eventId: 'kge2', type: 'income', category: '其他', amount: 40000, note: '' },
     ];
   }
 
@@ -1931,20 +1951,16 @@
     const tx = kgTransactions.filter(t=>t.eventId === ev.id);
     const actualIncome = tx.filter(t=>t.type==='income').reduce((s,t)=>s+Number(t.amount),0);
     const actualExpense = tx.filter(t=>t.type==='expense').reduce((s,t)=>s+Number(t.amount),0);
-    const budgetIncome = Number(ev.budgetIncome)||0;
-    const budgetExpense = Number(ev.budgetExpense)||0;
-    return { budgetIncome, budgetExpense, actualIncome, actualExpense, budgetNet: budgetIncome-budgetExpense, actualNet: actualIncome-actualExpense };
+    return { actualIncome, actualExpense, actualNet: actualIncome-actualExpense };
   }
 
   function kgSumTotals(evList){
     return evList.reduce((acc, ev)=>{
       const s = kgEventStats(ev);
-      acc.budgetExpense += s.budgetExpense;
       acc.actualExpense += s.actualExpense;
-      acc.budgetIncome += s.budgetIncome;
       acc.actualIncome += s.actualIncome;
       return acc;
-    }, { budgetExpense:0, actualExpense:0, budgetIncome:0, actualIncome:0 });
+    }, { actualExpense:0, actualIncome:0 });
   }
 
   function kgMetricCard(label, value, tone, sub){
@@ -1978,16 +1994,15 @@
     let html = `
       <div class="kg-metrics">
         ${kgMetricCard('活動數量', kgEvents.length)}
-        ${kgMetricCard('總預算支出', kgFmt(totals.budgetExpense), null, `實際 ${kgFmt(totals.actualExpense)}`)}
-        ${kgMetricCard('總預算收入', kgFmt(totals.budgetIncome), null, `實際 ${kgFmt(totals.actualIncome)}`)}
-        ${kgMetricCard('實際淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
+        ${kgMetricCard('總支出', kgFmt(totals.actualExpense))}
+        ${kgMetricCard('總收入', kgFmt(totals.actualIncome))}
+        ${kgMetricCard('淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
       </div>`;
     if(kgEvents.length === 0){
       html += '<div class="card"><div class="empty-state">還沒有任何活動，切換到「活動」新增一場吧。</div></div>';
     }else{
       html += '<div class="card">' + kgEvents.map(ev=>{
         const s = kgEventStats(ev);
-        const overBudget = s.actualExpense > s.budgetExpense && s.budgetExpense > 0;
         return `
           <div class="kg-event-row" data-kg-open="${ev.id}">
             <div style="min-width:160px;">
@@ -1997,7 +2012,7 @@
               </div>
             </div>
             <div style="text-align:right;font-size:13px;">
-              <div style="color:${overBudget?'var(--seal)':'var(--ink-soft)'};">支出 ${kgFmt(s.actualExpense)} / ${kgFmt(s.budgetExpense)}</div>
+              <div style="color:var(--ink-soft);">支出 ${kgFmt(s.actualExpense)}・收入 ${kgFmt(s.actualIncome)}</div>
               <div style="color:${s.actualNet>=0?'var(--teal)':'var(--seal)'};margin-top:2px;">淨損益 ${(s.actualNet>=0?'+':'')+kgFmt(s.actualNet)}</div>
             </div>
           </div>`;
@@ -2027,13 +2042,7 @@
       <div class="add-form">
         <input class="f-name" id="kgEvName" type="text" placeholder="活動名稱，例如：夏日市集音樂會">
         <input class="f-date" id="kgEvDate" type="date">
-        <select class="f-tag" id="kgEvStatus">
-          <option value="planned">籌備中</option>
-          <option value="ongoing">進行中</option>
-          <option value="completed">已結案</option>
-        </select>
-        <input class="f-num" id="kgEvBudgetExpense" type="number" placeholder="預算支出">
-        <input class="f-num" id="kgEvBudgetIncome" type="number" placeholder="預算收入">
+        <select class="f-tag" id="kgEvStatus">${kgStatusOptionsHtml('planned')}</select>
         <button class="add-form-btn" id="kgEvAddBtn">新增活動</button>
       </div>
       <div id="kgEvGrid"></div>`;
@@ -2052,13 +2061,8 @@
           <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;display:flex;align-items:center;gap:6px;">
             📅 ${ev.date}
             <select class="kg-status-select kg-status ${ev.status}" data-kg-status="${ev.id}" style="font-family:'Noto Sans TC',sans-serif;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);cursor:pointer;">
-              <option value="planned" ${ev.status==='planned'?'selected':''}>籌備中</option>
-              <option value="ongoing" ${ev.status==='ongoing'?'selected':''}>進行中</option>
-              <option value="completed" ${ev.status==='completed'?'selected':''}>已結案</option>
+              ${kgStatusOptionsHtml(ev.status)}
             </select>
-          </div>
-          <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">
-            預算支出 ${kgFmt(ev.budgetExpense)} · 預算收入 ${kgFmt(ev.budgetIncome)}
           </div>
           ${ev.note ? `<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">${ev.note}</div>` : ''}
         </div>`).join('');
@@ -2092,7 +2096,6 @@
         kgEvents = kgEvents.filter(ev=>ev.id !== id);
         kgTransactions = kgTransactions.filter(t=>t.eventId !== id);
         kgSave();
-        kgSave();
         kgRenderEventList(el);
       });
     });
@@ -2106,8 +2109,6 @@
         date: document.getElementById('kgEvDate').value || fmtDate(new Date()),
         status: document.getElementById('kgEvStatus').value,
         note: '',
-        budgetExpense: Number(document.getElementById('kgEvBudgetExpense').value) || 0,
-        budgetIncome: Number(document.getElementById('kgEvBudgetIncome').value) || 0,
       };
       kgEvents.push(ev);
       kgSave();
@@ -2115,9 +2116,12 @@
     });
   }
 
+  function kgCategoryOptionsFor(type){
+    return type === 'income' ? KG_INCOME_CATEGORIES : KG_EXPENSE_CATEGORIES;
+  }
+
   function kgRenderEventDetail(el, event){
     const s = kgEventStats(event);
-    const myTx = kgTransactions.filter(t=>t.eventId === event.id);
     el.innerHTML = `
       <button class="icon-btn" id="kgBackBtn" style="width:auto;padding:6px 12px;margin-bottom:14px;">← 返回活動列表</button>
       <div style="margin-bottom:16px;">
@@ -2125,33 +2129,21 @@
         <div style="font-size:12.5px;color:var(--ink-soft);margin-top:4px;display:flex;align-items:center;gap:6px;">
           📅 ${event.date}
           <select id="kgDetailStatusSelect" class="kg-status ${event.status}" style="font-family:'Noto Sans TC',sans-serif;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);cursor:pointer;">
-            <option value="planned" ${event.status==='planned'?'selected':''}>籌備中</option>
-            <option value="ongoing" ${event.status==='ongoing'?'selected':''}>進行中</option>
-            <option value="completed" ${event.status==='completed'?'selected':''}>已結案</option>
+            ${kgStatusOptionsHtml(event.status)}
           </select>
         </div>
       </div>
       <div class="kg-metrics">
-        ${kgMetricCard('支出', kgFmt(s.actualExpense), s.actualExpense>s.budgetExpense?'neg':null, `預算 ${kgFmt(s.budgetExpense)}`)}
-        ${kgMetricCard('收入', kgFmt(s.actualIncome), null, `預算 ${kgFmt(s.budgetIncome)}`)}
-        ${kgMetricCard('淨損益（實際）', (s.actualNet>=0?'+':'')+kgFmt(s.actualNet), s.actualNet>=0?'pos':'neg', `預算淨損益 ${(s.budgetNet>=0?'+':'')+kgFmt(s.budgetNet)}`)}
+        ${kgMetricCard('支出', kgFmt(s.actualExpense))}
+        ${kgMetricCard('收入', kgFmt(s.actualIncome))}
+        ${kgMetricCard('淨損益', (s.actualNet>=0?'+':'')+kgFmt(s.actualNet), s.actualNet>=0?'pos':'neg')}
       </div>
       <div class="add-form">
         <select class="f-tag" id="kgTxType">
           <option value="expense">支出</option>
           <option value="income">收入</option>
         </select>
-        <input class="f-name" id="kgTxCategory" type="text" list="kgTxCategorySugg" placeholder="名稱，例如：場地收入／售票收入">
-        <datalist id="kgTxCategorySugg">
-          <option value="場地收入"></option>
-          <option value="售票收入"></option>
-          <option value="周邊銷售"></option>
-          <option value="場地租借"></option>
-          <option value="器材設備"></option>
-          <option value="視覺設計"></option>
-          <option value="演員費"></option>
-          <option value="交通住宿"></option>
-        </datalist>
+        <select class="f-tag" id="kgTxCategory"></select>
         <input class="f-name" id="kgTxContent" type="text" placeholder="內容（選填）">
         <input class="f-num" id="kgTxAmount" type="number" placeholder="金額">
         <input class="f-name" id="kgTxNote" type="text" placeholder="備註（選填）">
@@ -2168,7 +2160,17 @@
       e.target.className = `kg-status ${event.status}`;
     });
 
+    // 類別下拉選單依照「支出／收入」動態切換選項
+    const typeSel = document.getElementById('kgTxType');
+    const categorySel = document.getElementById('kgTxCategory');
+    function refreshCategoryOptions(){
+      categorySel.innerHTML = kgCategoryOptionsFor(typeSel.value).map(c=>`<option value="${c}">${c}</option>`).join('');
+    }
+    typeSel.addEventListener('change', refreshCategoryOptions);
+    refreshCategoryOptions();
+
     const tableWrap = el.querySelector('#kgTxTableWrap');
+    function myTxLive(){ return kgTransactions.filter(t=>t.eventId === event.id); }
     function renderTxTable(){
       if(myTxLive().length === 0){
         tableWrap.innerHTML = '<div class="empty-state">尚無收支紀錄</div>';
@@ -2179,26 +2181,84 @@
           <thead><tr><th>類別</th><th>名稱</th><th>內容</th><th>備註</th><th class="r">金額</th><th></th></tr></thead>
           <tbody>
             ${myTxLive().map(t => `
-              <tr>
+              <tr style="${t.locked ? 'opacity:.85;' : ''}">
                 <td style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'收入':'支出'}</td>
-                <td>${t.category}</td>
+                <td>${t.category}${t.locked ? ' <span style="font-size:10px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:1px 6px;margin-left:4px;">🔒 已請款</span>' : ''}</td>
                 <td style="color:var(--ink-soft);">${t.content || '—'}</td>
                 <td style="color:var(--ink-soft);">${t.note || '—'}</td>
                 <td class="r" style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'+':'-'}${kgFmt(t.amount)}</td>
-                <td class="r"><button class="icon-btn danger" data-kg-del-tx="${t.id}" title="刪除">✕</button></td>
+                <td class="r">
+                  <div class="item-actions" style="justify-content:flex-end;">
+                    ${t.locked
+                      ? `<button class="icon-btn" data-kg-unlock-tx="${t.id}" title="解鎖">🔓</button>`
+                      : `<button class="icon-btn" data-kg-lock-tx="${t.id}" title="鎖定（已請款）">🔒</button>
+                         <button class="icon-btn" data-kg-edit-tx="${t.id}" title="編輯">✎</button>
+                         <button class="icon-btn danger" data-kg-del-tx="${t.id}" title="刪除">✕</button>`
+                    }
+                  </div>
+                </td>
               </tr>`).join('')}
           </tbody>
         </table>`;
+      tableWrap.querySelectorAll('[data-kg-lock-tx]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const t = kgTransactions.find(x=>x.id === btn.dataset.kgLockTx);
+          if(!t) return;
+          if(!confirm('鎖定後這筆紀錄會無法編輯或刪除，代表已經請款完成，確定要鎖定嗎？')) return;
+          t.locked = true;
+          kgSave();
+          renderTxTable();
+        });
+      });
+      tableWrap.querySelectorAll('[data-kg-unlock-tx]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const t = kgTransactions.find(x=>x.id === btn.dataset.kgUnlockTx);
+          if(!t) return;
+          if(!confirm('確定要解鎖這筆已請款的紀錄嗎？解鎖後就能再次編輯或刪除。')) return;
+          t.locked = false;
+          kgSave();
+          renderTxTable();
+        });
+      });
+      tableWrap.querySelectorAll('[data-kg-edit-tx]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          const t = kgTransactions.find(x=>x.id === btn.dataset.kgEditTx);
+          if(!t || t.locked) return;
+          const typeInput = prompt('類別（輸入「支出」或「收入」）：', t.type === 'income' ? '收入' : '支出');
+          if(typeInput === null) return;
+          const newType = typeInput.trim() === '收入' ? 'income' : 'expense';
+          const options = kgCategoryOptionsFor(newType);
+          const categoryInput = prompt(`名稱（可選：${options.join('／')}）：`, t.category);
+          if(categoryInput === null) return;
+          const contentInput = prompt('內容：', t.content || '');
+          if(contentInput === null) return;
+          const amountInput = prompt('金額：', t.amount);
+          if(amountInput === null) return;
+          const noteInput = prompt('備註：', t.note || '');
+          if(noteInput === null) return;
+          const amountNum = Number(amountInput);
+          t.type = newType;
+          if(categoryInput.trim()) t.category = categoryInput.trim();
+          t.content = contentInput.trim();
+          if(!isNaN(amountNum) && amountNum > 0) t.amount = amountNum;
+          t.note = noteInput.trim();
+          kgSave();
+          renderTxTable();
+          kgRenderEventDetail(el, event);
+        });
+      });
       tableWrap.querySelectorAll('[data-kg-del-tx]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          kgTransactions = kgTransactions.filter(t=>t.id !== btn.dataset.kgDelTx);
+          const t = kgTransactions.find(x=>x.id === btn.dataset.kgDelTx);
+          if(!t || t.locked) return;
+          if(!confirm('確定要刪除這筆收支紀錄嗎？')) return;
+          kgTransactions = kgTransactions.filter(x=>x.id !== btn.dataset.kgDelTx);
           kgSave();
           renderTxTable();
           kgRenderEventDetail(el, event); // 重新整理上方金額統計
         });
       });
     }
-    function myTxLive(){ return kgTransactions.filter(t=>t.eventId === event.id); }
     renderTxTable();
 
     el.querySelector('#kgBackBtn').addEventListener('click', ()=>{
@@ -2206,15 +2266,17 @@
       kgRenderEvents();
     });
     el.querySelector('#kgTxAddBtn').addEventListener('click', ()=>{
-      const category = document.getElementById('kgTxCategory').value.trim();
+      const category = categorySel.value;
       const amount = Number(document.getElementById('kgTxAmount').value);
       if(!category || !amount || amount <= 0) return;
       kgTransactions.push({
         id: newId('kgt'), eventId: event.id,
-        type: document.getElementById('kgTxType').value,
-        category, amount,
+        type: typeSel.value,
+        category,
         content: document.getElementById('kgTxContent').value.trim(),
+        amount,
         note: document.getElementById('kgTxNote').value.trim(),
+        locked: false,
       });
       kgSave();
       kgRenderEventDetail(el, event);
@@ -2222,21 +2284,14 @@
   }
 
   function kgExportCsv(monthEvents, currentMonth){
-    const header = ['活動', '狀態', '日期', '支出(實際)', '支出(預算)', '收入(實際)', '收入(預算)', '淨損益(實際)'];
+    const header = ['活動', '狀態', '日期', '支出', '收入', '淨損益'];
     const rows = monthEvents.map(ev => {
       const s = kgEventStats(ev);
-      return [
-        ev.name,
-        KG_STATUS_LABEL[ev.status],
-        ev.date,
-        s.actualExpense, s.budgetExpense,
-        s.actualIncome, s.budgetIncome,
-        s.actualNet,
-      ];
+      return [ev.name, KG_STATUS_LABEL[ev.status], ev.date, s.actualExpense, s.actualIncome, s.actualNet];
     });
     const totals = kgSumTotals(monthEvents);
     const netActual = totals.actualIncome - totals.actualExpense;
-    rows.push(['總計', '', '', totals.actualExpense, totals.budgetExpense, totals.actualIncome, totals.budgetIncome, netActual]);
+    rows.push(['總計', '', '', totals.actualExpense, totals.actualIncome, netActual]);
 
     const csvLines = [header, ...rows].map(row =>
       row.map(cell => {
@@ -2276,22 +2331,22 @@
       </div>
       <div class="kg-metrics">
         ${kgMetricCard('本月活動數', monthEvents.length)}
-        ${kgMetricCard('支出 實際/預算', kgFmt(totals.actualExpense), null, `預算 ${kgFmt(totals.budgetExpense)}`)}
-        ${kgMetricCard('收入 實際/預算', kgFmt(totals.actualIncome), null, `預算 ${kgFmt(totals.budgetIncome)}`)}
+        ${kgMetricCard('本月支出', kgFmt(totals.actualExpense))}
+        ${kgMetricCard('本月收入', kgFmt(totals.actualIncome))}
         ${kgMetricCard('本月淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
       </div>
       ${monthEvents.length === 0
         ? '<div class="card"><div class="empty-state">此月份沒有活動紀錄</div></div>'
         : `<div class="card"><table class="kg-table">
-            <thead><tr><th>活動</th><th>狀態</th><th class="r">支出 實際/預算</th><th class="r">收入 實際/預算</th><th class="r">淨損益</th></tr></thead>
+            <thead><tr><th>活動</th><th>狀態</th><th class="r">支出</th><th class="r">收入</th><th class="r">淨損益</th></tr></thead>
             <tbody>
               ${monthEvents.map(ev=>{
                 const s = kgEventStats(ev);
                 return `<tr>
                   <td>${ev.name}</td>
                   <td class="kg-status ${ev.status}">${KG_STATUS_LABEL[ev.status]}</td>
-                  <td class="r" style="color:${s.actualExpense>s.budgetExpense?'var(--seal)':'var(--ink-soft)'};">${kgFmt(s.actualExpense)} / ${kgFmt(s.budgetExpense)}</td>
-                  <td class="r" style="color:var(--ink-soft);">${kgFmt(s.actualIncome)} / ${kgFmt(s.budgetIncome)}</td>
+                  <td class="r" style="color:var(--ink-soft);">${kgFmt(s.actualExpense)}</td>
+                  <td class="r" style="color:var(--ink-soft);">${kgFmt(s.actualIncome)}</td>
                   <td class="r" style="color:${s.actualNet>=0?'var(--teal)':'var(--seal)'};">${(s.actualNet>=0?'+':'')+kgFmt(s.actualNet)}</td>
                 </tr>`;
               }).join('')}
