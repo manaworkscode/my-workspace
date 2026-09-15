@@ -1633,20 +1633,28 @@
   });
 
   /* ================= 待辦清單：新增／編輯／刪除／打勾 ================= */
+  let expandedTodoNotes = {}; // 記住哪些待辦事項目前展開備註（純畫面狀態，不用存雲端）
+
   function renderTodos(){
     scheduleCloudSave();
     const el = document.getElementById('todoList');
     el.innerHTML = todos.length === 0
       ? '<div class="empty-state">還沒有任何待辦事項</div>'
       : todos.map(t => `
-        <div class="full-todo-item">
-          <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
-          <span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>
-          <span class="todo-date">${t.date}</span>
-          <div class="item-actions">
-            <button class="icon-btn" data-edit-todo="${t.id}" title="編輯">✎</button>
-            <button class="icon-btn danger" data-del-todo="${t.id}" title="刪除">✕</button>
+        <div class="full-todo-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
+            <span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>
+            <span class="todo-date">${t.date}</span>
+            <div class="item-actions">
+              <button class="icon-btn" data-note-todo="${t.id}" title="備註／記事" style="${t.content ? 'border-color:var(--gold);color:var(--gold);' : ''}">📝</button>
+              <button class="icon-btn" data-edit-todo="${t.id}" title="編輯">✎</button>
+              <button class="icon-btn danger" data-del-todo="${t.id}" title="刪除">✕</button>
+            </div>
           </div>
+          ${expandedTodoNotes[t.id] ? `
+          <textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="2" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>
+          ` : ''}
         </div>`).join('');
 
     const remaining = todos.filter(t=>!t.done).length;
@@ -1656,6 +1664,25 @@
       elx.addEventListener('click', ()=>{
         const t = todos.find(x=>x.id === elx.dataset.toggleTodo);
         if(t){ t.done = !t.done; renderTodos(); }
+      });
+    });
+    el.querySelectorAll('[data-note-todo]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.noteTodo;
+        expandedTodoNotes[id] = !expandedTodoNotes[id];
+        renderTodos();
+        if(expandedTodoNotes[id]){
+          const ta = el.querySelector(`[data-note-input="${id}"]`);
+          if(ta) ta.focus();
+        }
+      });
+    });
+    el.querySelectorAll('[data-note-input]').forEach(ta=>{
+      ta.addEventListener('input', ()=>{
+        const t = todos.find(x=>x.id === ta.dataset.noteInput);
+        if(!t) return;
+        t.content = ta.value;
+        scheduleCloudSave(); // 直接排程存檔，不整份重新渲染，打字才不會被打斷
       });
     });
     el.querySelectorAll('[data-edit-todo]').forEach(btn=>{
@@ -1675,6 +1702,7 @@
       btn.addEventListener('click', ()=>{
         if(!confirm('確定要刪除這項待辦事項嗎？')) return;
         todos = todos.filter(x=>x.id !== btn.dataset.delTodo);
+        delete expandedTodoNotes[btn.dataset.delTodo];
         renderTodos();
       });
     });
@@ -1688,7 +1716,7 @@
     const dateStr = dateEl.value
       ? `${String(new Date(dateEl.value).getMonth()+1).padStart(2,'0')}-${String(new Date(dateEl.value).getDate()).padStart(2,'0')}`
       : `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    todos.push({ id: newId('t'), label, date: dateStr, done: false });
+    todos.push({ id: newId('t'), label, date: dateStr, done: false, content: '' });
     labelEl.value = ''; dateEl.value = '';
     renderTodos();
   });
