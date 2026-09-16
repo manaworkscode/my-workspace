@@ -713,6 +713,7 @@
     *{ transition: none !important; animation: none !important; }
   }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -1742,13 +1743,11 @@
       ? '<div class="empty-state">還沒有任何待辦事項</div>'
       : todos.map((t, i) => {
         const isEditing = editingTodoId === t.id;
+        const isNoteOpen = !!expandedTodoNotes[t.id];
         return `
-        <div class="full-todo-item" style="flex-direction:column;align-items:stretch;gap:6px;">
+        <div class="full-todo-item" draggable="true" data-drag-todo="${t.id}" style="flex-direction:column;align-items:stretch;gap:6px;cursor:grab;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="display:flex;flex-direction:column;gap:1px;">
-              <button class="icon-btn" data-move-todo-up="${t.id}" title="上移" ${i===0?'disabled style="opacity:.3;"':''} style="width:20px;height:16px;padding:0;font-size:9px;">▲</button>
-              <button class="icon-btn" data-move-todo-down="${t.id}" title="下移" ${i===todos.length-1?'disabled style="opacity:.3;"':''} style="width:20px;height:16px;padding:0;font-size:9px;">▼</button>
-            </div>
+            <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;" title="拖曳排序">⠿</span>
             <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
             ${isEditing
               ? `<input type="text" data-todo-edit-input="${t.id}" value="${t.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">`
@@ -1765,42 +1764,53 @@
               `}
             </div>
           </div>
-          ${expandedTodoNotes[t.id] ? `
-          <textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="2" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>
-          ` : ''}
+          ${isNoteOpen
+            ? `<textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="6" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.6;border:1px solid var(--gold);border-radius:8px;padding:10px 12px;background:var(--surface);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>`
+            : (t.content ? `<div data-note-preview="${t.id}" style="width:100%;font-size:12.5px;line-height:1.6;color:var(--ink-soft);background:var(--surface-2);border-radius:8px;padding:8px 12px;white-space:pre-wrap;word-break:break-word;cursor:text;box-sizing:border-box;">${t.content}</div>` : '')
+          }
         </div>`;
       }).join('');
 
     const remaining = todos.filter(t=>!t.done).length;
     document.getElementById('todoCount').textContent = `${remaining} 項待完成，共 ${todos.length} 項`;
 
-    function moveTodo(id, dir){
-      const idx = todos.findIndex(x=>x.id===id);
-      const swapIdx = idx + dir;
-      if(idx<0 || swapIdx<0 || swapIdx>=todos.length) return;
-      [todos[idx], todos[swapIdx]] = [todos[swapIdx], todos[idx]];
-      renderTodos();
-    }
-    el.querySelectorAll('[data-move-todo-up]').forEach(btn=>{
-      btn.addEventListener('click', ()=> moveTodo(btn.dataset.moveTodoUp, -1));
+    /* ---- 拖曳排序 ---- */
+    let dragFromId = null;
+    el.querySelectorAll('[data-drag-todo]').forEach(row=>{
+      row.addEventListener('dragstart', e=>{
+        dragFromId = row.dataset.dragTodo;
+        row.style.opacity = '.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', ()=>{ row.style.opacity = ''; });
+      row.addEventListener('dragover', e=>{ e.preventDefault(); });
+      row.addEventListener('drop', e=>{
+        e.preventDefault();
+        const dropToId = row.dataset.dragTodo;
+        if(!dragFromId || dragFromId === dropToId) return;
+        const fromIdx = todos.findIndex(x=>x.id === dragFromId);
+        const toIdx = todos.findIndex(x=>x.id === dropToId);
+        if(fromIdx < 0 || toIdx < 0) return;
+        const [moved] = todos.splice(fromIdx, 1);
+        todos.splice(toIdx, 0, moved);
+        renderTodos();
+      });
     });
-    el.querySelectorAll('[data-move-todo-down]').forEach(btn=>{
-      btn.addEventListener('click', ()=> moveTodo(btn.dataset.moveTodoDown, 1));
-    });
+
     el.querySelectorAll('[data-toggle-todo]').forEach(elx=>{
       elx.addEventListener('click', ()=>{
         const t = todos.find(x=>x.id === elx.dataset.toggleTodo);
         if(t){ t.done = !t.done; renderTodos(); }
       });
     });
-    el.querySelectorAll('[data-note-todo]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        const id = btn.dataset.noteTodo;
+    el.querySelectorAll('[data-note-todo], [data-note-preview]').forEach(elx=>{
+      elx.addEventListener('click', ()=>{
+        const id = elx.dataset.noteTodo || elx.dataset.notePreview;
         expandedTodoNotes[id] = !expandedTodoNotes[id];
         renderTodos();
         if(expandedTodoNotes[id]){
           const ta = el.querySelector(`[data-note-input="${id}"]`);
-          if(ta) ta.focus();
+          if(ta){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
         }
       });
     });
@@ -2525,52 +2535,83 @@
     });
   }
 
-  function kgExportCsv(monthEvents, currentMonth){
-    const header = ['日期', '活動', '收支', '類別', '內容', '備註', '金額'];
-    const rows = [];
+  function kgBuildReportSheetData(monthEvents){
+    // 建立二維陣列（aoa）與合併儲存格清單，模擬：
+    // 日期 | 活動 |        支出（類別/內容/說明/金額）        |        收入（類別/內容/說明/金額）        | 淨損益
+    const aoa = [];
+    const merges = [];
+
+    // 表頭（兩列：第一列是大分類，第二列是支出/收入底下的四個子欄位）
+    aoa.push(['日期', '活動', '支出', '', '', '', '收入', '', '', '', '淨損益']);
+    aoa.push(['', '', '類別', '內容', '說明', '金額', '類別', '內容', '說明', '金額', '']);
+    merges.push({ s:{r:0,c:0}, e:{r:1,c:0} }); // 日期
+    merges.push({ s:{r:0,c:1}, e:{r:1,c:1} }); // 活動
+    merges.push({ s:{r:0,c:2}, e:{r:0,c:5} }); // 支出（跨 4 欄）
+    merges.push({ s:{r:0,c:6}, e:{r:0,c:9} }); // 收入（跨 4 欄）
+    merges.push({ s:{r:0,c:10}, e:{r:1,c:10} }); // 淨損益
 
     monthEvents.forEach(ev => {
       const tx = kgTransactions.filter(t=>t.eventId === ev.id);
       const expenses = tx.filter(t=>t.type==='expense');
       const incomes = tx.filter(t=>t.type==='income');
       const s = kgEventStats(ev);
+      const detailRows = Math.max(expenses.length, incomes.length, 1);
+      const startRow = aoa.length;
 
-      if(expenses.length === 0 && incomes.length === 0){
-        rows.push([ev.date, ev.name, '（尚無收支紀錄）', '', '', '', '']);
-      }else{
-        expenses.forEach(t => rows.push([ev.date, ev.name, '支出', t.category, t.content || '', t.note || '', t.amount]));
-        incomes.forEach(t => rows.push([ev.date, ev.name, '收入', t.category, t.content || '', t.note || '', t.amount]));
+      for(let i=0; i<detailRows; i++){
+        const exp = expenses[i];
+        const inc = incomes[i];
+        const expCatShown = exp ? (i>0 && expenses[i-1].category===exp.category ? '' : exp.category) : '';
+        const incCatShown = inc ? (i>0 && incomes[i-1].category===inc.category ? '' : inc.category) : '';
+        aoa.push([
+          i===0 ? ev.date : '',
+          i===0 ? ev.name : '',
+          expCatShown, exp ? (exp.content||'') : '', exp ? (exp.note||'') : '', exp ? exp.amount : '',
+          incCatShown, inc ? (inc.content||'') : '', inc ? (inc.note||'') : '', inc ? inc.amount : '',
+          i===0 ? s.actualNet : '',
+        ]);
       }
-      rows.push([ev.date, ev.name, '支出小計', '', '', '', s.actualExpense]);
-      rows.push([ev.date, ev.name, '收入小計', '', '', '', s.actualIncome]);
-      rows.push([ev.date, ev.name, '淨損益', '', '', '', s.actualNet]);
-      rows.push(['', '', '', '', '', '', '']); // 空白列分隔各活動
+
+      // 這場活動的支出/收入總額（相當於照片裡「NT$500」「NT$2,000」那一列），
+      // 用備註列的方式加在明細最後一行的下面，並把類別/內容/說明三格合併顯示小計文字
+      const totalRow = aoa.length;
+      aoa.push(['', '', `支出小計 ${kgFmt(s.actualExpense)}`, '', '', '', `收入小計 ${kgFmt(s.actualIncome)}`, '', '', '', '']);
+      merges.push({ s:{r:totalRow,c:2}, e:{r:totalRow,c:5} });
+      merges.push({ s:{r:totalRow,c:6}, e:{r:totalRow,c:9} });
+
+      const endRow = aoa.length - 1;
+      if(endRow > startRow){
+        merges.push({ s:{r:startRow,c:0}, e:{r:endRow-1,c:0} }); // 日期（不含小計那列）
+        merges.push({ s:{r:startRow,c:1}, e:{r:endRow-1,c:1} }); // 活動
+        merges.push({ s:{r:startRow,c:10}, e:{r:endRow-1,c:10} }); // 淨損益
+      }
+
+      aoa.push(['', '', '', '', '', '', '', '', '', '', '']); // 空白列分隔活動
     });
 
     const totals = kgSumTotals(monthEvents);
     const netActual = totals.actualIncome - totals.actualExpense;
-    rows.push(['總計', '', '', '', '', '', '']);
-    rows.push(['', '', '支出總計', '', '', '', totals.actualExpense]);
-    rows.push(['', '', '收入總計', '', '', '', totals.actualIncome]);
-    rows.push(['', '', '淨損益總計', '', '', '', netActual]);
+    const grandRow = aoa.length;
+    aoa.push(['總計', '', `支出總計 ${kgFmt(totals.actualExpense)}`, '', '', '', `收入總計 ${kgFmt(totals.actualIncome)}`, '', '', '', kgFmt(netActual)]);
+    merges.push({ s:{r:grandRow,c:2}, e:{r:grandRow,c:5} });
+    merges.push({ s:{r:grandRow,c:6}, e:{r:grandRow,c:9} });
 
-    const csvLines = [header, ...rows].map(row =>
-      row.map(cell => {
-        const str = String(cell);
-        return /[",\n]/.test(str) ? '"' + str.replace(/"/g,'""') + '"' : str;
-      }).join(',')
-    );
-    // 加上 UTF-8 BOM，避免 Excel 開啟時中文亂碼
-    const csvContent = '\uFEFF' + csvLines.join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `喜劇開港月報表_${currentMonth}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    return { aoa, merges };
+  }
+
+  function kgExportCsv(monthEvents, currentMonth){
+    const { aoa, merges } = kgBuildReportSheetData(monthEvents);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!merges'] = merges;
+    ws['!cols'] = [
+      { wch: 12 }, { wch: 20 },
+      { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 10 },
+      { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 10 },
+      { wch: 10 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '月報表');
+    XLSX.writeFile(wb, `喜劇開港月報表_${currentMonth}.xlsx`);
   }
 
   function kgRenderReport(){
