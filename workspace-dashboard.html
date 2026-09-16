@@ -624,6 +624,7 @@
   }
   .kg-tab:hover{ border-color: var(--seal); color: var(--seal); }
   .kg-tab.active{ background: var(--seal); border-color: var(--seal); color: #fff; font-weight: 500; }
+  .kg-tab-sm{ font-size: 12px; padding: 6px 12px; }
   .kg-metrics{ display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
   .kg-metric-card{
     flex: 1 1 160px;
@@ -1360,10 +1361,11 @@
         const isGoogle = !!e.googleId;
         const isPast = e.date < now;
         const isEditing = editingEventId === e.id;
+        const canSyncToGoogle = !isGoogle && !e.syncedToGoogle && gAccessToken;
         return `
         <div class="up-item" style="${isPast && !isEditing ? 'opacity:.55;' : ''}">
           <div class="up-top">
-            <span class="tag tag-${e.tag}">${e.source || tagLabel[e.tag]}${isGoogle ? '・Google' : ''}</span>
+            <span class="tag tag-${e.tag}">${e.source || tagLabel[e.tag]}${isGoogle ? '・Google' : ''}${e.syncedToGoogle ? '・已同步' : ''}</span>
             ${isEditing
               ? `<input type="date" data-event-edit-date="${e.id}" value="${fmtDate(e.date)}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);outline:none;">`
               : `<span class="up-date">${fmtDate(e.date)}${isPast ? '（已過）' : ''}</span>`
@@ -1379,6 +1381,7 @@
                 <button class="icon-btn" data-save-event="${e.id}" title="儲存">✓</button>
                 <button class="icon-btn" data-cancel-event="${e.id}" title="取消">✕</button>
               ` : `
+                ${canSyncToGoogle ? `<button class="icon-btn" data-sync-event="${e.id}" title="補同步到 Google 日曆">☁</button>` : ''}
                 <button class="icon-btn" data-edit-event="${e.id}" title="編輯">✎</button>
                 <button class="icon-btn danger" data-del-event="${e.id}" title="刪除">✕</button>
               `}
@@ -1387,6 +1390,20 @@
         </div>`;
       }).join('');
 
+    el.querySelectorAll('[data-sync-event]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        const ev = events.find(x=>x.id === btn.dataset.syncEvent);
+        if(!ev) return;
+        btn.disabled = true;
+        const ok = await addGoogleEvent(fmtDate(ev.date), ev.label);
+        if(ok){
+          ev.syncedToGoogle = true;
+          renderAllEvents();
+        }else{
+          btn.disabled = false;
+        }
+      });
+    });
     el.querySelectorAll('[data-edit-event]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         editingEventId = btn.dataset.editEvent;
@@ -1487,9 +1504,11 @@
       for(const it of t.items){
         const d = new Date(baseDate);
         d.setDate(d.getDate() + it.offset);
-        events.push({ id: newId('e'), date: d, label: it.label, tag: 'work', source: t.name });
+        const newEv = { id: newId('e'), date: d, label: it.label, tag: 'work', source: t.name };
+        events.push(newEv);
         if(syncGoogle){
-          await addGoogleEvent(fmtDate(d), it.label);
+          const ok = await addGoogleEvent(fmtDate(d), it.label);
+          if(ok) newEv.syncedToGoogle = true;
         }
       }
       // 不管範本裡有沒有設定 offset=0 的規則，基準日本身一定要加進行事曆
@@ -1497,9 +1516,11 @@
       const hasBaseDay = t.items.some(it => it.offset === 0);
       if(!hasBaseDay){
         const baseLabel = label || '活動當天';
-        events.push({ id: newId('e'), date: new Date(baseDate), label: baseLabel, tag: 'work', source: t.name });
+        const baseEv = { id: newId('e'), date: new Date(baseDate), label: baseLabel, tag: 'work', source: t.name };
+        events.push(baseEv);
         if(syncGoogle){
-          await addGoogleEvent(fmtDate(baseDate), baseLabel);
+          const ok = await addGoogleEvent(fmtDate(baseDate), baseLabel);
+          if(ok) baseEv.syncedToGoogle = true;
         }
         generatedCount += 1;
       }
@@ -1512,11 +1533,13 @@
 
     // 一般模式：新增單筆行程
     if(!label){ setGcalStatus('請輸入行程名稱，或選一個範本來套用。'); return; }
-    events.push({ id: newId('e'), date: new Date(dateStr), label, tag });
+    const newEv = { id: newId('e'), date: new Date(dateStr), label, tag };
+    events.push(newEv);
     document.getElementById('evAddLabel').value = '';
     renderAllEvents();
     if(syncGoogle){
-      await addGoogleEvent(dateStr, label);
+      const ok = await addGoogleEvent(dateStr, label);
+      if(ok){ newEv.syncedToGoogle = true; renderAllEvents(); }
     }
   });
 
@@ -2179,10 +2202,10 @@
     const netActual = totals.actualIncome - totals.actualExpense;
     let html = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <select class="f-tag" id="kgOverviewStatusSel" style="min-width:120px;">
-          <option value="all">全部狀態</option>
-          ${KG_STATUS_OPTIONS.map(s=>`<option value="${s}" ${s===kgOverviewStatusFilter?'selected':''}>${KG_STATUS_LABEL[s]}</option>`).join('')}
-        </select>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="kg-tab kg-tab-sm ${kgOverviewStatusFilter==='all'?'active':''}" data-kg-status-filter="all">全部狀態</button>
+          ${KG_STATUS_OPTIONS.map(s=>`<button class="kg-tab kg-tab-sm ${s===kgOverviewStatusFilter?'active':''}" data-kg-status-filter="${s}">${KG_STATUS_LABEL[s]}</button>`).join('')}
+        </div>
         <input type="month" id="kgOverviewMonthSel" value="${kgOverviewMonthFilter}" style="font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);color:var(--ink);">
         ${kgOverviewMonthFilter ? `<button class="icon-btn" id="kgOverviewMonthClear" style="width:auto;padding:0 10px;font-size:11.5px;">清除月份</button>` : ''}
       </div>
@@ -2219,9 +2242,11 @@
         kgSwitchTab('events');
       });
     });
-    document.getElementById('kgOverviewStatusSel').addEventListener('change', e=>{
-      kgOverviewStatusFilter = e.target.value;
-      kgRenderOverview();
+    el.querySelectorAll('[data-kg-status-filter]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        kgOverviewStatusFilter = btn.dataset.kgStatusFilter;
+        kgRenderOverview();
+      });
     });
     document.getElementById('kgOverviewMonthSel').addEventListener('change', e=>{
       kgOverviewMonthFilter = e.target.value;
@@ -2258,21 +2283,21 @@
     if(kgEvents.length === 0){
       grid.innerHTML = '<div class="card"><div class="empty-state">還沒有活動，先在上面新增一場。</div></div>';
     }else{
-      grid.className = 'kg-event-grid';
-      grid.innerHTML = kgEvents.map(ev => `
-        <div class="kg-event-card" data-kg-card="${ev.id}">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div style="font-family:'Noto Serif TC',serif;font-size:16px;color:var(--ink);">${ev.name}</div>
-            <button class="icon-btn danger" data-kg-del-event="${ev.id}" title="刪除">✕</button>
+      grid.className = '';
+      grid.innerHTML = '<div class="card">' + kgEvents.map(ev => `
+        <div class="kg-event-row" data-kg-card="${ev.id}">
+          <div style="min-width:160px;">
+            <div style="font-size:14.5px;color:var(--ink);">${ev.name}</div>
+            <div style="font-size:12px;color:var(--ink-soft);margin-top:4px;display:flex;align-items:center;gap:6px;">
+              📅 ${ev.date}
+              <select class="kg-status-select kg-status ${ev.status}" data-kg-status="${ev.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);cursor:pointer;">
+                ${kgStatusOptionsHtml(ev.status)}
+              </select>
+            </div>
+            ${ev.note ? `<div style="font-size:12px;color:var(--ink-soft);margin-top:4px;">${ev.note}</div>` : ''}
           </div>
-          <div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;display:flex;align-items:center;gap:6px;">
-            📅 ${ev.date}
-            <select class="kg-status-select kg-status ${ev.status}" data-kg-status="${ev.id}" style="font-family:'Noto Sans TC',sans-serif;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface);cursor:pointer;">
-              ${kgStatusOptionsHtml(ev.status)}
-            </select>
-          </div>
-          ${ev.note ? `<div style="font-size:12.5px;color:var(--ink-soft);margin-top:6px;">${ev.note}</div>` : ''}
-        </div>`).join('');
+          <button class="icon-btn danger" data-kg-del-event="${ev.id}" title="刪除">✕</button>
+        </div>`).join('') + '</div>';
     }
 
     grid.querySelectorAll('[data-kg-status]').forEach(sel=>{
