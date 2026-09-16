@@ -849,7 +849,7 @@
           <option value="">不套用範本</option>
         </select>
         <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);">
-          <input type="checkbox" id="evAddSyncGoogle" style="width:auto;">同步到 Google
+          <input type="checkbox" id="evAddSyncGoogle" style="width:auto;">同步到 Google<span id="evAddSyncCalendarHint" style="color:var(--gold);"></span>
         </label>
         <button class="add-form-btn" id="evAddBtn">新增行程</button>
       </div>
@@ -1102,6 +1102,7 @@
         activityRules,
         kgEvents, kgTransactions,
         selectedCalendarIds,
+        googleWriteCalendarId,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
     }catch(err){
@@ -1122,6 +1123,7 @@
         kgEvents = (d.kgEvents && d.kgEvents.length) ? d.kgEvents : kgSeedEvents();
         kgTransactions = d.kgTransactions || kgSeedTx();
         selectedCalendarIds = d.selectedCalendarIds || null;
+        googleWriteCalendarId = d.googleWriteCalendarId || null;
       }else{
         // 第一次登入的新帳號：套用預設示範資料，並立刻存一份到雲端
         displayNameValue = '';
@@ -1286,6 +1288,7 @@
   let gAccessToken = sessionStorage.getItem('gcal_access_token') || null;
   let tokenClient = null;
   let selectedCalendarIds = null; // null = 尚未選過，預設抓 Google 裡「有勾選顯示」的日曆；設定過後存陣列
+  let googleWriteCalendarId = null; // null = 預設寫入「主要日曆」；設定過後存日曆 ID，新增行程會寫進這個日曆
 
   const tagLabel = { personal: "個人", work: "工作", general: "一般" };
 
@@ -1426,7 +1429,7 @@
         const saveBtn = el.querySelector(`[data-save-event="${id}"]`);
         if(saveBtn) saveBtn.disabled = true;
         editingEventId = null;
-        await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr);
+        await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr, ev.calendarId);
       }else{
         const parsed = new Date(finalDateStr);
         ev.label = finalLabel;
@@ -1452,7 +1455,7 @@
         if(!ev) return;
         if(ev.googleId){
           btn.disabled = true;
-          await deleteGoogleEvent(ev.googleId);
+          await deleteGoogleEvent(ev.googleId, ev.calendarId);
         }else{
           events = events.filter(x=>x.id !== id);
           renderAllEvents();
@@ -1928,6 +1931,7 @@
         sessionStorage.setItem('gcal_access_token', gAccessToken);
         updateGcalButton(true);
         fetchGoogleEvents();
+        renderEvAddCalendarLabel();
       },
       error_callback: (err)=>{
         setGcalStatus('無法開啟 Google 登入視窗，可能被瀏覽器封鎖彈出視窗，請允許此網站的彈出視窗後再試一次。');
@@ -1937,6 +1941,7 @@
     if(gAccessToken){
       updateGcalButton(true);
       fetchGoogleEvents();
+      renderEvAddCalendarLabel();
     }
   }
 
@@ -1975,15 +1980,24 @@
     try{ allCals = await fetchCalendarListRaw(); }
     catch(e){ return; }
     const picked = selectedCalendarIds || allCals.filter(c=>c.selected !== false).map(c=>c.id);
+    const currentWriteCal = googleWriteCalendarId || (allCals.find(c=>c.primary) ? allCals.find(c=>c.primary).id : (allCals[0] && allCals[0].id));
     const el = document.getElementById('gcalCalendarPicker');
     el.style.display = 'block';
     el.innerHTML = `
-      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">勾選要同步進工作台的日曆：</div>
+      <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px;">勾選要同步進工作台的日曆（讀取）：</div>
       ${allCals.map(c => `
         <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;">
           <input type="checkbox" data-cal-id="${c.id}" ${picked.includes(c.id) ? 'checked' : ''} style="width:auto;">
           ${c.summary}${c.primary ? '（主要）' : ''}
         </label>`).join('')}
+
+      <div style="font-size:12.5px;color:var(--ink-soft);margin:14px 0 8px;padding-top:12px;border-top:1px dashed var(--line);">新增行程時，要寫入哪個日曆：</div>
+      ${allCals.map(c => `
+        <label style="display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;cursor:pointer;">
+          <input type="radio" name="gcalWriteTarget" data-cal-write-id="${c.id}" ${currentWriteCal===c.id ? 'checked' : ''} style="width:auto;">
+          ${c.summary}${c.primary ? '（主要）' : ''}
+        </label>`).join('')}
+
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="add-form-btn" id="gcalCalSaveBtn">儲存並同步</button>
         <button class="icon-btn" id="gcalCalCancelBtn" style="width:auto;padding:0 12px;">取消</button>
@@ -1991,13 +2005,28 @@
     document.getElementById('gcalCalSaveBtn').addEventListener('click', async ()=>{
       const checked = Array.from(el.querySelectorAll('[data-cal-id]')).filter(c=>c.checked).map(c=>c.dataset.calId);
       selectedCalendarIds = checked;
+      const writeRadio = el.querySelector('[name="gcalWriteTarget"]:checked');
+      if(writeRadio) googleWriteCalendarId = writeRadio.dataset.calWriteId;
       scheduleCloudSave();
       el.style.display = 'none';
       await fetchGoogleEvents();
+      renderEvAddCalendarLabel();
     });
     document.getElementById('gcalCalCancelBtn').addEventListener('click', ()=>{
       el.style.display = 'none';
     });
+  }
+
+  // 在「新增行程」表單旁邊小小提示目前新增的行程會同步到哪個日曆
+  function renderEvAddCalendarLabel(){
+    const labelEl = document.getElementById('evAddSyncCalendarHint');
+    if(!labelEl) return;
+    if(!gAccessToken){ labelEl.textContent = ''; return; }
+    fetchCalendarListRaw().then(cals=>{
+      const target = googleWriteCalendarId || (cals.find(c=>c.primary) ? cals.find(c=>c.primary).id : null);
+      const cal = cals.find(c=>c.id === target);
+      labelEl.textContent = cal ? `（將寫入：${cal.summary}）` : '';
+    }).catch(()=>{ labelEl.textContent = ''; });
   }
   document.getElementById('gcalChooseCalBtn').addEventListener('click', openCalendarPicker);
 
@@ -2021,18 +2050,19 @@
           const res = await fetch(url, { headers: { Authorization: `Bearer ${gAccessToken}` } });
           if(!res.ok) continue; // 某個日曆抓失敗就跳過，不要整個中斷
           const data = await res.json();
-          (data.items || []).forEach(ev => allItems.push({ ev, calendarName: cal.summary }));
+          (data.items || []).forEach(ev => allItems.push({ ev, calendarId: cal.id, calendarName: cal.summary }));
         }catch(e){ /* 單一日曆失敗就跳過 */ }
       }
 
       googleEvents = allItems
         .filter(({ev}) => ev.start && (ev.start.dateTime || ev.start.date))
-        .map(({ev, calendarName}) => ({
+        .map(({ev, calendarId, calendarName}) => ({
           id: 'g' + ev.id,
           date: new Date(ev.start.dateTime || ev.start.date),
           label: ev.summary || '(無標題)',
           tag: 'work',
           googleId: ev.id,
+          calendarId, // 記住這筆行程實際存在哪個日曆裡，編輯／刪除才找得到
           source: calendarName,
         }));
       setGcalStatus(`已從 ${calendars.length} 個 Google 日曆同步 ${googleEvents.length} 筆行程（前一個月～後六個月），可點右上角「選擇日曆」調整同步範圍。`);
@@ -2042,10 +2072,11 @@
     }
   }
 
-  async function addGoogleEvent(dateStr, label){
+  async function addGoogleEvent(dateStr, label, calendarId){
     if(!gAccessToken){ setGcalStatus('尚未連接 Google 日曆，此筆行程僅新增在本機。'); return false; }
+    const targetCal = calendarId || googleWriteCalendarId || 'primary';
     try{
-      const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCal)}/events`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${gAccessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: label, start: { date: dateStr }, end: { date: dateStr } })
@@ -2059,10 +2090,11 @@
     }
   }
 
-  async function updateGoogleEvent(googleId, label, dateStr){
+  async function updateGoogleEvent(googleId, label, dateStr, calendarId){
     if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆。'); return false; }
+    const targetCal = calendarId || 'primary';
     try{
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleId}`, {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCal)}/events/${googleId}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${gAccessToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: label, start: { date: dateStr }, end: { date: dateStr } })
@@ -2076,10 +2108,11 @@
     }
   }
 
-  async function deleteGoogleEvent(googleId){
+  async function deleteGoogleEvent(googleId, calendarId){
     if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆。'); return false; }
+    const targetCal = calendarId || 'primary';
     try{
-      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${googleId}`, {
+      const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCal)}/events/${googleId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${gAccessToken}` }
       });
