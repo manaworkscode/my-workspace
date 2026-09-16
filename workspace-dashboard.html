@@ -907,8 +907,7 @@
       </div>
 
       <div class="add-form">
-        <input class="f-name" id="todoAddLabel" type="text" placeholder="待辦事項">
-        <input class="f-date" id="todoAddDate" type="date">
+        <input class="f-name" id="todoAddLabel" type="text" placeholder="待辦事項" style="flex:1;">
         <button class="add-form-btn" id="todoAddBtn">新增待辦</button>
       </div>
 
@@ -974,10 +973,10 @@
   }
   function defaultTodos(){
     return [
-      { id: "t1", label: "整理本週工作紀錄", date: "08-27", done: false },
-      { id: "t2", label: "回覆客戶提案信件", date: "08-28", done: false },
-      { id: "t3", label: "預約健康檢查", date: "08-31", done: true },
-      { id: "t4", label: "備份筆電資料", date: "09-02", done: false },
+      { id: "t1", label: "整理本週工作紀錄", done: false, content: "" },
+      { id: "t2", label: "回覆客戶提案信件", done: false, content: "" },
+      { id: "t3", label: "預約健康檢查", done: true, content: "" },
+      { id: "t4", label: "備份筆電資料", done: false, content: "" },
     ];
   }
   function defaultProjects(){
@@ -1348,6 +1347,8 @@
   }
 
   /* ---- 行事曆頁：所有行程列表（不管過去未來都顯示，本機與 Google 行程都可編輯／刪除） ---- */
+  let editingEventId = null;
+
   function renderEventList(){
     const now = new Date(); now.setHours(0,0,0,0);
     const el = document.getElementById('upcomingList');
@@ -1357,42 +1358,72 @@
       : all.map(e => {
         const isGoogle = !!e.googleId;
         const isPast = e.date < now;
+        const isEditing = editingEventId === e.id;
         return `
-        <div class="up-item" style="${isPast ? 'opacity:.55;' : ''}">
+        <div class="up-item" style="${isPast && !isEditing ? 'opacity:.55;' : ''}">
           <div class="up-top">
             <span class="tag tag-${e.tag}">${e.source || tagLabel[e.tag]}${isGoogle ? '・Google' : ''}</span>
-            <span class="up-date">${fmtDate(e.date)}${isPast ? '（已過）' : ''}</span>
+            ${isEditing
+              ? `<input type="date" data-event-edit-date="${e.id}" value="${fmtDate(e.date)}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);outline:none;">`
+              : `<span class="up-date">${fmtDate(e.date)}${isPast ? '（已過）' : ''}</span>`
+            }
           </div>
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <div class="up-label">${e.label}</div>
+            ${isEditing
+              ? `<input type="text" data-event-edit-label="${e.id}" value="${e.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">`
+              : `<div class="up-label">${e.label}</div>`
+            }
             <div class="item-actions">
-              <button class="icon-btn" data-edit-event="${e.id}" title="編輯">✎</button>
-              <button class="icon-btn danger" data-del-event="${e.id}" title="刪除">✕</button>
+              ${isEditing ? `
+                <button class="icon-btn" data-save-event="${e.id}" title="儲存">✓</button>
+                <button class="icon-btn" data-cancel-event="${e.id}" title="取消">✕</button>
+              ` : `
+                <button class="icon-btn" data-edit-event="${e.id}" title="編輯">✎</button>
+                <button class="icon-btn danger" data-del-event="${e.id}" title="刪除">✕</button>
+              `}
             </div>
           </div>
         </div>`;
       }).join('');
 
     el.querySelectorAll('[data-edit-event]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const id = btn.dataset.editEvent;
-        const ev = allEvents().find(x=>x.id === id);
-        if(!ev) return;
-        const newLabel = prompt('編輯行程名稱：', ev.label);
-        if(newLabel === null) return;
-        const newDateStr = prompt('編輯日期（YYYY-MM-DD）：', fmtDate(ev.date));
-        if(newDateStr === null) return;
-        const finalLabel = newLabel.trim() || ev.label;
-        const finalDateStr = newDateStr.trim() || fmtDate(ev.date);
-        if(ev.googleId){
-          btn.disabled = true;
-          await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr);
-        }else{
-          const parsed = new Date(finalDateStr);
-          ev.label = finalLabel;
-          if(!isNaN(parsed)) ev.date = parsed;
-          renderAllEvents();
-        }
+      btn.addEventListener('click', ()=>{
+        editingEventId = btn.dataset.editEvent;
+        renderEventList();
+        const input = el.querySelector(`[data-event-edit-label="${editingEventId}"]`);
+        if(input){ input.focus(); input.select(); }
+      });
+    });
+    el.querySelectorAll('[data-cancel-event]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingEventId = null; renderEventList(); });
+    });
+    async function commitEventEdit(id){
+      const ev = allEvents().find(x=>x.id === id);
+      const labelInput = el.querySelector(`[data-event-edit-label="${id}"]`);
+      const dateInput = el.querySelector(`[data-event-edit-date="${id}"]`);
+      if(!ev || !labelInput || !dateInput) return;
+      const finalLabel = labelInput.value.trim() || ev.label;
+      const finalDateStr = dateInput.value || fmtDate(ev.date);
+      if(ev.googleId){
+        const saveBtn = el.querySelector(`[data-save-event="${id}"]`);
+        if(saveBtn) saveBtn.disabled = true;
+        editingEventId = null;
+        await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr);
+      }else{
+        const parsed = new Date(finalDateStr);
+        ev.label = finalLabel;
+        if(!isNaN(parsed)) ev.date = parsed;
+        editingEventId = null;
+        renderAllEvents();
+      }
+    }
+    el.querySelectorAll('[data-save-event]').forEach(btn=>{
+      btn.addEventListener('click', ()=> commitEventEdit(btn.dataset.saveEvent));
+    });
+    el.querySelectorAll('[data-event-edit-label]').forEach(input=>{
+      input.addEventListener('keydown', e=>{
+        if(e.key === 'Enter') commitEventEdit(input.dataset.eventEditLabel);
+        if(e.key === 'Escape'){ editingEventId = null; renderEventList(); }
       });
     });
     el.querySelectorAll('[data-del-event]').forEach(btn=>{
@@ -1502,6 +1533,8 @@
     evSel.value = activityRules.some(r=>r.id===keepValue) ? keepValue : '';
   }
 
+  let editingRuleId = null;
+
   function renderRuleItems(){
     scheduleCloudSave();
     const t = currentTemplate();
@@ -1511,28 +1544,57 @@
       return;
     }
     const sorted = [...t.items].sort((a,b)=>a.offset-b.offset);
-    el.innerHTML = sorted.map(it => `
+    el.innerHTML = sorted.map(it => {
+      const isEditing = editingRuleId === it.id;
+      return `
       <div class="ai-preview-row">
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);width:66px;flex-shrink:0;">${it.offset>0?'+':''}${it.offset} 天</span>
-        <span style="flex:1;font-size:13px;">${it.label}</span>
+        ${isEditing
+          ? `<input type="number" data-rule-edit-offset="${it.id}" value="${it.offset}" style="width:66px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:4px 6px;background:var(--surface);color:var(--ink);outline:none;">
+             <input type="text" data-rule-edit-label="${it.id}" value="${it.label.replace(/"/g,'&quot;')}" style="flex:1;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--ink);outline:none;">`
+          : `<span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--gold);width:66px;flex-shrink:0;">${it.offset>0?'+':''}${it.offset} 天</span>
+             <span style="flex:1;font-size:13px;">${it.label}</span>`
+        }
         <div class="item-actions">
-          <button class="icon-btn" data-edit-rule="${it.id}" title="編輯">✎</button>
-          <button class="icon-btn danger" data-del-rule="${it.id}" title="刪除">✕</button>
+          ${isEditing ? `
+            <button class="icon-btn" data-save-rule="${it.id}" title="儲存">✓</button>
+            <button class="icon-btn" data-cancel-rule="${it.id}" title="取消">✕</button>
+          ` : `
+            <button class="icon-btn" data-edit-rule="${it.id}" title="編輯">✎</button>
+            <button class="icon-btn danger" data-del-rule="${it.id}" title="刪除">✕</button>
+          `}
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
 
     el.querySelectorAll('[data-edit-rule]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        const it = t.items.find(x=>x.id === btn.dataset.editRule);
-        if(!it) return;
-        const newOffset = prompt('天數差（活動前用負數，例如活動前 14 天輸入 -14）：', it.offset);
-        if(newOffset === null) return;
-        const newLabel = prompt('行程名稱：', it.label);
-        if(newLabel === null) return;
-        const n = parseInt(newOffset, 10);
-        if(!isNaN(n)) it.offset = n;
-        if(newLabel.trim()) it.label = newLabel.trim();
+        editingRuleId = btn.dataset.editRule;
         renderRuleItems();
+        const input = el.querySelector(`[data-rule-edit-label="${editingRuleId}"]`);
+        if(input){ input.focus(); input.select(); }
+      });
+    });
+    function commitRuleEdit(id){
+      const it = t.items.find(x=>x.id===id);
+      const offsetInput = el.querySelector(`[data-rule-edit-offset="${id}"]`);
+      const labelInput = el.querySelector(`[data-rule-edit-label="${id}"]`);
+      if(it){
+        if(offsetInput){ const n = parseInt(offsetInput.value, 10); if(!isNaN(n)) it.offset = n; }
+        if(labelInput && labelInput.value.trim()) it.label = labelInput.value.trim();
+      }
+      editingRuleId = null;
+      renderRuleItems();
+    }
+    el.querySelectorAll('[data-save-rule]').forEach(btn=>{
+      btn.addEventListener('click', ()=> commitRuleEdit(btn.dataset.saveRule));
+    });
+    el.querySelectorAll('[data-cancel-rule]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingRuleId = null; renderRuleItems(); });
+    });
+    el.querySelectorAll('[data-rule-edit-label]').forEach(input=>{
+      input.addEventListener('keydown', e=>{
+        if(e.key === 'Enter') commitRuleEdit(input.dataset.ruleEditLabel);
+        if(e.key === 'Escape'){ editingRuleId = null; renderRuleItems(); }
       });
     });
     el.querySelectorAll('[data-del-rule]').forEach(btn=>{
@@ -1580,35 +1642,72 @@
   });
 
   /* ================= 專案排程：新增／編輯／刪除 ================= */
+  let editingProjId = null;
+
   function renderProjects(){
     scheduleCloudSave();
     const el = document.getElementById('projList');
     el.innerHTML = projects.length === 0
       ? '<div class="empty-state">還沒有任何專案，新增一個吧</div>'
-      : projects.map(p => `
+      : projects.map(p => {
+        const isEditing = editingProjId === p.id;
+        return `
         <div class="proj-list-row" style="margin-bottom:14px;">
           <div class="proj-row">
-            <div class="proj-top"><span class="proj-name">${p.name}</span><span class="proj-pct">${p.pct}%</span></div>
+            <div class="proj-top">
+              ${isEditing
+                ? `<input type="text" data-proj-edit-name="${p.id}" value="${p.name.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--ink);outline:none;">
+                   <input type="number" data-proj-edit-pct="${p.id}" value="${p.pct}" min="0" max="100" style="width:60px;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--ink);outline:none;">`
+                : `<span class="proj-name">${p.name}</span><span class="proj-pct">${p.pct}%</span>`
+              }
+            </div>
             <div class="bar-track"><div class="bar-fill" style="width:${p.pct}%"></div></div>
           </div>
           <div class="item-actions">
-            <button class="icon-btn" data-edit-proj="${p.id}" title="編輯">✎</button>
-            <button class="icon-btn danger" data-del-proj="${p.id}" title="刪除">✕</button>
+            ${isEditing ? `
+              <button class="icon-btn" data-save-proj="${p.id}" title="儲存">✓</button>
+              <button class="icon-btn" data-cancel-proj="${p.id}" title="取消">✕</button>
+            ` : `
+              <button class="icon-btn" data-edit-proj="${p.id}" title="編輯">✎</button>
+              <button class="icon-btn danger" data-del-proj="${p.id}" title="刪除">✕</button>
+            `}
           </div>
-        </div>`).join('');
+        </div>`;
+      }).join('');
 
     el.querySelectorAll('[data-edit-proj]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        const p = projects.find(x=>x.id === btn.dataset.editProj);
-        if(!p) return;
-        const newName = prompt('編輯專案名稱：', p.name);
-        if(newName === null) return;
-        const newPct = prompt('編輯進度（0-100）：', p.pct);
-        if(newPct === null) return;
-        if(newName.trim()) p.name = newName.trim();
-        const n = parseInt(newPct, 10);
-        if(!isNaN(n)) p.pct = Math.max(0, Math.min(100, n));
+        editingProjId = btn.dataset.editProj;
         renderProjects();
+        const input = el.querySelector(`[data-proj-edit-name="${editingProjId}"]`);
+        if(input){ input.focus(); input.select(); }
+      });
+    });
+    function commitProjEdit(id){
+      const p = projects.find(x=>x.id===id);
+      const nameInput = el.querySelector(`[data-proj-edit-name="${id}"]`);
+      const pctInput = el.querySelector(`[data-proj-edit-pct="${id}"]`);
+      if(p){
+        if(nameInput && nameInput.value.trim()) p.name = nameInput.value.trim();
+        if(pctInput){
+          const n = parseInt(pctInput.value, 10);
+          if(!isNaN(n)) p.pct = Math.max(0, Math.min(100, n));
+        }
+      }
+      editingProjId = null;
+      renderProjects();
+    }
+    el.querySelectorAll('[data-save-proj]').forEach(btn=>{
+      btn.addEventListener('click', ()=> commitProjEdit(btn.dataset.saveProj));
+    });
+    el.querySelectorAll('[data-cancel-proj]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingProjId = null; renderProjects(); });
+    });
+    el.querySelectorAll('[data-proj-edit-name], [data-proj-edit-pct]').forEach(input=>{
+      input.addEventListener('keydown', e=>{
+        const id = input.dataset.projEditName || input.dataset.projEditPct;
+        if(e.key === 'Enter') commitProjEdit(id);
+        if(e.key === 'Escape'){ editingProjId = null; renderProjects(); }
       });
     });
     el.querySelectorAll('[data-del-proj]').forEach(btn=>{
@@ -1634,32 +1733,60 @@
 
   /* ================= 待辦清單：新增／編輯／刪除／打勾 ================= */
   let expandedTodoNotes = {}; // 記住哪些待辦事項目前展開備註（純畫面狀態，不用存雲端）
+  let editingTodoId = null; // 目前正在直接編輯欄位的待辦事項
 
   function renderTodos(){
     scheduleCloudSave();
     const el = document.getElementById('todoList');
     el.innerHTML = todos.length === 0
       ? '<div class="empty-state">還沒有任何待辦事項</div>'
-      : todos.map(t => `
+      : todos.map((t, i) => {
+        const isEditing = editingTodoId === t.id;
+        return `
         <div class="full-todo-item" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div style="display:flex;align-items:center;gap:10px;">
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <button class="icon-btn" data-move-todo-up="${t.id}" title="上移" ${i===0?'disabled style="opacity:.3;"':''} style="width:20px;height:16px;padding:0;font-size:9px;">▲</button>
+              <button class="icon-btn" data-move-todo-down="${t.id}" title="下移" ${i===todos.length-1?'disabled style="opacity:.3;"':''} style="width:20px;height:16px;padding:0;font-size:9px;">▼</button>
+            </div>
             <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
-            <span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>
-            <span class="todo-date">${t.date}</span>
+            ${isEditing
+              ? `<input type="text" data-todo-edit-input="${t.id}" value="${t.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">`
+              : `<span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>`
+            }
             <div class="item-actions">
-              <button class="icon-btn" data-note-todo="${t.id}" title="備註／記事" style="${t.content ? 'border-color:var(--gold);color:var(--gold);' : ''}">📝</button>
-              <button class="icon-btn" data-edit-todo="${t.id}" title="編輯">✎</button>
-              <button class="icon-btn danger" data-del-todo="${t.id}" title="刪除">✕</button>
+              ${isEditing ? `
+                <button class="icon-btn" data-save-todo="${t.id}" title="儲存">✓</button>
+                <button class="icon-btn" data-cancel-todo="${t.id}" title="取消">✕</button>
+              ` : `
+                <button class="icon-btn" data-note-todo="${t.id}" title="備註／記事" style="${t.content ? 'border-color:var(--gold);color:var(--gold);' : ''}">📝</button>
+                <button class="icon-btn" data-edit-todo="${t.id}" title="編輯">✎</button>
+                <button class="icon-btn danger" data-del-todo="${t.id}" title="刪除">✕</button>
+              `}
             </div>
           </div>
           ${expandedTodoNotes[t.id] ? `
           <textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="2" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--surface-2);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>
           ` : ''}
-        </div>`).join('');
+        </div>`;
+      }).join('');
 
     const remaining = todos.filter(t=>!t.done).length;
     document.getElementById('todoCount').textContent = `${remaining} 項待完成，共 ${todos.length} 項`;
 
+    function moveTodo(id, dir){
+      const idx = todos.findIndex(x=>x.id===id);
+      const swapIdx = idx + dir;
+      if(idx<0 || swapIdx<0 || swapIdx>=todos.length) return;
+      [todos[idx], todos[swapIdx]] = [todos[swapIdx], todos[idx]];
+      renderTodos();
+    }
+    el.querySelectorAll('[data-move-todo-up]').forEach(btn=>{
+      btn.addEventListener('click', ()=> moveTodo(btn.dataset.moveTodoUp, -1));
+    });
+    el.querySelectorAll('[data-move-todo-down]').forEach(btn=>{
+      btn.addEventListener('click', ()=> moveTodo(btn.dataset.moveTodoDown, 1));
+    });
     el.querySelectorAll('[data-toggle-todo]').forEach(elx=>{
       elx.addEventListener('click', ()=>{
         const t = todos.find(x=>x.id === elx.dataset.toggleTodo);
@@ -1687,15 +1814,29 @@
     });
     el.querySelectorAll('[data-edit-todo]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        const t = todos.find(x=>x.id === btn.dataset.editTodo);
-        if(!t) return;
-        const newLabel = prompt('編輯待辦事項：', t.label);
-        if(newLabel === null) return;
-        const newDate = prompt('編輯日期（例如 08-27）：', t.date);
-        if(newDate === null) return;
-        if(newLabel.trim()) t.label = newLabel.trim();
-        if(newDate.trim()) t.date = newDate.trim();
+        editingTodoId = btn.dataset.editTodo;
         renderTodos();
+        const input = el.querySelector(`[data-todo-edit-input="${editingTodoId}"]`);
+        if(input){ input.focus(); input.select(); }
+      });
+    });
+    function commitTodoEdit(id){
+      const input = el.querySelector(`[data-todo-edit-input="${id}"]`);
+      const t = todos.find(x=>x.id===id);
+      if(input && t && input.value.trim()) t.label = input.value.trim();
+      editingTodoId = null;
+      renderTodos();
+    }
+    el.querySelectorAll('[data-save-todo]').forEach(btn=>{
+      btn.addEventListener('click', ()=> commitTodoEdit(btn.dataset.saveTodo));
+    });
+    el.querySelectorAll('[data-cancel-todo]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingTodoId = null; renderTodos(); });
+    });
+    el.querySelectorAll('[data-todo-edit-input]').forEach(input=>{
+      input.addEventListener('keydown', e=>{
+        if(e.key === 'Enter') commitTodoEdit(input.dataset.todoEditInput);
+        if(e.key === 'Escape'){ editingTodoId = null; renderTodos(); }
       });
     });
     el.querySelectorAll('[data-del-todo]').forEach(btn=>{
@@ -1709,16 +1850,14 @@
   }
   document.getElementById('todoAddBtn').addEventListener('click', ()=>{
     const labelEl = document.getElementById('todoAddLabel');
-    const dateEl = document.getElementById('todoAddDate');
     const label = labelEl.value.trim();
     if(!label){ return; }
-    const now = new Date();
-    const dateStr = dateEl.value
-      ? `${String(new Date(dateEl.value).getMonth()+1).padStart(2,'0')}-${String(new Date(dateEl.value).getDate()).padStart(2,'0')}`
-      : `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-    todos.push({ id: newId('t'), label, date: dateStr, done: false, content: '' });
-    labelEl.value = ''; dateEl.value = '';
+    todos.push({ id: newId('t'), label, done: false, content: '' });
+    labelEl.value = '';
     renderTodos();
+  });
+  document.getElementById('todoAddLabel').addEventListener('keydown', e=>{
+    if(e.key === 'Enter') document.getElementById('todoAddBtn').click();
   });
 
   /* ---------------- Google Calendar 串接 ---------------- */
@@ -1939,7 +2078,7 @@
   ==================================================== */
   const KG_STATUS_LABEL = { planned: '籌備中', ongoing: '進行中', ended: '已結束', completed: '已結案' };
   const KG_STATUS_OPTIONS = ['planned','ongoing','ended','completed'];
-  const KG_EXPENSE_CATEGORIES = ['場地租借', '器材設備', '視覺設計', '交通住宿'];
+  const KG_EXPENSE_CATEGORIES = ['場地租借', '器材設備', '視覺設計', '演員費', '交通住宿'];
   const KG_INCOME_CATEGORIES = ['週邊銷售', '售票收入', '其他'];
 
   function kgStatusOptionsHtml(current){
@@ -1971,6 +2110,7 @@
   let kgEvents = [];
   let kgTransactions = [];
   let kgSelectedEventId = null;
+  let editingTxId = null;
   let kgCurrentTab = 'overview';
 
   function kgFmt(n){ return 'NT$ ' + Math.round(Number(n)||0).toLocaleString('zh-TW'); }
@@ -2015,21 +2155,37 @@
     btn.addEventListener('click', ()=> kgSwitchTab(btn.dataset.kgTab));
   });
 
+  let kgOverviewStatusFilter = 'all';
+  let kgOverviewMonthFilter = '';
+
   function kgRenderOverview(){
     const el = document.getElementById('kgOverview');
-    const totals = kgSumTotals(kgEvents);
+    const filtered = kgEvents.filter(ev => {
+      if(kgOverviewStatusFilter !== 'all' && ev.status !== kgOverviewStatusFilter) return false;
+      if(kgOverviewMonthFilter && ev.date.slice(0,7) !== kgOverviewMonthFilter) return false;
+      return true;
+    });
+    const totals = kgSumTotals(filtered);
     const netActual = totals.actualIncome - totals.actualExpense;
     let html = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <select class="f-tag" id="kgOverviewStatusSel" style="min-width:120px;">
+          <option value="all">全部狀態</option>
+          ${KG_STATUS_OPTIONS.map(s=>`<option value="${s}" ${s===kgOverviewStatusFilter?'selected':''}>${KG_STATUS_LABEL[s]}</option>`).join('')}
+        </select>
+        <input type="month" id="kgOverviewMonthSel" value="${kgOverviewMonthFilter}" style="font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--surface);color:var(--ink);">
+        ${kgOverviewMonthFilter ? `<button class="icon-btn" id="kgOverviewMonthClear" style="width:auto;padding:0 10px;font-size:11.5px;">清除月份</button>` : ''}
+      </div>
       <div class="kg-metrics">
-        ${kgMetricCard('活動數量', kgEvents.length)}
+        ${kgMetricCard('活動數量', filtered.length)}
         ${kgMetricCard('總支出', kgFmt(totals.actualExpense))}
         ${kgMetricCard('總收入', kgFmt(totals.actualIncome))}
         ${kgMetricCard('淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
       </div>`;
-    if(kgEvents.length === 0){
-      html += '<div class="card"><div class="empty-state">還沒有任何活動，切換到「活動」新增一場吧。</div></div>';
+    if(filtered.length === 0){
+      html += `<div class="card"><div class="empty-state">${kgEvents.length===0 ? '還沒有任何活動，切換到「活動」新增一場吧。' : '這個篩選條件下沒有活動。'}</div></div>`;
     }else{
-      html += '<div class="card">' + kgEvents.map(ev=>{
+      html += '<div class="card">' + filtered.slice().sort((a,b)=> a.date < b.date ? 1 : -1).map(ev=>{
         const s = kgEventStats(ev);
         return `
           <div class="kg-event-row" data-kg-open="${ev.id}">
@@ -2052,6 +2208,19 @@
         kgSelectedEventId = row.dataset.kgOpen;
         kgSwitchTab('events');
       });
+    });
+    document.getElementById('kgOverviewStatusSel').addEventListener('change', e=>{
+      kgOverviewStatusFilter = e.target.value;
+      kgRenderOverview();
+    });
+    document.getElementById('kgOverviewMonthSel').addEventListener('change', e=>{
+      kgOverviewMonthFilter = e.target.value;
+      kgRenderOverview();
+    });
+    const clearBtn = document.getElementById('kgOverviewMonthClear');
+    if(clearBtn) clearBtn.addEventListener('click', ()=>{
+      kgOverviewMonthFilter = '';
+      kgRenderOverview();
     });
   }
 
@@ -2208,7 +2377,35 @@
         <table class="kg-table">
           <thead><tr><th>類別</th><th>名稱</th><th>內容</th><th>備註</th><th class="r">金額</th><th></th></tr></thead>
           <tbody>
-            ${myTxLive().map(t => `
+            ${myTxLive().map(t => {
+              const isEditing = editingTxId === t.id;
+              if(isEditing){
+                const opts = kgCategoryOptionsFor(t.type);
+                return `
+              <tr>
+                <td>
+                  <select data-tx-edit-type="${t.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 4px;background:var(--surface);color:var(--ink);">
+                    <option value="expense" ${t.type==='expense'?'selected':''}>支出</option>
+                    <option value="income" ${t.type==='income'?'selected':''}>收入</option>
+                  </select>
+                </td>
+                <td>
+                  <select data-tx-edit-category="${t.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 4px;background:var(--surface);color:var(--ink);">
+                    ${opts.map(c=>`<option value="${c}" ${c===t.category?'selected':''}>${c}</option>`).join('')}
+                  </select>
+                </td>
+                <td><input type="text" data-tx-edit-content="${t.id}" value="${(t.content||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);"></td>
+                <td><input type="text" data-tx-edit-note="${t.id}" value="${(t.note||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);"></td>
+                <td class="r"><input type="number" data-tx-edit-amount="${t.id}" value="${t.amount}" style="width:90px;box-sizing:border-box;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);text-align:right;"></td>
+                <td class="r">
+                  <div class="item-actions" style="justify-content:flex-end;">
+                    <button class="icon-btn" data-save-tx="${t.id}" title="儲存">✓</button>
+                    <button class="icon-btn" data-cancel-tx="${t.id}" title="取消">✕</button>
+                  </div>
+                </td>
+              </tr>`;
+              }
+              return `
               <tr style="${t.locked ? 'opacity:.85;' : ''}">
                 <td style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'收入':'支出'}</td>
                 <td>${t.category}${t.locked ? ' <span style="font-size:10px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:1px 6px;margin-left:4px;">🔒 已請款</span>' : ''}</td>
@@ -2225,7 +2422,8 @@
                     }
                   </div>
                 </td>
-              </tr>`).join('')}
+              </tr>`;
+            }).join('')}
           </tbody>
         </table>`;
       tableWrap.querySelectorAll('[data-kg-lock-tx]').forEach(btn=>{
@@ -2252,28 +2450,44 @@
         btn.addEventListener('click', ()=>{
           const t = kgTransactions.find(x=>x.id === btn.dataset.kgEditTx);
           if(!t || t.locked) return;
-          const typeInput = prompt('類別（輸入「支出」或「收入」）：', t.type === 'income' ? '收入' : '支出');
-          if(typeInput === null) return;
-          const newType = typeInput.trim() === '收入' ? 'income' : 'expense';
-          const options = kgCategoryOptionsFor(newType);
-          const categoryInput = prompt(`名稱（可選：${options.join('／')}）：`, t.category);
-          if(categoryInput === null) return;
-          const contentInput = prompt('內容：', t.content || '');
-          if(contentInput === null) return;
-          const amountInput = prompt('金額：', t.amount);
-          if(amountInput === null) return;
-          const noteInput = prompt('備註：', t.note || '');
-          if(noteInput === null) return;
-          const amountNum = Number(amountInput);
-          t.type = newType;
-          if(categoryInput.trim()) t.category = categoryInput.trim();
-          t.content = contentInput.trim();
-          if(!isNaN(amountNum) && amountNum > 0) t.amount = amountNum;
-          t.note = noteInput.trim();
-          kgSave();
+          editingTxId = t.id;
           renderTxTable();
-          kgRenderEventDetail(el, event);
+          // 類別選項要跟著「類型」下拉一起連動
+          const typeSelEdit = tableWrap.querySelector(`[data-tx-edit-type="${t.id}"]`);
+          const catSelEdit = tableWrap.querySelector(`[data-tx-edit-category="${t.id}"]`);
+          if(typeSelEdit && catSelEdit){
+            typeSelEdit.addEventListener('change', ()=>{
+              catSelEdit.innerHTML = kgCategoryOptionsFor(typeSelEdit.value).map(c=>`<option value="${c}">${c}</option>`).join('');
+            });
+          }
         });
+      });
+      function commitTxEdit(id){
+        const t = kgTransactions.find(x=>x.id === id);
+        if(!t) return;
+        const typeInput = tableWrap.querySelector(`[data-tx-edit-type="${id}"]`);
+        const catInput = tableWrap.querySelector(`[data-tx-edit-category="${id}"]`);
+        const contentInput = tableWrap.querySelector(`[data-tx-edit-content="${id}"]`);
+        const noteInput = tableWrap.querySelector(`[data-tx-edit-note="${id}"]`);
+        const amountInput = tableWrap.querySelector(`[data-tx-edit-amount="${id}"]`);
+        if(typeInput) t.type = typeInput.value;
+        if(catInput) t.category = catInput.value;
+        if(contentInput) t.content = contentInput.value.trim();
+        if(noteInput) t.note = noteInput.value.trim();
+        if(amountInput){
+          const n = Number(amountInput.value);
+          if(!isNaN(n) && n > 0) t.amount = n;
+        }
+        editingTxId = null;
+        kgSave();
+        renderTxTable();
+        kgRenderEventDetail(el, event);
+      }
+      tableWrap.querySelectorAll('[data-save-tx]').forEach(btn=>{
+        btn.addEventListener('click', ()=> commitTxEdit(btn.dataset.saveTx));
+      });
+      tableWrap.querySelectorAll('[data-cancel-tx]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{ editingTxId = null; renderTxTable(); });
       });
       tableWrap.querySelectorAll('[data-kg-del-tx]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
@@ -2312,14 +2526,33 @@
   }
 
   function kgExportCsv(monthEvents, currentMonth){
-    const header = ['活動', '狀態', '日期', '支出', '收入', '淨損益'];
-    const rows = monthEvents.map(ev => {
+    const header = ['日期', '活動', '收支', '類別', '內容', '備註', '金額'];
+    const rows = [];
+
+    monthEvents.forEach(ev => {
+      const tx = kgTransactions.filter(t=>t.eventId === ev.id);
+      const expenses = tx.filter(t=>t.type==='expense');
+      const incomes = tx.filter(t=>t.type==='income');
       const s = kgEventStats(ev);
-      return [ev.name, KG_STATUS_LABEL[ev.status], ev.date, s.actualExpense, s.actualIncome, s.actualNet];
+
+      if(expenses.length === 0 && incomes.length === 0){
+        rows.push([ev.date, ev.name, '（尚無收支紀錄）', '', '', '', '']);
+      }else{
+        expenses.forEach(t => rows.push([ev.date, ev.name, '支出', t.category, t.content || '', t.note || '', t.amount]));
+        incomes.forEach(t => rows.push([ev.date, ev.name, '收入', t.category, t.content || '', t.note || '', t.amount]));
+      }
+      rows.push([ev.date, ev.name, '支出小計', '', '', '', s.actualExpense]);
+      rows.push([ev.date, ev.name, '收入小計', '', '', '', s.actualIncome]);
+      rows.push([ev.date, ev.name, '淨損益', '', '', '', s.actualNet]);
+      rows.push(['', '', '', '', '', '', '']); // 空白列分隔各活動
     });
+
     const totals = kgSumTotals(monthEvents);
     const netActual = totals.actualIncome - totals.actualExpense;
-    rows.push(['總計', '', '', totals.actualExpense, totals.actualIncome, netActual]);
+    rows.push(['總計', '', '', '', '', '', '']);
+    rows.push(['', '', '支出總計', '', '', '', totals.actualExpense]);
+    rows.push(['', '', '收入總計', '', '', '', totals.actualIncome]);
+    rows.push(['', '', '淨損益總計', '', '', '', netActual]);
 
     const csvLines = [header, ...rows].map(row =>
       row.map(cell => {
