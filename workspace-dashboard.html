@@ -1766,7 +1766,7 @@
           </div>
           ${isNoteOpen
             ? `<textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="6" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.6;border:1px solid var(--gold);border-radius:8px;padding:10px 12px;background:var(--surface);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>`
-            : (t.content ? `<div data-note-preview="${t.id}" style="width:100%;font-size:12.5px;line-height:1.6;color:var(--ink-soft);background:var(--surface-2);border-radius:8px;padding:8px 12px;white-space:pre-wrap;word-break:break-word;cursor:text;box-sizing:border-box;">${t.content}</div>` : '')
+            : ''
           }
         </div>`;
       }).join('');
@@ -1803,9 +1803,9 @@
         if(t){ t.done = !t.done; renderTodos(); }
       });
     });
-    el.querySelectorAll('[data-note-todo], [data-note-preview]').forEach(elx=>{
+    el.querySelectorAll('[data-note-todo]').forEach(elx=>{
       elx.addEventListener('click', ()=>{
-        const id = elx.dataset.noteTodo || elx.dataset.notePreview;
+        const id = elx.dataset.noteTodo;
         expandedTodoNotes[id] = !expandedTodoNotes[id];
         renderTodos();
         if(expandedTodoNotes[id]){
