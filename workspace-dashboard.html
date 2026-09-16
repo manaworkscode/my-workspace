@@ -2557,35 +2557,56 @@
       const incomes = tx.filter(t=>t.type==='income');
       const s = kgEventStats(ev);
       const detailRows = Math.max(expenses.length, incomes.length, 1);
-      const startRow = aoa.length;
+      const startRow = aoa.length; // 這場活動區塊的第一列（小計列）
 
+      // 小計列放在最上面：日期／活動／淨損益也放在這一列（合併儲存格的值要放在最上面那格）
+      aoa.push([
+        ev.date, ev.name,
+        `支出小計 ${kgFmt(s.actualExpense)}`, '', '', '',
+        `收入小計 ${kgFmt(s.actualIncome)}`, '', '', '',
+        s.actualNet,
+      ]);
+      rowTypes.push('summary');
+      merges.push({ s:{r:startRow,c:2}, e:{r:startRow,c:5} });
+      merges.push({ s:{r:startRow,c:6}, e:{r:startRow,c:9} });
+
+      const detailStartRow = aoa.length;
       for(let i=0; i<detailRows; i++){
         const exp = expenses[i];
         const inc = incomes[i];
+        // 相同類別只在該區塊第一列顯示文字，其餘留空，稍後會把這幾列的儲存格真正合併起來
         const expCatShown = exp ? (i>0 && expenses[i-1].category===exp.category ? '' : exp.category) : '';
         const incCatShown = inc ? (i>0 && incomes[i-1].category===inc.category ? '' : inc.category) : '';
         aoa.push([
-          i===0 ? ev.date : '',
-          i===0 ? ev.name : '',
+          '', '',
           expCatShown, exp ? (exp.content||'') : '', exp ? (exp.note||'') : '', exp ? exp.amount : '',
           incCatShown, inc ? (inc.content||'') : '', inc ? (inc.note||'') : '', inc ? inc.amount : '',
-          i===0 ? s.actualNet : '',
+          '',
         ]);
         rowTypes.push('detail');
       }
 
-      // 這場活動的支出/收入總額（相當於照片裡「NT$500」「NT$2,000」那一列）
-      const totalRow = aoa.length;
-      aoa.push(['', '', `支出小計 ${kgFmt(s.actualExpense)}`, '', '', '', `收入小計 ${kgFmt(s.actualIncome)}`, '', '', '', '']);
-      rowTypes.push('summary');
-      merges.push({ s:{r:totalRow,c:2}, e:{r:totalRow,c:5} });
-      merges.push({ s:{r:totalRow,c:6}, e:{r:totalRow,c:9} });
+      // 把「連續相同類別」的儲存格合併起來（支出類別欄=c2，收入類別欄=c6）
+      function mergeConsecutiveCategory(list, col){
+        let runStart = 0;
+        for(let i=1; i<=list.length; i++){
+          const sameAsPrev = i < list.length && list[i] && list[runStart] && list[i].category === list[runStart].category;
+          if(!sameAsPrev){
+            if(i - runStart > 1){
+              merges.push({ s:{ r: detailStartRow+runStart, c: col }, e:{ r: detailStartRow+i-1, c: col } });
+            }
+            runStart = i;
+          }
+        }
+      }
+      mergeConsecutiveCategory(expenses.slice(0, detailRows), 2);
+      mergeConsecutiveCategory(incomes.slice(0, detailRows), 6);
 
-      const endRow = aoa.length - 1;
+      const endRow = aoa.length - 1; // 這場活動區塊的最後一列（最後一筆明細）
       if(endRow > startRow){
-        merges.push({ s:{r:startRow,c:0}, e:{r:endRow-1,c:0} }); // 日期（不含小計那列）
-        merges.push({ s:{r:startRow,c:1}, e:{r:endRow-1,c:1} }); // 活動
-        merges.push({ s:{r:startRow,c:10}, e:{r:endRow-1,c:10} }); // 淨損益
+        merges.push({ s:{r:startRow,c:0}, e:{r:endRow,c:0} }); // 日期（涵蓋小計列＋全部明細列）
+        merges.push({ s:{r:startRow,c:1}, e:{r:endRow,c:1} }); // 活動
+        merges.push({ s:{r:startRow,c:10}, e:{r:endRow,c:10} }); // 淨損益
       }
 
       aoa.push(['', '', '', '', '', '', '', '', '', '', '']); // 空白列分隔活動
@@ -2633,25 +2654,33 @@
         if(!ws[addr]) ws[addr] = { t: 's', v: '' }; // 合併範圍內的空白格也要補上樣式，畫面才會一致
         const cell = ws[addr];
         let s = { border, alignment: centerAlign };
+        const isMergedInfoCol = c === 0 || c === 1 || c === 10; // 日期／活動／淨損益：這幾欄合併橫跨小計列＋明細列
 
         if(type === 'header'){
-          s.fill = { patternType: 'solid', fgColor: { rgb: KG_XLSX_COLOR.headerFill } };
+          s.fill = { patternType: 'solid', fgColor: { rgb: KG_XLSX_COLOR.headerFill }, bgColor: { rgb: KG_XLSX_COLOR.headerFill } };
           s.font = { color: { rgb: KG_XLSX_COLOR.headerFont }, bold: true, sz: 11 };
-        }else if(type === 'summary' || type === 'grandtotal'){
-          s.fill = { patternType: 'solid', fgColor: { rgb: KG_XLSX_COLOR.summaryFill } };
+        }else if(type === 'grandtotal'){
+          // 最下面的總計列：整列淺藍底
+          s.fill = { patternType: 'solid', fgColor: { rgb: KG_XLSX_COLOR.summaryFill }, bgColor: { rgb: KG_XLSX_COLOR.summaryFill } };
+          s.font = { bold: true, sz: c===10 ? 12 : 11 };
+        }else if(type === 'summary' && !isMergedInfoCol){
+          // 每場活動的支出/收入小計列，只有支出、收入那兩個區塊上色，日期/活動/淨損益欄留白（因為它們合併橫跨到下面的明細列）
+          s.fill = { patternType: 'solid', fgColor: { rgb: KG_XLSX_COLOR.summaryFill }, bgColor: { rgb: KG_XLSX_COLOR.summaryFill } };
           s.font = { bold: true, sz: 11 };
-        }else if(type === 'detail'){
-          s.fill = { patternType: 'solid', fgColor: { rgb: 'FFFFFF' } };
+        }else{
+          // 明細列，以及小計列裡的日期/活動/淨損益欄：白底
+          s.fill = { patternType: 'solid', fgColor: { rgb: 'FFFFFF' }, bgColor: { rgb: 'FFFFFF' } };
           const isAmountCol = c === 5 || c === 9; // 支出金額 / 收入金額
           const isNetCol = c === 10; // 淨損益
-          if(isAmountCol && cell.v !== ''){
+          if(isAmountCol && type === 'detail' && cell.v !== ''){
             s.font = { color: { rgb: KG_XLSX_COLOR.amountFont }, bold: true, sz: 11 };
           }else if(isNetCol && cell.v !== ''){
             s.font = { color: { rgb: '000000' }, bold: true, sz: 12 };
           }else{
             s.font = { color: { rgb: '000000' }, sz: 11 };
           }
-        }else{
+        }
+        if(type === 'blank'){
           // 空白分隔列：不畫框線，保持乾淨
           s = {};
         }
