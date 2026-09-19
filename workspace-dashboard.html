@@ -610,7 +610,7 @@
   }
 
   /* ============ 喜劇開港・活動財務模組 ============ */
-  .kg-tabs{ display: flex; gap: 8px; margin-bottom: 20px; }
+  .kg-tabs{ display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
   .kg-tab{
     font-family: 'Noto Sans TC', sans-serif;
     font-size: 13px;
@@ -655,7 +655,9 @@
     padding: 16px 18px; cursor: pointer; transition: border-color .15s ease;
   }
   .kg-event-card:hover{ border-color: var(--seal); }
-  .kg-table{ width: 100%; border-collapse: collapse; font-size: 13px; }
+  #kgTxTableWrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .kg-table-scroll{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .kg-table{ width: 100%; min-width: 560px; border-collapse: collapse; font-size: 13px; }
   .kg-table th{ padding: 6px 4px; font-weight: 400; color: var(--ink-soft); text-align: left; }
   .kg-table th.r, .kg-table td.r{ text-align: right; }
   .kg-table td{ padding: 8px 4px; border-top: 1px solid var(--line); color: var(--ink); }
@@ -697,17 +699,22 @@
   }
 
   @media (max-width: 880px){
-    .app{ grid-template-columns: 1fr; }
-    .sidebar{ flex-direction: row; overflow-x: auto; overflow-y: visible; height: auto; padding: 14px 16px; gap: 16px; align-items: center; }
-    nav{ flex-direction: row; }
+    html, body{ overflow-x: hidden; max-width: 100vw; }
+    .app{ grid-template-columns: 1fr; overflow-x: hidden; max-width: 100vw; }
+    .sidebar{ flex-direction: row; flex-wrap: wrap; overflow-x: hidden; overflow-y: visible; height: auto; padding: 12px 14px; gap: 10px 14px; align-items: center; position: sticky; top: 0; z-index: 10; }
+    nav{ flex-direction: row; flex-wrap: wrap; gap: 4px 10px; }
+    .nav-item{ padding: 6px 8px; font-size: 12.5px; }
+    .nav-section-label{ display: none; } /* 手機上空間有限，隱藏這個純裝飾的分組標題 */
     .sidebar-foot{ margin-top: 0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
     .sidebar-foot-time{ display: none; }
     .sidebar-foot .nav-item{ margin-top: 0 !important; white-space: nowrap; }
-    main{ padding: 22px 18px 40px; }
+    main{ padding: 18px 14px 40px; overflow-x: hidden; max-width: 100vw; box-sizing: border-box; }
     .grid-2, .grid-3{ grid-template-columns: 1fr; }
     .cal-wrap{ grid-template-columns: 1fr; }
     .top{ flex-direction: column; }
     .quote{ text-align: left; }
+    .add-form{ flex-wrap: wrap; }
+    .kg-metric-card{ flex: 1 1 calc(50% - 6px); }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -1041,6 +1048,8 @@
   };
   firebase.initializeApp(firebaseConfig);
   const fbAuth = firebase.auth();
+  // 關閉分頁／瀏覽器後就不再自動保持登入，下次打開一定要重新輸入帳號密碼
+  fbAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
   const fbDb = firebase.firestore();
 
   let currentUser = null;
@@ -2776,7 +2785,7 @@
       </div>
       ${monthEvents.length === 0
         ? '<div class="card"><div class="empty-state">此月份沒有活動紀錄</div></div>'
-        : `<div class="card"><table class="kg-table">
+        : `<div class="card"><div class="kg-table-scroll"><table class="kg-table">
             <thead><tr><th>活動</th><th>狀態</th><th class="r">支出</th><th class="r">收入</th><th class="r">淨損益</th></tr></thead>
             <tbody>
               ${monthEvents.map(ev=>{
@@ -2790,7 +2799,7 @@
                 </tr>`;
               }).join('')}
             </tbody>
-          </table></div>`}`;
+          </table></div></div>`}`;
 
     el.querySelector('#kgReportMonth').addEventListener('change', (e)=>{
       el.dataset.month = e.target.value;
