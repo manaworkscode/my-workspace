@@ -1949,6 +1949,10 @@
     gcalBtn.classList.toggle('connected', connected);
     gcalBtnText.textContent = connected ? '已連接 Google 日曆' : '連接 Google 日曆';
     document.getElementById('gcalChooseCalBtn').style.display = connected ? 'inline-flex' : 'none';
+    // 已經連接 Google 的情況下，「新增行程」的『同步到 Google』預設打勾，
+    // 不然使用者連好帳號卻忘記勾選，新增的行程就只會存在本機、Google 日曆完全看不到（這是之前反映「沒有同步」最常見的原因）
+    const syncBox = document.getElementById('evAddSyncGoogle');
+    if(syncBox) syncBox.checked = connected;
   }
 
   function initGoogleAuth(){
