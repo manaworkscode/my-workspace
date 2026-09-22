@@ -802,7 +802,7 @@
           <div class="greet-name" id="greetName"></div>
           <div class="greet-date" id="greetDate"></div>
         </div>
-        <div class="quote">把每天的第一眼,留給最重要的事。</div>
+        <div class="quote" id="dailyQuote"></div>
       </div>
 
       <div class="card" style="margin-bottom:16px;">
@@ -1294,7 +1294,31 @@
   /* ================= 共用資料與渲染 ================= */
   let dashboardInitialized = false;
   let googleEvents = []; // 從 Google 日曆抓回來的行程（唯讀，不能在此編輯／刪除）
-  let gAccessToken = sessionStorage.getItem('gcal_access_token') || null;
+  // Google 的授權token（GIS token client）本身就沒有 refresh token，最長只能撐約 1 小時，
+  // 到期後一定要使用者重新點一次「連接 Google 日曆」授權，這是 Google 這種串接方式的限制、無法完全避免。
+  // 但至少改存在 localStorage（而不是分頁一關就清空的 sessionStorage），
+  // 這樣只要 token 還沒過期，即使把分頁或瀏覽器關掉重開，也不用整個重新連接。
+  function loadStoredGoogleToken(){
+    try{
+      const token = localStorage.getItem('gcal_access_token');
+      const expiresAt = Number(localStorage.getItem('gcal_token_expires_at') || 0);
+      if(token && expiresAt && Date.now() < expiresAt) return token;
+    }catch(e){}
+    // 沒有效的 token 就順手清掉舊資料，避免下次誤判
+    try{ localStorage.removeItem('gcal_access_token'); localStorage.removeItem('gcal_token_expires_at'); }catch(e){}
+    return null;
+  }
+  function storeGoogleToken(token, expiresInSeconds){
+    try{
+      localStorage.setItem('gcal_access_token', token);
+      const expiresAt = Date.now() + (Number(expiresInSeconds || 3600) * 1000) - 60000; // 提早 1 分鐘視為過期，避免邊界問題
+      localStorage.setItem('gcal_token_expires_at', String(expiresAt));
+    }catch(e){}
+  }
+  function clearStoredGoogleToken(){
+    try{ localStorage.removeItem('gcal_access_token'); localStorage.removeItem('gcal_token_expires_at'); }catch(e){}
+  }
+  let gAccessToken = loadStoredGoogleToken();
   let tokenClient = null;
   let selectedCalendarIds = null; // null = 尚未選過，預設抓 Google 裡「有勾選顯示」的日曆；設定過後存陣列
   let googleWriteCalendarId = null; // null = 預設寫入「主要日曆」；設定過後存日曆 ID，新增行程會寫進這個日曆
@@ -1850,6 +1874,15 @@
       });
     });
     el.querySelectorAll('[data-note-input]').forEach(ta=>{
+      // 備註欄位在可拖曳的整列裡面，滑鼠一碰到備註就先關掉整列的 draggable，
+      // 這樣選字／點擊游標定位都不會被誤判成拖曳排序；離開備註欄位再恢復可拖曳
+      const row = ta.closest('[data-drag-todo]');
+      const disableDrag = ()=>{ if(row) row.draggable = false; };
+      const enableDrag = ()=>{ if(row) row.draggable = true; };
+      ta.addEventListener('mousedown', disableDrag);
+      ta.addEventListener('touchstart', disableDrag, { passive: true });
+      ta.addEventListener('focus', disableDrag);
+      ta.addEventListener('blur', enableDrag);
       ta.addEventListener('input', ()=>{
         const t = todos.find(x=>x.id === ta.dataset.noteInput);
         if(!t) return;
@@ -1937,7 +1970,7 @@
           return;
         }
         gAccessToken = resp.access_token;
-        sessionStorage.setItem('gcal_access_token', gAccessToken);
+        storeGoogleToken(gAccessToken, resp.expires_in);
         updateGcalButton(true);
         fetchGoogleEvents();
         renderEvAddCalendarLabel();
@@ -1973,8 +2006,9 @@
     });
     if(res.status === 401 || res.status === 403){
       gAccessToken = null;
-      sessionStorage.removeItem('gcal_access_token');
+      clearStoredGoogleToken();
       updateGcalButton(false);
+      document.getElementById('gcalCalendarPicker').style.display = 'none';
       setGcalStatus('權限不足或登入逾期，請重新點一次「連接 Google 日曆」重新授權。');
       throw new Error('unauthorized');
     }
@@ -2240,7 +2274,14 @@
       if(kgOverviewMonthFilter && ev.date.slice(0,7) !== kgOverviewMonthFilter) return false;
       return true;
     });
-    const totals = kgSumTotals(filtered);
+    // 總覽金額只計入「已結束／已結案」的活動：籌備中／進行中的活動款項還沒確定，
+    // 算進總額會不準，所以金額卡片固定只統計已結束＋已結案（不受上面狀態篩選鈕影響，只受月份篩選影響）
+    const settledEvents = kgEvents.filter(ev => {
+      if(ev.status !== 'ended' && ev.status !== 'completed') return false;
+      if(kgOverviewMonthFilter && ev.date.slice(0,7) !== kgOverviewMonthFilter) return false;
+      return true;
+    });
+    const totals = kgSumTotals(settledEvents);
     const netActual = totals.actualIncome - totals.actualExpense;
     let html = `
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
@@ -2256,7 +2297,8 @@
         ${kgMetricCard('總支出', kgFmt(totals.actualExpense))}
         ${kgMetricCard('總收入', kgFmt(totals.actualIncome))}
         ${kgMetricCard('淨損益', (netActual>=0?'+':'')+kgFmt(netActual), netActual>=0?'pos':'neg')}
-      </div>`;
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-faint);margin:-8px 0 14px;">※ 金額僅計入「已結束／已結案」的活動，籌備中／進行中的款項尚未確定，不列入統計</div>`;
     if(filtered.length === 0){
       html += `<div class="card"><div class="empty-state">${kgEvents.length===0 ? '還沒有任何活動，切換到「活動」新增一場吧。' : '這個篩選條件下沒有活動。'}</div></div>`;
     }else{
@@ -2819,6 +2861,22 @@
     return "晚安";
   }
 
+  /* 嵐（ARASHI）成員曾經說過的話，整理自公開訪談與媒體報導後意譯，
+     每天依日期固定輪播一句（同一天重新整理頁面看到的都會是同一句）。 */
+  const ARASHI_QUOTES = [
+    { text: "自己就是自己，如果因為別人怎樣、自己也要跟著怎樣，那只會讓人更疲憊而已。", member: "大野智" },
+    { text: "想珍惜每一個能為身邊的人帶來笑容的瞬間。", member: "櫻井翔" },
+    { text: "正因為喜歡嵐、想繼續留在嵐裡，才覺得沒有其他的人生可以選擇。", member: "相葉雅紀" },
+    { text: "如果嵐會被討厭，那就讓早就習慣被討厭的我來當那個角色吧，討厭我一個人扛就夠了。", member: "二宮和也" },
+    { text: "人生不會事事順利，但只要願意接受這件事，就能從中獲得真正屬於自己的經驗。", member: "松本潤" },
+  ];
+  function todayArashiQuote(){
+    const now = new Date();
+    const dayIndex = Math.floor(now.getTime() / 86400000); // 以日期為單位輪播，同一天固定同一句
+    const q = ARASHI_QUOTES[dayIndex % ARASHI_QUOTES.length];
+    return `「${q.text}」－ ${q.member}`;
+  }
+
   function refreshGreeting(){
     const now = new Date();
     document.getElementById('greetName').textContent = `${greetingWord(now.getHours())}，${getDisplayName()} 👋`;
@@ -2828,6 +2886,8 @@
     document.getElementById('lastUpdate').textContent = now.toTimeString().slice(0,5);
     document.getElementById('settingsLoginUser').textContent = currentUser ? usernameFromUser(currentUser) : '';
     document.getElementById('settingsNameInput').value = getDisplayName();
+    const quoteEl = document.getElementById('dailyQuote');
+    if(quoteEl) quoteEl.textContent = todayArashiQuote();
   }
 
   function initDashboard(){
