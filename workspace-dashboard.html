@@ -902,7 +902,7 @@
         </div>
 
         <div class="card upcoming-card">
-          <div class="card-head"><div class="card-title">📌 所有行程</div></div>
+          <div class="card-head"><div class="card-title" id="upcomingListTitle">📌 所有行程</div></div>
           <div id="upcomingList"></div>
         </div>
       </div>
@@ -1390,9 +1390,16 @@
   function renderEventList(){
     const now = new Date(); now.setHours(0,0,0,0);
     const el = document.getElementById('upcomingList');
-    const all = allEvents().sort((a,b)=>a.date-b.date).slice(0,100);
+    // 只顯示行事曆目前切換到的那個月份的行程，不同月份要按「‹ ›」切換月份才會顯示
+    const viewYear = calendarViewDate.getFullYear();
+    const viewMonth = calendarViewDate.getMonth();
+    const titleEl = document.getElementById('upcomingListTitle');
+    if(titleEl) titleEl.textContent = `📌 ${viewYear}年${viewMonth+1}月 行程`;
+    const all = allEvents()
+      .filter(e => e.date.getFullYear() === viewYear && e.date.getMonth() === viewMonth)
+      .sort((a,b)=>a.date-b.date);
     el.innerHTML = all.length === 0
-      ? '<div class="empty-state">還沒有任何行程</div>'
+      ? '<div class="empty-state">這個月還沒有任何行程</div>'
       : all.map(e => {
         const isGoogle = !!e.googleId;
         const isPast = e.date < now;
