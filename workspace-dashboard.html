@@ -655,13 +655,25 @@
     padding: 16px 18px; cursor: pointer; transition: border-color .15s ease;
   }
   .kg-event-card:hover{ border-color: var(--seal); }
-  #kgTxTableWrap{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .kg-table-scroll{ overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .kg-table{ width: 100%; min-width: 560px; border-collapse: collapse; font-size: 13px; }
   .kg-table th{ padding: 6px 4px; font-weight: 400; color: var(--ink-soft); text-align: left; }
   .kg-table th.r, .kg-table td.r{ text-align: right; }
   .kg-table td{ padding: 8px 4px; border-top: 1px solid var(--line); color: var(--ink); }
   .kg-table tr:first-child td{ border-top: none; }
+
+  /* 點名稱展開細項的清單（取代左右滑動的表格）：收支明細、月報表活動明細都用這個 */
+  .kg-list-item{ border-top: 1px solid var(--line); }
+  .kg-list-item:first-child{ border-top: none; }
+  .kg-list-row{ display: flex; align-items: center; gap: 10px; padding: 11px 2px; cursor: pointer; user-select: none; }
+  .kg-list-row-main{ flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .kg-list-row-title{ font-size: 13.5px; color: var(--ink); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .kg-list-row-sub{ font-size: 11.5px; color: var(--ink-soft); }
+  .kg-list-row-amount{ font-size: 13.5px; text-align: right; white-space: nowrap; flex-shrink: 0; }
+  .kg-list-chev{ color: var(--ink-faint); font-size: 11px; flex-shrink: 0; transition: transform .15s ease; }
+  .kg-list-row.open .kg-list-chev{ transform: rotate(90deg); }
+  .kg-list-detail{ padding: 0 2px 14px 2px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.8; }
+  .kg-list-detail-line{ display: flex; justify-content: space-between; gap: 10px; }
 
   .ai-preview-row{
     display: flex;
@@ -698,17 +710,55 @@
     border-top: 1px dashed var(--line);
   }
 
+  /* 手機版：選單收合成左側可滑出的抽屜選單，用左上角的 ☰ 按鈕開關 */
+  .mobile-menu-btn{
+    display: none;
+    position: fixed;
+    top: 12px; left: 14px;
+    z-index: 220;
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: var(--navy);
+    color: #fff;
+    font-size: 18px;
+    align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  .mobile-nav-overlay{
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 190;
+  }
+  .mobile-nav-overlay.open{ display: block; }
+
   @media (max-width: 880px){
     html, body{ overflow-x: hidden; max-width: 100vw; }
     .app{ grid-template-columns: 1fr; overflow-x: hidden; max-width: 100vw; }
-    .sidebar{ flex-direction: row; flex-wrap: wrap; overflow-x: hidden; overflow-y: visible; height: auto; padding: 12px 14px; gap: 10px 14px; align-items: center; position: sticky; top: 0; z-index: 10; }
-    nav{ flex-direction: row; flex-wrap: wrap; gap: 4px 10px; }
-    .nav-item{ padding: 6px 8px; font-size: 12.5px; }
-    .nav-section-label{ display: none; } /* 手機上空間有限，隱藏這個純裝飾的分組標題 */
-    .sidebar-foot{ margin-top: 0; display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-    .sidebar-foot-time{ display: none; }
-    .sidebar-foot .nav-item{ margin-top: 0 !important; white-space: nowrap; }
-    main{ padding: 18px 14px 40px; overflow-x: hidden; max-width: 100vw; box-sizing: border-box; }
+    .mobile-menu-btn{ display: flex; }
+    .sidebar{
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      width: 240px;
+      max-width: 78vw;
+      padding: 20px 16px;
+      overflow-y: auto;
+      z-index: 200;
+      transform: translateX(-100%);
+      transition: transform .22s ease;
+      box-shadow: 2px 0 16px rgba(0,0,0,0.25);
+    }
+    .sidebar.open{ transform: translateX(0); }
+    nav{ flex-direction: column; gap: 2px; }
+    .nav-item{ padding: 9px 10px; font-size: 13.5px; }
+    .nav-section-label{ display: block; }
+    .sidebar-foot{ margin-top: auto; display: block; }
+    .sidebar-foot-time{ display: block; }
+    .sidebar-foot .nav-item{ white-space: normal; }
+    main{ padding: 64px 14px 40px; overflow-x: hidden; max-width: 100vw; box-sizing: border-box; }
     .grid-2, .grid-3{ grid-template-columns: 1fr; }
     .cal-wrap{ grid-template-columns: 1fr; }
     .top{ flex-direction: column; }
@@ -729,7 +779,7 @@
 <div id="authOverlay">
   <div class="auth-card">
     <div class="auth-seal" id="authSealIcon">M</div>
-    <div class="auth-title" id="authTitle">mana work-space</div>
+    <div class="auth-title" id="authTitle">Manaworkspace</div>
     <div class="auth-sub" id="authSub">輸入帳號密碼，進入你的工作台</div>
 
     <div id="loginForm">
@@ -770,20 +820,21 @@
 
 <!-- ================= APP ================= -->
 <div id="appRoot" class="locked">
+<button class="mobile-menu-btn" id="mobileMenuBtn" title="選單" aria-label="開啟選單">☰</button>
+<div class="mobile-nav-overlay" id="mobileNavOverlay"></div>
 <div class="app">
-  <aside class="sidebar">
+  <aside class="sidebar" id="appSidebar">
     <div class="brand">
       <div class="brand-seal">工</div>
       <div>
-        <div class="brand-name">我的工作台</div>
+        <div class="brand-name">Manaworkspace</div>
         <div class="brand-sub">WORKSPACE</div>
       </div>
     </div>
     <nav>
       <div class="nav-item active" data-view="home"><span class="nav-icon">🏠</span>首頁</div>
-      <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span>專案排程</div>
+      <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span>專案進度</div>
       <div class="nav-item" data-view="calendar"><span class="nav-icon">📅</span>行事曆</div>
-      <div class="nav-item" data-view="todos"><span class="nav-icon">✅</span>待辦清單</div>
       <div class="nav-section-label">喜劇開港</div>
       <div class="nav-item" data-view="kaigang"><span class="nav-icon">⚓</span>財務管理</div>
     </nav>
@@ -819,21 +870,21 @@
       </div>
     </div>
 
-    <!-- ========== 專案排程 ========== -->
+    <!-- ========== 專案排程與待辦清單（合併成一頁） ========== -->
     <div class="view" id="view-projects">
       <div class="page-head">
-        <div class="page-title">專案排程</div>
-        <div class="page-sub">新增、更新進度或刪除專案</div>
+        <div class="page-title">專案進度</div>
+        <div class="page-sub"><span id="todoCount"></span></div>
       </div>
 
       <div class="add-form">
-        <input class="f-name" id="projAddName" type="text" placeholder="專案名稱">
-        <input class="f-num" id="projAddPct" type="number" min="0" max="100" placeholder="進度 %">
-        <button class="add-form-btn" id="projAddBtn">新增專案</button>
+        <input class="f-name" id="todoAddLabel" type="text" placeholder="項目名稱" style="flex:1;">
+        <input class="f-num" id="todoAddPct" type="number" min="0" max="100" placeholder="進度 %">
+        <button class="add-form-btn" id="todoAddBtn">新增</button>
       </div>
 
       <div class="card">
-        <div id="projList"></div>
+        <div id="todoList"></div>
       </div>
     </div>
 
@@ -860,13 +911,8 @@
         </label>
         <button class="add-form-btn" id="evAddBtn">新增行程</button>
       </div>
-      <div style="font-size:11.5px;color:var(--ink-soft);margin:-8px 0 16px 4px;">選了範本後，會用上面的日期當基準，直接展開整套規則行程；標籤與行程名稱欄位會被範本內容取代。</div>
-
       <div class="card" style="margin-bottom:16px;">
         <div class="card-head"><div class="card-title">🎯 活動規則範本管理</div></div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
-          在這裡設定範本內容（例如活動前 30 天定案、前 14 天報名貼文上線），設定好之後，上方「新增行程」選好範本即可直接套用。
-        </div>
 
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
           <select class="f-tag" id="ruleTemplateSelect" style="min-width:160px;"></select>
@@ -908,23 +954,6 @@
       </div>
     </div>
 
-    <!-- ========== 待辦清單 ========== -->
-    <div class="view" id="view-todos">
-      <div class="page-head">
-        <div class="page-title">待辦清單</div>
-        <div class="page-sub"><span id="todoCount"></span></div>
-      </div>
-
-      <div class="add-form">
-        <input class="f-name" id="todoAddLabel" type="text" placeholder="待辦事項" style="flex:1;">
-        <button class="add-form-btn" id="todoAddBtn">新增待辦</button>
-      </div>
-
-      <div class="card">
-        <div id="todoList"></div>
-      </div>
-    </div>
-
     <!-- ========== 財務管理（喜劇開港） ========== -->
     <div class="view" id="view-kaigang">
       <div class="page-head">
@@ -951,16 +980,28 @@
         <div class="page-sub">調整工作台的顯示名稱</div>
       </div>
 
-      <div class="card" style="max-width:420px;">
-        <div class="card-head"><div class="card-title">👤 顯示名稱</div></div>
-        <div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px;line-height:1.6;">
-          首頁問候語顯示的名字，跟登入帳號（<span id="settingsLoginUser" class="mono"></span>）是分開的，只是給自己看的稱呼，可以隨意取。
-        </div>
-        <div class="add-form" style="margin-bottom:0;">
-          <input class="f-name" id="settingsNameInput" type="text" placeholder="輸入你想顯示的名字">
-          <button class="add-form-btn" id="settingsNameSaveBtn">儲存</button>
-        </div>
-        <div class="gcal-status" id="settingsNameStatus" style="margin-top:10px;"></div>
+      <div class="card-head" style="margin-bottom:12px;">
+        <div class="card-title">👤 顯示名稱</div>
+      </div>
+      <div class="add-form">
+        <input class="f-name" id="settingsNameInput" type="text" placeholder="輸入你想顯示的名字" style="max-width:220px;flex:none;">
+        <button class="add-form-btn" id="settingsNameSaveBtn">儲存</button>
+      </div>
+      <div id="settingsNameStatus" class="gcal-status" style="margin:8px 0 20px 4px;"></div>
+
+      <div class="card-head" style="margin-bottom:12px;">
+        <div class="card-title">📝 每日一句</div>
+      </div>
+      <div class="add-form">
+        <input class="f-name" id="quoteAddText" type="text" placeholder="句子內容">
+        <input class="f-name" id="quoteAddMember" type="text" placeholder="署名（選填，例如作者）" style="max-width:160px;">
+        <button class="add-form-btn" id="quoteAddBtn">新增</button>
+      </div>
+
+      <div class="kg-tabs" id="quoteMemberFilterTabs" style="margin-bottom:14px;"></div>
+
+      <div class="card">
+        <div id="quoteList"></div>
       </div>
     </div>
   </main>
@@ -982,10 +1023,10 @@
   }
   function defaultTodos(){
     return [
-      { id: "t1", label: "整理本週工作紀錄", done: false, content: "" },
-      { id: "t2", label: "回覆客戶提案信件", done: false, content: "" },
-      { id: "t3", label: "預約健康檢查", done: true, content: "" },
-      { id: "t4", label: "備份筆電資料", done: false, content: "" },
+      { id: "t1", label: "整理本週工作紀錄", done: false, content: "", pct: 40 },
+      { id: "t2", label: "回覆客戶提案信件", done: false, content: "", pct: 0 },
+      { id: "t3", label: "預約健康檢查", done: true, content: "", pct: 100 },
+      { id: "t4", label: "備份筆電資料", done: false, content: "", pct: 20 },
     ];
   }
   function defaultProjects(){
@@ -1112,6 +1153,7 @@
         kgEvents, kgTransactions,
         selectedCalendarIds,
         googleWriteCalendarId,
+        dailyQuotes,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
     }catch(err){
@@ -1133,6 +1175,7 @@
         kgTransactions = d.kgTransactions || kgSeedTx();
         selectedCalendarIds = d.selectedCalendarIds || null;
         googleWriteCalendarId = d.googleWriteCalendarId || null;
+        dailyQuotes = (d.dailyQuotes && d.dailyQuotes.length) ? d.dailyQuotes : defaultDailyQuotes();
       }else{
         // 第一次登入的新帳號：套用預設示範資料，並立刻存一份到雲端
         displayNameValue = '';
@@ -1142,6 +1185,7 @@
         activityRules = defaultActivityRules();
         kgEvents = kgSeedEvents();
         kgTransactions = kgSeedTx();
+        dailyQuotes = defaultDailyQuotes();
         await saveUserData();
       }
       currentRuleTemplateId = activityRules[0] ? activityRules[0].id : null;
@@ -1155,6 +1199,7 @@
       activityRules = defaultActivityRules();
       kgEvents = kgSeedEvents();
       kgTransactions = kgSeedTx();
+      dailyQuotes = defaultDailyQuotes();
       currentRuleTemplateId = activityRules[0].id;
     }
   }
@@ -1175,7 +1220,7 @@
   function showLogin(){
     setupForm.style.display = 'none';
     loginForm.style.display = 'block';
-    authTitle.textContent = 'mana work-space';
+    authTitle.textContent = 'Manaworkspace';
     authSub.textContent = '輸入帳號密碼，進入你的工作台';
   }
 
@@ -1261,12 +1306,12 @@
       document.getElementById('setupError').textContent = '';
       await loadUserData(user.uid);
       dataLoadedOnce = true;
-      renderProjects();
       renderTodos();
       renderRuleTemplateSelect();
       renderRuleItems();
       renderAllEvents();
       kgRenderOverview();
+      renderQuoteSettings();
       refreshGreeting();
       enterApp();
     }else{
@@ -1290,6 +1335,24 @@
   document.querySelectorAll('.nav-item').forEach(n=>{
     n.addEventListener('click', ()=> switchView(n.dataset.view));
   });
+
+  /* ---- 手機版左側抽屜選單開關 ---- */
+  (function(){
+    const sidebarEl = document.getElementById('appSidebar');
+    const menuBtn = document.getElementById('mobileMenuBtn');
+    const overlay = document.getElementById('mobileNavOverlay');
+    if(!sidebarEl || !menuBtn || !overlay) return;
+    function openMenu(){ sidebarEl.classList.add('open'); overlay.classList.add('open'); }
+    function closeMenu(){ sidebarEl.classList.remove('open'); overlay.classList.remove('open'); }
+    menuBtn.addEventListener('click', ()=>{
+      sidebarEl.classList.contains('open') ? closeMenu() : openMenu();
+    });
+    overlay.addEventListener('click', closeMenu);
+    // 點選單項目後（手機上）自動收合選單，才不會擋住畫面
+    sidebarEl.querySelectorAll('.nav-item').forEach(n=>{
+      n.addEventListener('click', closeMenu);
+    });
+  })();
 
   /* ================= 共用資料與渲染 ================= */
   let dashboardInitialized = false;
@@ -1708,97 +1771,7 @@
     renderRuleItems();
   });
 
-  /* ================= 專案排程：新增／編輯／刪除 ================= */
-  let editingProjId = null;
-
-  function renderProjects(){
-    scheduleCloudSave();
-    const el = document.getElementById('projList');
-    el.innerHTML = projects.length === 0
-      ? '<div class="empty-state">還沒有任何專案，新增一個吧</div>'
-      : projects.map(p => {
-        const isEditing = editingProjId === p.id;
-        return `
-        <div class="proj-list-row" style="margin-bottom:14px;">
-          <div class="proj-row">
-            <div class="proj-top">
-              ${isEditing
-                ? `<input type="text" data-proj-edit-name="${p.id}" value="${p.name.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--ink);outline:none;">
-                   <input type="number" data-proj-edit-pct="${p.id}" value="${p.pct}" min="0" max="100" style="width:60px;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:4px 8px;background:var(--surface);color:var(--ink);outline:none;">`
-                : `<span class="proj-name">${p.name}</span><span class="proj-pct">${p.pct}%</span>`
-              }
-            </div>
-            <div class="bar-track"><div class="bar-fill" style="width:${p.pct}%"></div></div>
-          </div>
-          <div class="item-actions">
-            ${isEditing ? `
-              <button class="icon-btn" data-save-proj="${p.id}" title="儲存">✓</button>
-              <button class="icon-btn" data-cancel-proj="${p.id}" title="取消">✕</button>
-            ` : `
-              <button class="icon-btn" data-edit-proj="${p.id}" title="編輯">✎</button>
-              <button class="icon-btn danger" data-del-proj="${p.id}" title="刪除">✕</button>
-            `}
-          </div>
-        </div>`;
-      }).join('');
-
-    el.querySelectorAll('[data-edit-proj]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        editingProjId = btn.dataset.editProj;
-        renderProjects();
-        const input = el.querySelector(`[data-proj-edit-name="${editingProjId}"]`);
-        if(input){ input.focus(); input.select(); }
-      });
-    });
-    function commitProjEdit(id){
-      const p = projects.find(x=>x.id===id);
-      const nameInput = el.querySelector(`[data-proj-edit-name="${id}"]`);
-      const pctInput = el.querySelector(`[data-proj-edit-pct="${id}"]`);
-      if(p){
-        if(nameInput && nameInput.value.trim()) p.name = nameInput.value.trim();
-        if(pctInput){
-          const n = parseInt(pctInput.value, 10);
-          if(!isNaN(n)) p.pct = Math.max(0, Math.min(100, n));
-        }
-      }
-      editingProjId = null;
-      renderProjects();
-    }
-    el.querySelectorAll('[data-save-proj]').forEach(btn=>{
-      btn.addEventListener('click', ()=> commitProjEdit(btn.dataset.saveProj));
-    });
-    el.querySelectorAll('[data-cancel-proj]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{ editingProjId = null; renderProjects(); });
-    });
-    el.querySelectorAll('[data-proj-edit-name], [data-proj-edit-pct]').forEach(input=>{
-      input.addEventListener('keydown', e=>{
-        const id = input.dataset.projEditName || input.dataset.projEditPct;
-        if(e.key === 'Enter') commitProjEdit(id);
-        if(e.key === 'Escape'){ editingProjId = null; renderProjects(); }
-      });
-    });
-    el.querySelectorAll('[data-del-proj]').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        if(!confirm('確定要刪除這個專案嗎？')) return;
-        projects = projects.filter(x=>x.id !== btn.dataset.delProj);
-        renderProjects();
-      });
-    });
-  }
-  document.getElementById('projAddBtn').addEventListener('click', ()=>{
-    const nameEl = document.getElementById('projAddName');
-    const pctEl = document.getElementById('projAddPct');
-    const name = nameEl.value.trim();
-    let pct = parseInt(pctEl.value, 10);
-    if(!name){ return; }
-    if(isNaN(pct)) pct = 0;
-    pct = Math.max(0, Math.min(100, pct));
-    projects.push({ id: newId('p'), name, pct });
-    nameEl.value = ''; pctEl.value = '';
-    renderProjects();
-  });
-
-  /* ================= 待辦清單：新增／編輯／刪除／打勾 ================= */
+  /* ================= 待辦清單（＝專案進度）：新增／編輯／刪除／打勾 ================= */
   let expandedTodoNotes = {}; // 記住哪些待辦事項目前展開備註（純畫面狀態，不用存雲端）
   let editingTodoId = null; // 目前正在直接編輯欄位的待辦事項
 
@@ -1810,14 +1783,16 @@
       : todos.map((t, i) => {
         const isEditing = editingTodoId === t.id;
         const isNoteOpen = !!expandedTodoNotes[t.id];
+        const pct = Math.max(0, Math.min(100, Number(t.pct) || 0));
         return `
         <div class="full-todo-item" draggable="true" data-drag-todo="${t.id}" style="flex-direction:column;align-items:stretch;gap:6px;cursor:grab;">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;" title="拖曳排序">⠿</span>
             <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
             ${isEditing
-              ? `<input type="text" data-todo-edit-input="${t.id}" value="${t.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">`
-              : `<span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>`
+              ? `<input type="text" data-todo-edit-input="${t.id}" value="${t.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">
+                 <input type="number" data-todo-edit-pct="${t.id}" value="${pct}" min="0" max="100" style="width:64px;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">`
+              : `<span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span><span class="proj-pct">${pct}%</span>`
             }
             <div class="item-actions">
               ${isEditing ? `
@@ -1830,6 +1805,7 @@
               `}
             </div>
           </div>
+          <div class="bar-track" style="margin-left:32px;"><div class="bar-fill" style="width:${pct}%"></div></div>
           ${isNoteOpen
             ? `<textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="6" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.6;border:1px solid var(--gold);border-radius:8px;padding:10px 12px;background:var(--surface);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>`
             : ''
@@ -1907,8 +1883,13 @@
     });
     function commitTodoEdit(id){
       const input = el.querySelector(`[data-todo-edit-input="${id}"]`);
+      const pctInput = el.querySelector(`[data-todo-edit-pct="${id}"]`);
       const t = todos.find(x=>x.id===id);
       if(input && t && input.value.trim()) t.label = input.value.trim();
+      if(pctInput && t){
+        const n = parseInt(pctInput.value, 10);
+        if(!isNaN(n)) t.pct = Math.max(0, Math.min(100, n));
+      }
       editingTodoId = null;
       renderTodos();
     }
@@ -1918,9 +1899,10 @@
     el.querySelectorAll('[data-cancel-todo]').forEach(btn=>{
       btn.addEventListener('click', ()=>{ editingTodoId = null; renderTodos(); });
     });
-    el.querySelectorAll('[data-todo-edit-input]').forEach(input=>{
+    el.querySelectorAll('[data-todo-edit-input], [data-todo-edit-pct]').forEach(input=>{
       input.addEventListener('keydown', e=>{
-        if(e.key === 'Enter') commitTodoEdit(input.dataset.todoEditInput);
+        const id = input.dataset.todoEditInput || input.dataset.todoEditPct;
+        if(e.key === 'Enter') commitTodoEdit(id);
         if(e.key === 'Escape'){ editingTodoId = null; renderTodos(); }
       });
     });
@@ -1935,10 +1917,14 @@
   }
   document.getElementById('todoAddBtn').addEventListener('click', ()=>{
     const labelEl = document.getElementById('todoAddLabel');
+    const pctEl = document.getElementById('todoAddPct');
     const label = labelEl.value.trim();
     if(!label){ return; }
-    todos.push({ id: newId('t'), label, done: false, content: '' });
-    labelEl.value = '';
+    let pct = parseInt(pctEl.value, 10);
+    if(isNaN(pct)) pct = 0;
+    pct = Math.max(0, Math.min(100, pct));
+    todos.push({ id: newId('t'), label, done: false, content: '', pct });
+    labelEl.value = ''; pctEl.value = '';
     renderTodos();
   });
   document.getElementById('todoAddLabel').addEventListener('keydown', e=>{
@@ -2231,6 +2217,8 @@
   let kgTransactions = [];
   let kgSelectedEventId = null;
   let editingTxId = null;
+  let expandedTxIds = {}; // 收支明細：點名稱展開/收合下方細項用
+  let expandedReportEventIds = {}; // 月報表：點活動名稱展開/收合下方細項用
   let kgCurrentTab = 'overview';
 
   function kgFmt(n){ return 'NT$ ' + Math.round(Number(n)||0).toLocaleString('zh-TW'); }
@@ -2503,61 +2491,78 @@
         tableWrap.innerHTML = '<div class="empty-state">尚無收支紀錄</div>';
         return;
       }
-      tableWrap.innerHTML = `
-        <table class="kg-table">
-          <thead><tr><th>類別</th><th>名稱</th><th>內容</th><th>備註</th><th class="r">金額</th><th></th></tr></thead>
-          <tbody>
-            ${myTxLive().map(t => {
-              const isEditing = editingTxId === t.id;
-              if(isEditing){
-                const opts = kgCategoryOptionsFor(t.type);
-                return `
-              <tr>
-                <td>
-                  <select data-tx-edit-type="${t.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 4px;background:var(--surface);color:var(--ink);">
+      // 點類別名稱展開/收合下方細項（內容、備註、操作），不用左右滑動的表格
+      tableWrap.innerHTML = myTxLive().map(t => {
+        const isEditing = editingTxId === t.id;
+        const isOpen = isEditing || !!expandedTxIds[t.id];
+        const color = t.type==='income' ? 'var(--teal)' : 'var(--seal)';
+        if(isEditing){
+          const opts = kgCategoryOptionsFor(t.type);
+          return `
+          <div class="kg-list-item" data-kg-tx-item="${t.id}">
+            <div class="kg-list-row open">
+              <div class="kg-list-row-main" style="gap:8px;">
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <select data-tx-edit-type="${t.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:4px 6px;background:var(--surface);color:var(--ink);">
                     <option value="expense" ${t.type==='expense'?'selected':''}>支出</option>
                     <option value="income" ${t.type==='income'?'selected':''}>收入</option>
                   </select>
-                </td>
-                <td>
-                  <select data-tx-edit-category="${t.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 4px;background:var(--surface);color:var(--ink);">
+                  <select data-tx-edit-category="${t.id}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:4px 6px;background:var(--surface);color:var(--ink);flex:1;min-width:100px;">
                     ${opts.map(c=>`<option value="${c}" ${c===t.category?'selected':''}>${c}</option>`).join('')}
                   </select>
-                </td>
-                <td><input type="text" data-tx-edit-content="${t.id}" value="${(t.content||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);"></td>
-                <td><input type="text" data-tx-edit-note="${t.id}" value="${(t.note||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);"></td>
-                <td class="r"><input type="number" data-tx-edit-amount="${t.id}" value="${t.amount}" style="width:90px;box-sizing:border-box;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);text-align:right;"></td>
-                <td class="r">
-                  <div class="item-actions" style="justify-content:flex-end;">
-                    <button class="icon-btn" data-save-tx="${t.id}" title="儲存">✓</button>
-                    <button class="icon-btn" data-cancel-tx="${t.id}" title="取消">✕</button>
-                  </div>
-                </td>
-              </tr>`;
+                </div>
+                <input type="text" data-tx-edit-content="${t.id}" placeholder="內容" value="${(t.content||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;font-size:12.5px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
+                <input type="text" data-tx-edit-note="${t.id}" placeholder="備註" value="${(t.note||'').replace(/"/g,'&quot;')}" style="width:100%;box-sizing:border-box;font-size:12.5px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
+                <input type="number" data-tx-edit-amount="${t.id}" placeholder="金額" value="${t.amount}" style="width:100%;box-sizing:border-box;font-size:12.5px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
+              </div>
+            </div>
+            <div class="kg-list-detail">
+              <div class="item-actions" style="justify-content:flex-end;">
+                <button class="icon-btn" data-save-tx="${t.id}" title="儲存">✓</button>
+                <button class="icon-btn" data-cancel-tx="${t.id}" title="取消">✕</button>
+              </div>
+            </div>
+          </div>`;
+        }
+        return `
+        <div class="kg-list-item" data-kg-tx-item="${t.id}" style="${t.locked ? 'opacity:.85;' : ''}">
+          <div class="kg-list-row ${isOpen ? 'open' : ''}" data-kg-tx-toggle="${t.id}">
+            <div class="kg-list-row-main">
+              <div class="kg-list-row-title">
+                ${t.category}
+                <span style="font-size:11px;color:${color};">・${t.type==='income'?'收入':'支出'}</span>
+                ${t.locked ? '<span style="font-size:10px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:1px 6px;">🔒 已請款</span>' : ''}
+              </div>
+              ${t.content ? `<div class="kg-list-row-sub">${t.content}</div>` : ''}
+            </div>
+            <div class="kg-list-row-amount" style="color:${color};">${t.type==='income'?'+':'-'}${kgFmt(t.amount)}</div>
+            <div class="kg-list-chev">▸</div>
+          </div>
+          ${isOpen ? `
+          <div class="kg-list-detail">
+            <div class="kg-list-detail-line"><span>內容</span><span>${t.content || '—'}</span></div>
+            <div class="kg-list-detail-line"><span>備註</span><span>${t.note || '—'}</span></div>
+            <div class="item-actions" style="justify-content:flex-end;margin-top:8px;">
+              ${t.locked
+                ? `<button class="icon-btn" data-kg-unlock-tx="${t.id}" title="解鎖">🔓</button>`
+                : `<button class="icon-btn" data-kg-lock-tx="${t.id}" title="鎖定（已請款）">🔒</button>
+                   <button class="icon-btn" data-kg-edit-tx="${t.id}" title="編輯">✎</button>
+                   <button class="icon-btn danger" data-kg-del-tx="${t.id}" title="刪除">✕</button>`
               }
-              return `
-              <tr style="${t.locked ? 'opacity:.85;' : ''}">
-                <td style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'收入':'支出'}</td>
-                <td>${t.category}${t.locked ? ' <span style="font-size:10px;color:var(--gold);border:1px solid var(--gold);border-radius:8px;padding:1px 6px;margin-left:4px;">🔒 已請款</span>' : ''}</td>
-                <td style="color:var(--ink-soft);">${t.content || '—'}</td>
-                <td style="color:var(--ink-soft);">${t.note || '—'}</td>
-                <td class="r" style="color:${t.type==='income'?'var(--teal)':'var(--seal)'};">${t.type==='income'?'+':'-'}${kgFmt(t.amount)}</td>
-                <td class="r">
-                  <div class="item-actions" style="justify-content:flex-end;">
-                    ${t.locked
-                      ? `<button class="icon-btn" data-kg-unlock-tx="${t.id}" title="解鎖">🔓</button>`
-                      : `<button class="icon-btn" data-kg-lock-tx="${t.id}" title="鎖定（已請款）">🔒</button>
-                         <button class="icon-btn" data-kg-edit-tx="${t.id}" title="編輯">✎</button>
-                         <button class="icon-btn danger" data-kg-del-tx="${t.id}" title="刪除">✕</button>`
-                    }
-                  </div>
-                </td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>`;
+            </div>
+          </div>` : ''}
+        </div>`;
+      }).join('');
+      tableWrap.querySelectorAll('[data-kg-tx-toggle]').forEach(row=>{
+        row.addEventListener('click', ()=>{
+          const id = row.dataset.kgTxToggle;
+          expandedTxIds[id] = !expandedTxIds[id];
+          renderTxTable();
+        });
+      });
       tableWrap.querySelectorAll('[data-kg-lock-tx]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
           const t = kgTransactions.find(x=>x.id === btn.dataset.kgLockTx);
           if(!t) return;
           if(!confirm('鎖定後這筆紀錄會無法編輯或刪除，代表已經請款完成，確定要鎖定嗎？')) return;
@@ -2567,7 +2572,8 @@
         });
       });
       tableWrap.querySelectorAll('[data-kg-unlock-tx]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
           const t = kgTransactions.find(x=>x.id === btn.dataset.kgUnlockTx);
           if(!t) return;
           if(!confirm('確定要解鎖這筆已請款的紀錄嗎？解鎖後就能再次編輯或刪除。')) return;
@@ -2577,7 +2583,8 @@
         });
       });
       tableWrap.querySelectorAll('[data-kg-edit-tx]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
           const t = kgTransactions.find(x=>x.id === btn.dataset.kgEditTx);
           if(!t || t.locked) return;
           editingTxId = t.id;
@@ -2614,17 +2621,19 @@
         kgRenderEventDetail(el, event);
       }
       tableWrap.querySelectorAll('[data-save-tx]').forEach(btn=>{
-        btn.addEventListener('click', ()=> commitTxEdit(btn.dataset.saveTx));
+        btn.addEventListener('click', (e)=>{ e.stopPropagation(); commitTxEdit(btn.dataset.saveTx); });
       });
       tableWrap.querySelectorAll('[data-cancel-tx]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{ editingTxId = null; renderTxTable(); });
+        btn.addEventListener('click', (e)=>{ e.stopPropagation(); editingTxId = null; renderTxTable(); });
       });
       tableWrap.querySelectorAll('[data-kg-del-tx]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
+        btn.addEventListener('click', (e)=>{
+          e.stopPropagation();
           const t = kgTransactions.find(x=>x.id === btn.dataset.kgDelTx);
           if(!t || t.locked) return;
           if(!confirm('確定要刪除這筆收支紀錄嗎？')) return;
           kgTransactions = kgTransactions.filter(x=>x.id !== btn.dataset.kgDelTx);
+          delete expandedTxIds[btn.dataset.kgDelTx];
           kgSave();
           renderTxTable();
           kgRenderEventDetail(el, event); // 重新整理上方金額統計
@@ -2838,21 +2847,46 @@
       </div>
       ${monthEvents.length === 0
         ? '<div class="card"><div class="empty-state">此月份沒有活動紀錄</div></div>'
-        : `<div class="card"><div class="kg-table-scroll"><table class="kg-table">
-            <thead><tr><th>活動</th><th>狀態</th><th class="r">支出</th><th class="r">收入</th><th class="r">淨損益</th></tr></thead>
-            <tbody>
-              ${monthEvents.map(ev=>{
-                const s = kgEventStats(ev);
-                return `<tr>
-                  <td>${ev.name}</td>
-                  <td class="kg-status ${ev.status}">${KG_STATUS_LABEL[ev.status]}</td>
-                  <td class="r" style="color:var(--ink-soft);">${kgFmt(s.actualExpense)}</td>
-                  <td class="r" style="color:var(--ink-soft);">${kgFmt(s.actualIncome)}</td>
-                  <td class="r" style="color:${s.actualNet>=0?'var(--teal)':'var(--seal)'};">${(s.actualNet>=0?'+':'')+kgFmt(s.actualNet)}</td>
-                </tr>`;
-              }).join('')}
-            </tbody>
-          </table></div></div>`}`;
+        : `<div class="card">${monthEvents.map(ev=>{
+            const s = kgEventStats(ev);
+            const isOpen = !!expandedReportEventIds[ev.id];
+            const tx = kgTransactions.filter(t=>t.eventId === ev.id);
+            const expenses = tx.filter(t=>t.type==='expense');
+            const incomes = tx.filter(t=>t.type==='income');
+            return `
+            <div class="kg-list-item" data-kg-report-item="${ev.id}">
+              <div class="kg-list-row ${isOpen ? 'open' : ''}" data-kg-report-toggle="${ev.id}">
+                <div class="kg-list-row-main">
+                  <div class="kg-list-row-title">
+                    ${ev.name}
+                    <span class="kg-status ${ev.status}" style="font-size:11px;">${KG_STATUS_LABEL[ev.status]}</span>
+                  </div>
+                  <div class="kg-list-row-sub">支出 ${kgFmt(s.actualExpense)}・收入 ${kgFmt(s.actualIncome)}</div>
+                </div>
+                <div class="kg-list-row-amount" style="color:${s.actualNet>=0?'var(--teal)':'var(--seal)'};">${(s.actualNet>=0?'+':'')+kgFmt(s.actualNet)}</div>
+                <div class="kg-list-chev">▸</div>
+              </div>
+              ${isOpen ? `
+              <div class="kg-list-detail">
+                <div style="font-weight:600;color:var(--seal);margin-top:2px;">支出（${kgFmt(s.actualExpense)}）</div>
+                ${expenses.length === 0 ? '<div class="kg-list-detail-line"><span>—</span></div>' : expenses.map(t=>`
+                  <div class="kg-list-detail-line"><span>${t.category}${t.content ? '・'+t.content : ''}</span><span>-${kgFmt(t.amount)}</span></div>
+                `).join('')}
+                <div style="font-weight:600;color:var(--teal);margin-top:10px;">收入（${kgFmt(s.actualIncome)}）</div>
+                ${incomes.length === 0 ? '<div class="kg-list-detail-line"><span>—</span></div>' : incomes.map(t=>`
+                  <div class="kg-list-detail-line"><span>${t.category}${t.content ? '・'+t.content : ''}</span><span>+${kgFmt(t.amount)}</span></div>
+                `).join('')}
+              </div>` : ''}
+            </div>`;
+          }).join('')}</div>`}`;
+
+    el.querySelectorAll('[data-kg-report-toggle]').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        const id = row.dataset.kgReportToggle;
+        expandedReportEventIds[id] = !expandedReportEventIds[id];
+        kgRenderReport();
+      });
+    });
 
     el.querySelector('#kgReportMonth').addEventListener('change', (e)=>{
       el.dataset.month = e.target.value;
@@ -2872,20 +2906,159 @@
     return "晚安";
   }
 
-  /* 嵐（ARASHI）成員曾經說過的話，整理自公開訪談與媒體報導後意譯，
-     每天依日期固定輪播一句（同一天重新整理頁面看到的都會是同一句）。 */
-  const ARASHI_QUOTES = [
-    { text: "自己就是自己，如果因為別人怎樣、自己也要跟著怎樣，那只會讓人更疲憊而已。", member: "大野智" },
-    { text: "想珍惜每一個能為身邊的人帶來笑容的瞬間。", member: "櫻井翔" },
-    { text: "正因為喜歡嵐、想繼續留在嵐裡，才覺得沒有其他的人生可以選擇。", member: "相葉雅紀" },
-    { text: "如果嵐會被討厭，那就讓早就習慣被討厭的我來當那個角色吧，討厭我一個人扛就夠了。", member: "二宮和也" },
-    { text: "人生不會事事順利，但只要願意接受這件事，就能從中獲得真正屬於自己的經驗。", member: "松本潤" },
-  ];
+  /* 每日一句：預設是嵐（ARASHI）成員曾經說過的話（整理自公開訪談與媒體報導後意譯），
+     每天依日期固定輪播一句（同一天重新整理頁面看到的都會是同一句）。
+     使用者可以到「設定」頁自己新增／編輯／刪除想看的句子，內容會存到雲端跟著帳號走。 */
+  function defaultDailyQuotes(){
+    return [
+      { id: newId('q'), text: "自己就是自己，如果因為別人怎樣、自己也要跟著怎樣，那只會讓人更疲憊而已。", member: "大野智" },
+      { id: newId('q'), text: "想珍惜每一個能為身邊的人帶來笑容的瞬間。", member: "櫻井翔" },
+      { id: newId('q'), text: "正因為喜歡嵐、想繼續留在嵐裡，才覺得沒有其他的人生可以選擇。", member: "相葉雅紀" },
+      { id: newId('q'), text: "如果嵐會被討厭，那就讓早就習慣被討厭的我來當那個角色吧，討厭我一個人扛就夠了。", member: "二宮和也" },
+      { id: newId('q'), text: "人生不會事事順利，但只要願意接受這件事，就能從中獲得真正屬於自己的經驗。", member: "松本潤" },
+    ];
+  }
+  let dailyQuotes = [];
+  let editingQuoteId = null;
+  let quoteMemberFilter = ''; // 篩選署名，空字串＝全部
+
+  function renderQuoteSettings(){
+    const el = document.getElementById('quoteList');
+    if(!el) return;
+
+    // 篩選署名：用跟其他頁面一樣的篩選按鈕（pill）樣式，列出目前所有出現過的署名（不重複）
+    const filterTabs = document.getElementById('quoteMemberFilterTabs');
+    if(filterTabs){
+      const members = Array.from(new Set(dailyQuotes.map(q=>q.member).filter(Boolean)));
+      if(quoteMemberFilter && !members.includes(quoteMemberFilter)) quoteMemberFilter = '';
+      filterTabs.innerHTML = `<button class="kg-tab kg-tab-sm ${quoteMemberFilter===''?'active':''}" data-quote-member-filter="">全部署名</button>`
+        + members.map(m=>`<button class="kg-tab kg-tab-sm ${m===quoteMemberFilter?'active':''}" data-quote-member-filter="${m}">${m}</button>`).join('');
+      filterTabs.querySelectorAll('[data-quote-member-filter]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          quoteMemberFilter = btn.dataset.quoteMemberFilter;
+          renderQuoteSettings();
+        });
+      });
+    }
+
+    const visible = quoteMemberFilter ? dailyQuotes.filter(q=>q.member === quoteMemberFilter) : dailyQuotes;
+
+    if(dailyQuotes.length === 0){
+      el.innerHTML = '<div class="empty-state">還沒有任何句子，先在上面新增一句吧。</div>';
+      return;
+    }
+    if(visible.length === 0){
+      el.innerHTML = '<div class="empty-state">這個署名底下沒有句子。</div>';
+      return;
+    }
+    el.innerHTML = visible.map(q=>{
+      const isEditing = editingQuoteId === q.id;
+      if(isEditing){
+        return `
+        <div class="kg-list-item" data-quote-item="${q.id}">
+          <div style="display:flex;flex-direction:column;gap:6px;padding:10px 2px;">
+            <input type="text" data-quote-edit-text="${q.id}" value="${(q.text||'').replace(/"/g,'&quot;')}" placeholder="句子內容" style="width:100%;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
+            <input type="text" data-quote-edit-member="${q.id}" value="${(q.member||'').replace(/"/g,'&quot;')}" placeholder="署名（選填）" style="width:100%;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
+            <div class="item-actions" style="justify-content:flex-end;">
+              <button class="icon-btn" data-save-quote="${q.id}" title="儲存">✓</button>
+              <button class="icon-btn" data-cancel-quote="${q.id}" title="取消">✕</button>
+            </div>
+          </div>
+        </div>`;
+      }
+      return `
+      <div class="kg-list-item" draggable="true" data-quote-item="${q.id}" data-drag-quote="${q.id}" style="cursor:grab;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;">
+          <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;flex-shrink:0;" title="拖曳排序">⠿</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;color:var(--ink);">${q.text}</div>
+            ${q.member ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">－ ${q.member}</div>` : ''}
+          </div>
+          <div class="item-actions">
+            <button class="icon-btn" data-edit-quote="${q.id}" title="編輯">✎</button>
+            <button class="icon-btn danger" data-del-quote="${q.id}" title="刪除">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    /* ---- 拖曳排序 ---- */
+    let dragFromId = null;
+    el.querySelectorAll('[data-drag-quote]').forEach(row=>{
+      row.addEventListener('dragstart', e=>{
+        dragFromId = row.dataset.dragQuote;
+        row.style.opacity = '.4';
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      row.addEventListener('dragend', ()=>{ row.style.opacity = ''; });
+      row.addEventListener('dragover', e=>{ e.preventDefault(); });
+      row.addEventListener('drop', e=>{
+        e.preventDefault();
+        const dropToId = row.dataset.dragQuote;
+        if(!dragFromId || dragFromId === dropToId) return;
+        const fromIdx = dailyQuotes.findIndex(x=>x.id === dragFromId);
+        const toIdx = dailyQuotes.findIndex(x=>x.id === dropToId);
+        if(fromIdx < 0 || toIdx < 0) return;
+        const [moved] = dailyQuotes.splice(fromIdx, 1);
+        dailyQuotes.splice(toIdx, 0, moved);
+        scheduleCloudSave();
+        renderQuoteSettings();
+      });
+    });
+
+    el.querySelectorAll('[data-edit-quote]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        editingQuoteId = btn.dataset.editQuote;
+        renderQuoteSettings();
+        const input = el.querySelector(`[data-quote-edit-text="${editingQuoteId}"]`);
+        if(input){ input.focus(); input.select(); }
+      });
+    });
+    el.querySelectorAll('[data-cancel-quote]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{ editingQuoteId = null; renderQuoteSettings(); });
+    });
+    function commitQuoteEdit(id){
+      const q = dailyQuotes.find(x=>x.id === id);
+      const textInput = el.querySelector(`[data-quote-edit-text="${id}"]`);
+      const memberInput = el.querySelector(`[data-quote-edit-member="${id}"]`);
+      if(!q || !textInput) return;
+      const finalText = textInput.value.trim();
+      if(!finalText) return; // 內容不能是空的
+      q.text = finalText;
+      q.member = memberInput ? memberInput.value.trim() : q.member;
+      editingQuoteId = null;
+      scheduleCloudSave();
+      renderQuoteSettings();
+      refreshGreeting(); // 如果改到的剛好是今天輪播的那句，首頁要立刻更新
+    }
+    el.querySelectorAll('[data-save-quote]').forEach(btn=>{
+      btn.addEventListener('click', ()=> commitQuoteEdit(btn.dataset.saveQuote));
+    });
+    el.querySelectorAll('[data-quote-edit-text], [data-quote-edit-member]').forEach(input=>{
+      input.addEventListener('keydown', e=>{
+        if(e.key === 'Enter') commitQuoteEdit(editingQuoteId);
+        if(e.key === 'Escape'){ editingQuoteId = null; renderQuoteSettings(); }
+      });
+    });
+    el.querySelectorAll('[data-del-quote]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        if(!confirm('確定要刪除這句嗎？')) return;
+        dailyQuotes = dailyQuotes.filter(x=>x.id !== btn.dataset.delQuote);
+        scheduleCloudSave();
+        renderQuoteSettings();
+        refreshGreeting();
+      });
+    });
+  }
+
   function todayArashiQuote(){
+    if(!dailyQuotes || dailyQuotes.length === 0) return '';
     const now = new Date();
     const dayIndex = Math.floor(now.getTime() / 86400000); // 以日期為單位輪播，同一天固定同一句
-    const q = ARASHI_QUOTES[dayIndex % ARASHI_QUOTES.length];
-    return `「${q.text}」－ ${q.member}`;
+    const q = dailyQuotes[dayIndex % dailyQuotes.length];
+    // 引號交給 .quote 這個 CSS class 的 ::before/::after 自動加，這裡不要再手動加一次，
+    // 不然畫面上會變成「「...」」多一組引號
+    return `${q.text}－ ${q.member}`;
   }
 
   function refreshGreeting(){
@@ -2895,10 +3068,13 @@
     document.getElementById('greetDate').textContent =
       `${now.getFullYear()} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日・星期${dowNames[now.getDay()]}`;
     document.getElementById('lastUpdate').textContent = now.toTimeString().slice(0,5);
-    document.getElementById('settingsLoginUser').textContent = currentUser ? usernameFromUser(currentUser) : '';
     document.getElementById('settingsNameInput').value = getDisplayName();
     const quoteEl = document.getElementById('dailyQuote');
-    if(quoteEl) quoteEl.textContent = todayArashiQuote();
+    if(quoteEl){
+      const q = todayArashiQuote();
+      quoteEl.textContent = q;
+      quoteEl.style.display = q ? '' : 'none'; // 全部句子都被刪掉時，不要顯示空的引號
+    }
   }
 
   function initDashboard(){
@@ -2924,6 +3100,22 @@
     });
     document.getElementById('settingsNameInput').addEventListener('keydown', e=>{
       if(e.key === 'Enter') document.getElementById('settingsNameSaveBtn').click();
+    });
+
+    document.getElementById('quoteAddBtn').addEventListener('click', ()=>{
+      const textInput = document.getElementById('quoteAddText');
+      const memberInput = document.getElementById('quoteAddMember');
+      const text = textInput.value.trim();
+      if(!text) return;
+      dailyQuotes.push({ id: newId('q'), text, member: memberInput.value.trim() });
+      textInput.value = '';
+      memberInput.value = '';
+      scheduleCloudSave();
+      renderQuoteSettings();
+      refreshGreeting();
+    });
+    document.getElementById('quoteAddText').addEventListener('keydown', e=>{
+      if(e.key === 'Enter') document.getElementById('quoteAddBtn').click();
     });
   }
 
