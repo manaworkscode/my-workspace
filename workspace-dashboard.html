@@ -995,10 +995,11 @@
       <div class="add-form">
         <input class="f-name" id="quoteAddText" type="text" placeholder="句子內容">
         <input class="f-name" id="quoteAddMember" type="text" placeholder="署名（選填，例如作者）" style="max-width:160px;">
+        <input class="f-name" id="quoteAddCategory" type="text" placeholder="分類（選填，例如工作、生活）" style="max-width:160px;">
         <button class="add-form-btn" id="quoteAddBtn">新增</button>
       </div>
 
-      <div class="kg-tabs" id="quoteMemberFilterTabs" style="margin-bottom:14px;"></div>
+      <div class="kg-tabs" id="quoteCategoryFilterTabs" style="margin-bottom:14px;"></div>
 
       <div class="card">
         <div id="quoteList"></div>
@@ -1785,9 +1786,9 @@
         const isNoteOpen = !!expandedTodoNotes[t.id];
         const pct = Math.max(0, Math.min(100, Number(t.pct) || 0));
         return `
-        <div class="full-todo-item" draggable="true" data-drag-todo="${t.id}" style="flex-direction:column;align-items:stretch;gap:6px;cursor:grab;">
+        <div class="full-todo-item" draggable="false" data-drag-todo="${t.id}" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;" title="拖曳排序">⠿</span>
+            <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;cursor:grab;" title="拖曳排序" data-drag-handle-todo="${t.id}">⠿</span>
             <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
             ${isEditing
               ? `<input type="text" data-todo-edit-input="${t.id}" value="${t.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">
@@ -1816,15 +1817,24 @@
     const remaining = todos.filter(t=>!t.done).length;
     document.getElementById('todoCount').textContent = `${remaining} 項待完成，共 ${todos.length} 項`;
 
-    /* ---- 拖曳排序 ---- */
+    /* ---- 拖曳排序：只有滑鼠按在「⠿」拖曳把手上才會啟動整列的 draggable，
+       避免點到項目文字、備註、按鈕等其他地方也被誤判成拖曳 ---- */
     let dragFromId = null;
+    el.querySelectorAll('[data-drag-handle-todo]').forEach(handle=>{
+      const row = handle.closest('[data-drag-todo]');
+      const armDrag = ()=>{ if(row) row.draggable = true; };
+      handle.addEventListener('mousedown', armDrag);
+      handle.addEventListener('touchstart', armDrag, { passive: true });
+    });
     el.querySelectorAll('[data-drag-todo]').forEach(row=>{
+      const disarmDrag = ()=>{ row.draggable = false; };
       row.addEventListener('dragstart', e=>{
         dragFromId = row.dataset.dragTodo;
         row.style.opacity = '.4';
         e.dataTransfer.effectAllowed = 'move';
       });
-      row.addEventListener('dragend', ()=>{ row.style.opacity = ''; });
+      row.addEventListener('dragend', ()=>{ row.style.opacity = ''; disarmDrag(); });
+      row.addEventListener('mouseup', disarmDrag);
       row.addEventListener('dragover', e=>{ e.preventDefault(); });
       row.addEventListener('drop', e=>{
         e.preventDefault();
@@ -1857,15 +1867,13 @@
       });
     });
     el.querySelectorAll('[data-note-input]').forEach(ta=>{
-      // 備註欄位在可拖曳的整列裡面，滑鼠一碰到備註就先關掉整列的 draggable，
-      // 這樣選字／點擊游標定位都不會被誤判成拖曳排序；離開備註欄位再恢復可拖曳
+      // 拖曳現在只會被「⠿」把手觸發，這裡保留一道保險：碰到備註欄位一律先關掉整列的 draggable，
+      // 這樣選字／點擊游標定位都不會被誤判成拖曳排序
       const row = ta.closest('[data-drag-todo]');
       const disableDrag = ()=>{ if(row) row.draggable = false; };
-      const enableDrag = ()=>{ if(row) row.draggable = true; };
       ta.addEventListener('mousedown', disableDrag);
       ta.addEventListener('touchstart', disableDrag, { passive: true });
       ta.addEventListener('focus', disableDrag);
-      ta.addEventListener('blur', enableDrag);
       ta.addEventListener('input', ()=>{
         const t = todos.find(x=>x.id === ta.dataset.noteInput);
         if(!t) return;
@@ -2911,44 +2919,44 @@
      使用者可以到「設定」頁自己新增／編輯／刪除想看的句子，內容會存到雲端跟著帳號走。 */
   function defaultDailyQuotes(){
     return [
-      { id: newId('q'), text: "自己就是自己，如果因為別人怎樣、自己也要跟著怎樣，那只會讓人更疲憊而已。", member: "大野智" },
-      { id: newId('q'), text: "想珍惜每一個能為身邊的人帶來笑容的瞬間。", member: "櫻井翔" },
-      { id: newId('q'), text: "正因為喜歡嵐、想繼續留在嵐裡，才覺得沒有其他的人生可以選擇。", member: "相葉雅紀" },
-      { id: newId('q'), text: "如果嵐會被討厭，那就讓早就習慣被討厭的我來當那個角色吧，討厭我一個人扛就夠了。", member: "二宮和也" },
-      { id: newId('q'), text: "人生不會事事順利，但只要願意接受這件事，就能從中獲得真正屬於自己的經驗。", member: "松本潤" },
+      { id: newId('q'), text: "自己就是自己，如果因為別人怎樣、自己也要跟著怎樣，那只會讓人更疲憊而已。", member: "大野智", category: "" },
+      { id: newId('q'), text: "想珍惜每一個能為身邊的人帶來笑容的瞬間。", member: "櫻井翔", category: "" },
+      { id: newId('q'), text: "正因為喜歡嵐、想繼續留在嵐裡，才覺得沒有其他的人生可以選擇。", member: "相葉雅紀", category: "" },
+      { id: newId('q'), text: "如果嵐會被討厭，那就讓早就習慣被討厭的我來當那個角色吧，討厭我一個人扛就夠了。", member: "二宮和也", category: "" },
+      { id: newId('q'), text: "人生不會事事順利，但只要願意接受這件事，就能從中獲得真正屬於自己的經驗。", member: "松本潤", category: "" },
     ];
   }
   let dailyQuotes = [];
   let editingQuoteId = null;
-  let quoteMemberFilter = ''; // 篩選署名，空字串＝全部
+  let quoteCategoryFilter = ''; // 篩選分類，空字串＝全部
 
   function renderQuoteSettings(){
     const el = document.getElementById('quoteList');
     if(!el) return;
 
-    // 篩選署名：用跟其他頁面一樣的篩選按鈕（pill）樣式，列出目前所有出現過的署名（不重複）
-    const filterTabs = document.getElementById('quoteMemberFilterTabs');
+    // 篩選分類：用跟其他頁面一樣的篩選按鈕（pill）樣式，列出目前所有出現過的分類（不重複）
+    const filterTabs = document.getElementById('quoteCategoryFilterTabs');
     if(filterTabs){
-      const members = Array.from(new Set(dailyQuotes.map(q=>q.member).filter(Boolean)));
-      if(quoteMemberFilter && !members.includes(quoteMemberFilter)) quoteMemberFilter = '';
-      filterTabs.innerHTML = `<button class="kg-tab kg-tab-sm ${quoteMemberFilter===''?'active':''}" data-quote-member-filter="">全部署名</button>`
-        + members.map(m=>`<button class="kg-tab kg-tab-sm ${m===quoteMemberFilter?'active':''}" data-quote-member-filter="${m}">${m}</button>`).join('');
-      filterTabs.querySelectorAll('[data-quote-member-filter]').forEach(btn=>{
+      const categories = Array.from(new Set(dailyQuotes.map(q=>q.category).filter(Boolean)));
+      if(quoteCategoryFilter && !categories.includes(quoteCategoryFilter)) quoteCategoryFilter = '';
+      filterTabs.innerHTML = `<button class="kg-tab kg-tab-sm ${quoteCategoryFilter===''?'active':''}" data-quote-category-filter="">全部分類</button>`
+        + categories.map(c=>`<button class="kg-tab kg-tab-sm ${c===quoteCategoryFilter?'active':''}" data-quote-category-filter="${c}">${c}</button>`).join('');
+      filterTabs.querySelectorAll('[data-quote-category-filter]').forEach(btn=>{
         btn.addEventListener('click', ()=>{
-          quoteMemberFilter = btn.dataset.quoteMemberFilter;
+          quoteCategoryFilter = btn.dataset.quoteCategoryFilter;
           renderQuoteSettings();
         });
       });
     }
 
-    const visible = quoteMemberFilter ? dailyQuotes.filter(q=>q.member === quoteMemberFilter) : dailyQuotes;
+    const visible = quoteCategoryFilter ? dailyQuotes.filter(q=>q.category === quoteCategoryFilter) : dailyQuotes;
 
     if(dailyQuotes.length === 0){
       el.innerHTML = '<div class="empty-state">還沒有任何句子，先在上面新增一句吧。</div>';
       return;
     }
     if(visible.length === 0){
-      el.innerHTML = '<div class="empty-state">這個署名底下沒有句子。</div>';
+      el.innerHTML = '<div class="empty-state">這個分類底下沒有句子。</div>';
       return;
     }
     el.innerHTML = visible.map(q=>{
@@ -2959,6 +2967,7 @@
           <div style="display:flex;flex-direction:column;gap:6px;padding:10px 2px;">
             <input type="text" data-quote-edit-text="${q.id}" value="${(q.text||'').replace(/"/g,'&quot;')}" placeholder="句子內容" style="width:100%;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
             <input type="text" data-quote-edit-member="${q.id}" value="${(q.member||'').replace(/"/g,'&quot;')}" placeholder="署名（選填）" style="width:100%;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
+            <input type="text" data-quote-edit-category="${q.id}" value="${(q.category||'').replace(/"/g,'&quot;')}" placeholder="分類（選填）" style="width:100%;box-sizing:border-box;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:6px 8px;background:var(--surface);color:var(--ink);">
             <div class="item-actions" style="justify-content:flex-end;">
               <button class="icon-btn" data-save-quote="${q.id}" title="儲存">✓</button>
               <button class="icon-btn" data-cancel-quote="${q.id}" title="取消">✕</button>
@@ -2972,7 +2981,7 @@
           <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;flex-shrink:0;" title="拖曳排序">⠿</span>
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;color:var(--ink);">${q.text}</div>
-            ${q.member ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">－ ${q.member}</div>` : ''}
+            ${(q.member || q.category) ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">${q.member ? `－ ${q.member}` : ''}${(q.member && q.category) ? '　' : ''}${q.category ? `<span class="kg-tab kg-tab-sm" style="padding:1px 8px;pointer-events:none;">${q.category}</span>` : ''}</div>` : ''}
           </div>
           <div class="item-actions">
             <button class="icon-btn" data-edit-quote="${q.id}" title="編輯">✎</button>
@@ -3021,11 +3030,13 @@
       const q = dailyQuotes.find(x=>x.id === id);
       const textInput = el.querySelector(`[data-quote-edit-text="${id}"]`);
       const memberInput = el.querySelector(`[data-quote-edit-member="${id}"]`);
+      const categoryInput = el.querySelector(`[data-quote-edit-category="${id}"]`);
       if(!q || !textInput) return;
       const finalText = textInput.value.trim();
       if(!finalText) return; // 內容不能是空的
       q.text = finalText;
       q.member = memberInput ? memberInput.value.trim() : q.member;
+      q.category = categoryInput ? categoryInput.value.trim() : q.category;
       editingQuoteId = null;
       scheduleCloudSave();
       renderQuoteSettings();
@@ -3034,7 +3045,7 @@
     el.querySelectorAll('[data-save-quote]').forEach(btn=>{
       btn.addEventListener('click', ()=> commitQuoteEdit(btn.dataset.saveQuote));
     });
-    el.querySelectorAll('[data-quote-edit-text], [data-quote-edit-member]').forEach(input=>{
+    el.querySelectorAll('[data-quote-edit-text], [data-quote-edit-member], [data-quote-edit-category]').forEach(input=>{
       input.addEventListener('keydown', e=>{
         if(e.key === 'Enter') commitQuoteEdit(editingQuoteId);
         if(e.key === 'Escape'){ editingQuoteId = null; renderQuoteSettings(); }
@@ -3105,11 +3116,13 @@
     document.getElementById('quoteAddBtn').addEventListener('click', ()=>{
       const textInput = document.getElementById('quoteAddText');
       const memberInput = document.getElementById('quoteAddMember');
+      const categoryInput = document.getElementById('quoteAddCategory');
       const text = textInput.value.trim();
       if(!text) return;
-      dailyQuotes.push({ id: newId('q'), text, member: memberInput.value.trim() });
+      dailyQuotes.push({ id: newId('q'), text, member: memberInput.value.trim(), category: categoryInput.value.trim() });
       textInput.value = '';
       memberInput.value = '';
+      categoryInput.value = '';
       scheduleCloudSave();
       renderQuoteSettings();
       refreshGreeting();
