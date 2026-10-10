@@ -892,23 +892,16 @@
     <div class="view" id="view-calendar">
       <div class="page-head">
         <div class="page-title">行事曆</div>
-        <div class="page-sub">管理本機行程，或連接 Google 日曆同步</div>
+        <div class="page-sub">行程以 Google 日曆為準，在這裡新增、編輯、刪除都會直接寫進 Google 日曆</div>
       </div>
 
       <div class="add-form">
         <input class="f-date" id="evAddDate" type="date">
         <input class="f-name" id="evAddLabel" type="text" placeholder="行程名稱（套用範本時可留空）">
-        <select class="f-tag" id="evAddTag">
-          <option value="personal">個人</option>
-          <option value="work">工作</option>
-          <option value="general">一般</option>
-        </select>
         <select class="f-tag" id="evAddTemplate" style="min-width:140px;">
           <option value="">不套用範本</option>
         </select>
-        <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-soft);">
-          <input type="checkbox" id="evAddSyncGoogle" style="width:auto;">同步到 Google<span id="evAddSyncCalendarHint" style="color:var(--gold);"></span>
-        </label>
+        <span id="evAddSyncCalendarHint" style="font-size:12.5px;color:var(--gold);"></span>
         <button class="add-form-btn" id="evAddBtn">新增行程</button>
       </div>
       <div class="card" style="margin-bottom:16px;">
@@ -1390,7 +1383,8 @@
   const tagLabel = { personal: "個人", work: "工作", general: "一般" };
 
   function allEvents(){
-    return events.concat(googleEvents);
+    // 行程統一以 Google 日曆為準；舊的本機行程資料仍留在雲端但不再顯示，避免同一件事出現兩筆
+    return googleEvents;
   }
 
   function fmtDate(d){
@@ -1463,16 +1457,14 @@
       .filter(e => e.date.getFullYear() === viewYear && e.date.getMonth() === viewMonth)
       .sort((a,b)=>a.date-b.date);
     el.innerHTML = all.length === 0
-      ? '<div class="empty-state">這個月還沒有任何行程</div>'
+      ? `<div class="empty-state">${gAccessToken ? '這個月還沒有任何行程' : '請先點「連接 Google 日曆」，行程會直接從 Google 日曆讀取'}</div>`
       : all.map(e => {
-        const isGoogle = !!e.googleId;
         const isPast = e.date < now;
         const isEditing = editingEventId === e.id;
-        const canSyncToGoogle = !isGoogle && !e.syncedToGoogle && gAccessToken;
         return `
         <div class="up-item" style="${isPast && !isEditing ? 'opacity:.55;' : ''}">
           <div class="up-top">
-            <span class="tag tag-${e.tag}">${e.source || tagLabel[e.tag]}${isGoogle ? '・Google' : ''}${e.syncedToGoogle ? '・已同步' : ''}</span>
+            <span class="tag tag-${e.tag}">${e.source || 'Google'}</span>
             ${isEditing
               ? `<input type="date" data-event-edit-date="${e.id}" value="${fmtDate(e.date)}" style="font-family:'Noto Sans TC',sans-serif;font-size:12px;border:1px solid var(--gold);border-radius:6px;padding:3px 6px;background:var(--surface);color:var(--ink);outline:none;">`
               : `<span class="up-date">${fmtDate(e.date)}${isPast ? '（已過）' : ''}</span>`
@@ -1488,7 +1480,6 @@
                 <button class="icon-btn" data-save-event="${e.id}" title="儲存">✓</button>
                 <button class="icon-btn" data-cancel-event="${e.id}" title="取消">✕</button>
               ` : `
-                ${canSyncToGoogle ? `<button class="icon-btn" data-sync-event="${e.id}" title="補同步到 Google 日曆">☁</button>` : ''}
                 <button class="icon-btn" data-edit-event="${e.id}" title="編輯">✎</button>
                 <button class="icon-btn danger" data-del-event="${e.id}" title="刪除">✕</button>
               `}
@@ -1497,20 +1488,6 @@
         </div>`;
       }).join('');
 
-    el.querySelectorAll('[data-sync-event]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        const ev = events.find(x=>x.id === btn.dataset.syncEvent);
-        if(!ev) return;
-        btn.disabled = true;
-        const ok = await addGoogleEvent(fmtDate(ev.date), ev.label);
-        if(ok){
-          ev.syncedToGoogle = true;
-          renderAllEvents();
-        }else{
-          btn.disabled = false;
-        }
-      });
-    });
     el.querySelectorAll('[data-edit-event]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         editingEventId = btn.dataset.editEvent;
@@ -1529,18 +1506,10 @@
       if(!ev || !labelInput || !dateInput) return;
       const finalLabel = labelInput.value.trim() || ev.label;
       const finalDateStr = dateInput.value || fmtDate(ev.date);
-      if(ev.googleId){
-        const saveBtn = el.querySelector(`[data-save-event="${id}"]`);
-        if(saveBtn) saveBtn.disabled = true;
-        editingEventId = null;
-        await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr, ev.calendarId);
-      }else{
-        const parsed = new Date(finalDateStr);
-        ev.label = finalLabel;
-        if(!isNaN(parsed)) ev.date = parsed;
-        editingEventId = null;
-        renderAllEvents();
-      }
+      const saveBtn = el.querySelector(`[data-save-event="${id}"]`);
+      if(saveBtn) saveBtn.disabled = true;
+      editingEventId = null;
+      await updateGoogleEvent(ev.googleId, finalLabel, finalDateStr, ev.calendarId);
     }
     el.querySelectorAll('[data-save-event]').forEach(btn=>{
       btn.addEventListener('click', ()=> commitEventEdit(btn.dataset.saveEvent));
@@ -1557,13 +1526,8 @@
         const id = btn.dataset.delEvent;
         const ev = allEvents().find(x=>x.id === id);
         if(!ev) return;
-        if(ev.googleId){
-          btn.disabled = true;
-          await deleteGoogleEvent(ev.googleId, ev.calendarId);
-        }else{
-          events = events.filter(x=>x.id !== id);
-          renderAllEvents();
-        }
+        btn.disabled = true;
+        await deleteGoogleEvent(ev.googleId, ev.calendarId);
       });
     });
   }
@@ -1591,63 +1555,48 @@
     renderEventList();
   }
 
-  /* ---- 新增本機行程（行事曆頁的表單） ---- */
+  /* ---- 新增行程（行事曆頁的表單）：一律直接寫進 Google 日曆，不再另外存本機 ---- */
   document.getElementById('evAddBtn').addEventListener('click', async ()=>{
     const dateStr = document.getElementById('evAddDate').value;
     const label = document.getElementById('evAddLabel').value.trim();
-    const tag = document.getElementById('evAddTag').value;
-    const syncGoogle = document.getElementById('evAddSyncGoogle').checked;
     const templateId = document.getElementById('evAddTemplate').value;
 
+    if(!gAccessToken){ setGcalStatus('請先點「連接 Google 日曆」，行程會直接新增到 Google 日曆。'); return; }
     if(!dateStr){ setGcalStatus('請選擇日期。'); return; }
+    const btn = document.getElementById('evAddBtn');
 
     if(templateId){
-      // 套用範本模式：用選好的日期當基準，展開整套規則行程
+      // 套用範本模式：用選好的日期當基準，展開整套規則行程，全部寫進 Google 日曆
       const t = activityRules.find(r=>r.id === templateId);
       if(!t || t.items.length === 0){ setGcalStatus('這個範本還沒有任何規則，請先到下面新增規則列。'); return; }
       const baseDate = new Date(dateStr);
-      const btn = document.getElementById('evAddBtn');
       btn.disabled = true; btn.textContent = '產生中…';
-      for(const it of t.items){
+      const toCreate = t.items.map(it=>{
         const d = new Date(baseDate);
         d.setDate(d.getDate() + it.offset);
-        const newEv = { id: newId('e'), date: d, label: it.label, tag: 'work', source: t.name };
-        events.push(newEv);
-        if(syncGoogle){
-          const ok = await addGoogleEvent(fmtDate(d), it.label);
-          if(ok) newEv.syncedToGoogle = true;
-        }
-      }
+        return { dateStr: fmtDate(d), label: it.label };
+      });
       // 不管範本裡有沒有設定 offset=0 的規則，基準日本身一定要加進行事曆
-      let generatedCount = t.items.length;
-      const hasBaseDay = t.items.some(it => it.offset === 0);
-      if(!hasBaseDay){
-        const baseLabel = label || '活動當天';
-        const baseEv = { id: newId('e'), date: new Date(baseDate), label: baseLabel, tag: 'work', source: t.name };
-        events.push(baseEv);
-        if(syncGoogle){
-          const ok = await addGoogleEvent(fmtDate(baseDate), baseLabel);
-          if(ok) baseEv.syncedToGoogle = true;
-        }
-        generatedCount += 1;
+      if(!t.items.some(it => it.offset === 0)){
+        toCreate.push({ dateStr: fmtDate(baseDate), label: label || '活動當天' });
       }
+      let okCount = 0;
+      for(const it of toCreate){
+        if(await addGoogleEvent(it.dateStr, it.label, undefined, true)) okCount++;
+      }
+      await fetchGoogleEvents();
       btn.disabled = false; btn.textContent = '新增行程';
-      renderAllEvents();
-      setGcalStatus(`已套用「${t.name}」，產生 ${generatedCount} 筆行程${syncGoogle ? '，並同步到 Google' : ''}`);
+      setGcalStatus(`已套用「${t.name}」，新增 ${okCount}／${toCreate.length} 筆到 Google 日曆`);
       document.getElementById('evAddLabel').value = '';
       return;
     }
 
     // 一般模式：新增單筆行程
     if(!label){ setGcalStatus('請輸入行程名稱，或選一個範本來套用。'); return; }
-    const newEv = { id: newId('e'), date: new Date(dateStr), label, tag };
-    events.push(newEv);
-    document.getElementById('evAddLabel').value = '';
-    renderAllEvents();
-    if(syncGoogle){
-      const ok = await addGoogleEvent(dateStr, label);
-      if(ok){ newEv.syncedToGoogle = true; renderAllEvents(); }
-    }
+    btn.disabled = true;
+    const ok = await addGoogleEvent(dateStr, label);
+    btn.disabled = false;
+    if(ok) document.getElementById('evAddLabel').value = '';
   });
 
   /* ================= 活動規則範本：設定規則 ================= */
@@ -1776,6 +1725,51 @@
   let expandedTodoNotes = {}; // 記住哪些待辦事項目前展開備註（純畫面狀態，不用存雲端）
   let editingTodoId = null; // 目前正在直接編輯欄位的待辦事項
 
+  /* ---- 共用：用「⠿」把手拖曳排序（Pointer 事件，不使用 HTML5 draggable，
+     所以只有按住把手才會動，編輯文字／備註時不會誤觸，電腦與手機都能用） ---- */
+  function enableHandleReorder(container, rowSel, handleSel, rowIdAttr, onReorder){
+    container.querySelectorAll(handleSel).forEach(handle=>{
+      handle.style.touchAction = 'none';
+      handle.style.cursor = 'grab';
+      handle.addEventListener('pointerdown', e=>{
+        if(e.button !== undefined && e.button !== 0) return;
+        e.preventDefault();
+        const row = handle.closest(rowSel);
+        if(!row) return;
+        const rows = Array.from(container.querySelectorAll(rowSel));
+        const fromId = row.dataset[rowIdAttr];
+        const fromIdx = rows.indexOf(row);
+        let overId = null;
+        row.style.opacity = '.5';
+        document.body.style.userSelect = 'none';
+        const clearMarks = ()=> rows.forEach(r=>{ r.style.boxShadow = ''; });
+        const onMove = ev=>{
+          const t = document.elementFromPoint(ev.clientX, ev.clientY);
+          const r = t && t.closest ? t.closest(rowSel) : null;
+          clearMarks();
+          if(r && container.contains(r) && r !== row){
+            overId = r.dataset[rowIdAttr];
+            r.style.boxShadow = rows.indexOf(r) > fromIdx ? 'inset 0 -3px 0 var(--gold)' : 'inset 0 3px 0 var(--gold)';
+          }else{
+            overId = null;
+          }
+        };
+        const onUp = ()=>{
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          document.removeEventListener('pointercancel', onUp);
+          document.body.style.userSelect = '';
+          clearMarks();
+          row.style.opacity = '';
+          if(overId && overId !== fromId) onReorder(fromId, overId);
+        };
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+        document.addEventListener('pointercancel', onUp);
+      });
+    });
+  }
+
   function renderTodos(){
     scheduleCloudSave();
     const el = document.getElementById('todoList');
@@ -1786,7 +1780,7 @@
         const isNoteOpen = !!expandedTodoNotes[t.id];
         const pct = Math.max(0, Math.min(100, Number(t.pct) || 0));
         return `
-        <div class="full-todo-item" draggable="false" data-drag-todo="${t.id}" style="flex-direction:column;align-items:stretch;gap:6px;">
+        <div class="full-todo-item" data-drag-todo="${t.id}" style="flex-direction:column;align-items:stretch;gap:6px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;cursor:grab;" title="拖曳排序" data-drag-handle-todo="${t.id}">⠿</span>
             <span class="todo-check" data-toggle-todo="${t.id}" style="cursor:pointer;${t.done ? 'background:var(--teal);border-color:var(--teal);color:#fff;' : ''}">${t.done?'✓':''}</span>
@@ -1817,36 +1811,14 @@
     const remaining = todos.filter(t=>!t.done).length;
     document.getElementById('todoCount').textContent = `${remaining} 項待完成，共 ${todos.length} 項`;
 
-    /* ---- 拖曳排序：只有滑鼠按在「⠿」拖曳把手上才會啟動整列的 draggable，
-       避免點到項目文字、備註、按鈕等其他地方也被誤判成拖曳 ---- */
-    let dragFromId = null;
-    el.querySelectorAll('[data-drag-handle-todo]').forEach(handle=>{
-      const row = handle.closest('[data-drag-todo]');
-      const armDrag = ()=>{ if(row) row.draggable = true; };
-      handle.addEventListener('mousedown', armDrag);
-      handle.addEventListener('touchstart', armDrag, { passive: true });
-    });
-    el.querySelectorAll('[data-drag-todo]').forEach(row=>{
-      const disarmDrag = ()=>{ row.draggable = false; };
-      row.addEventListener('dragstart', e=>{
-        dragFromId = row.dataset.dragTodo;
-        row.style.opacity = '.4';
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      row.addEventListener('dragend', ()=>{ row.style.opacity = ''; disarmDrag(); });
-      row.addEventListener('mouseup', disarmDrag);
-      row.addEventListener('dragover', e=>{ e.preventDefault(); });
-      row.addEventListener('drop', e=>{
-        e.preventDefault();
-        const dropToId = row.dataset.dragTodo;
-        if(!dragFromId || dragFromId === dropToId) return;
-        const fromIdx = todos.findIndex(x=>x.id === dragFromId);
-        const toIdx = todos.findIndex(x=>x.id === dropToId);
-        if(fromIdx < 0 || toIdx < 0) return;
-        const [moved] = todos.splice(fromIdx, 1);
-        todos.splice(toIdx, 0, moved);
-        renderTodos();
-      });
+    /* ---- 拖曳排序：只有按住最左邊「⠿」把手才會拖動 ---- */
+    enableHandleReorder(el, '[data-drag-todo]', '[data-drag-handle-todo]', 'dragTodo', (fromId, toId)=>{
+      const fromIdx = todos.findIndex(x=>x.id === fromId);
+      const toIdx = todos.findIndex(x=>x.id === toId);
+      if(fromIdx < 0 || toIdx < 0) return;
+      const [moved] = todos.splice(fromIdx, 1);
+      todos.splice(toIdx, 0, moved);
+      renderTodos();
     });
 
     el.querySelectorAll('[data-toggle-todo]').forEach(elx=>{
@@ -1867,13 +1839,6 @@
       });
     });
     el.querySelectorAll('[data-note-input]').forEach(ta=>{
-      // 拖曳現在只會被「⠿」把手觸發，這裡保留一道保險：碰到備註欄位一律先關掉整列的 draggable，
-      // 這樣選字／點擊游標定位都不會被誤判成拖曳排序
-      const row = ta.closest('[data-drag-todo]');
-      const disableDrag = ()=>{ if(row) row.draggable = false; };
-      ta.addEventListener('mousedown', disableDrag);
-      ta.addEventListener('touchstart', disableDrag, { passive: true });
-      ta.addEventListener('focus', disableDrag);
       ta.addEventListener('input', ()=>{
         const t = todos.find(x=>x.id === ta.dataset.noteInput);
         if(!t) return;
@@ -1950,10 +1915,6 @@
     gcalBtn.classList.toggle('connected', connected);
     gcalBtnText.textContent = connected ? '已連接 Google 日曆' : '連接 Google 日曆';
     document.getElementById('gcalChooseCalBtn').style.display = connected ? 'inline-flex' : 'none';
-    // 已經連接 Google 的情況下，「新增行程」的『同步到 Google』預設打勾，
-    // 不然使用者連好帳號卻忘記勾選，新增的行程就只會存在本機、Google 日曆完全看不到（這是之前反映「沒有同步」最常見的原因）
-    const syncBox = document.getElementById('evAddSyncGoogle');
-    if(syncBox) syncBox.checked = connected;
   }
 
   function initGoogleAuth(){
@@ -2120,8 +2081,8 @@
     }
   }
 
-  async function addGoogleEvent(dateStr, label, calendarId){
-    if(!gAccessToken){ setGcalStatus('尚未連接 Google 日曆，此筆行程僅新增在本機。'); return false; }
+  async function addGoogleEvent(dateStr, label, calendarId, skipRefresh){
+    if(!gAccessToken){ setGcalStatus('請先連接 Google 日曆。'); return false; }
     const targetCal = calendarId || googleWriteCalendarId || 'primary';
     try{
       const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(targetCal)}/events`, {
@@ -2130,7 +2091,7 @@
         body: JSON.stringify({ summary: label, start: { date: dateStr }, end: { date: dateStr } })
       });
       if(!res.ok) throw new Error('HTTP ' + res.status);
-      await fetchGoogleEvents();
+      if(!skipRefresh) await fetchGoogleEvents();
       return true;
     }catch(err){
       setGcalStatus('新增到 Google 日曆失敗，請稍後再試。');
@@ -2976,9 +2937,9 @@
         </div>`;
       }
       return `
-      <div class="kg-list-item" draggable="true" data-quote-item="${q.id}" data-drag-quote="${q.id}" style="cursor:grab;">
+      <div class="kg-list-item" data-quote-item="${q.id}" data-drag-quote="${q.id}">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;">
-          <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;flex-shrink:0;" title="拖曳排序">⠿</span>
+          <span style="color:var(--ink-faint);font-size:13px;line-height:1;user-select:none;flex-shrink:0;" title="拖曳排序" data-drag-handle-quote="${q.id}">⠿</span>
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;color:var(--ink);">${q.text}</div>
             ${(q.member || q.category) ? `<div style="font-size:11.5px;color:var(--ink-soft);margin-top:2px;">${q.member ? `－ ${q.member}` : ''}${(q.member && q.category) ? '　' : ''}${q.category ? `<span class="kg-tab kg-tab-sm" style="padding:1px 8px;pointer-events:none;">${q.category}</span>` : ''}</div>` : ''}
@@ -2991,28 +2952,15 @@
       </div>`;
     }).join('');
 
-    /* ---- 拖曳排序 ---- */
-    let dragFromId = null;
-    el.querySelectorAll('[data-drag-quote]').forEach(row=>{
-      row.addEventListener('dragstart', e=>{
-        dragFromId = row.dataset.dragQuote;
-        row.style.opacity = '.4';
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      row.addEventListener('dragend', ()=>{ row.style.opacity = ''; });
-      row.addEventListener('dragover', e=>{ e.preventDefault(); });
-      row.addEventListener('drop', e=>{
-        e.preventDefault();
-        const dropToId = row.dataset.dragQuote;
-        if(!dragFromId || dragFromId === dropToId) return;
-        const fromIdx = dailyQuotes.findIndex(x=>x.id === dragFromId);
-        const toIdx = dailyQuotes.findIndex(x=>x.id === dropToId);
-        if(fromIdx < 0 || toIdx < 0) return;
-        const [moved] = dailyQuotes.splice(fromIdx, 1);
-        dailyQuotes.splice(toIdx, 0, moved);
-        scheduleCloudSave();
-        renderQuoteSettings();
-      });
+    /* ---- 拖曳排序：只有按住「⠿」把手才會拖動 ---- */
+    enableHandleReorder(el, '[data-drag-quote]', '[data-drag-handle-quote]', 'dragQuote', (fromId, toId)=>{
+      const fromIdx = dailyQuotes.findIndex(x=>x.id === fromId);
+      const toIdx = dailyQuotes.findIndex(x=>x.id === toId);
+      if(fromIdx < 0 || toIdx < 0) return;
+      const [moved] = dailyQuotes.splice(fromIdx, 1);
+      dailyQuotes.splice(toIdx, 0, moved);
+      scheduleCloudSave();
+      renderQuoteSettings();
     });
 
     el.querySelectorAll('[data-edit-quote]').forEach(btn=>{
