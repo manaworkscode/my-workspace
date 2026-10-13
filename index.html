@@ -1832,6 +1832,7 @@
       kgsRenderAll(true);
       renderQuoteSettings();
       refreshGreeting();
+      if(!kgsIsOwner()) switchView('kgs-all');
       enterApp();
     }else{
       currentUser = null; loginInitiated = false;
@@ -1847,7 +1848,10 @@
   });
 
   /* ================= 分頁視圖切換 ================= */
+  // 只有管理者（Mana）能看到首頁／專案進度／行事曆／設定；製作人與檢視者只看得到藝業合作
+  const KGS_ADMIN_VIEWS = ['home','projects','calendar','settings'];
   function switchView(viewName){
+    if(KGS_ADMIN_VIEWS.includes(viewName) && typeof kgsIsOwner === 'function' && !kgsIsOwner()) viewName = 'kgs-all';
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('view-' + viewName).classList.add('active');
     if(viewName === 'settings') kgsApprovals = null;
@@ -3889,6 +3893,8 @@
     function kgsApplyRole(){
     // 所有登入的帳號都可以編輯藝業合作的資料；只有 Mana 能管理設定裡的製作人名單
     document.body.classList.remove('kgs-role-view','kgs-role-producer');
+    const adminOnly = !kgsIsOwner();
+    document.querySelectorAll('.nav-item').forEach(n=>{ if(KGS_ADMIN_VIEWS.includes(n.dataset.view)) n.style.display = adminOnly ? 'none' : ''; });
     if(!kgsCanWrite()) document.body.classList.add('kgs-role-view');
     const add = document.getElementById('kgsProducerAddBtn');
     const form = add && add.closest('.add-form'); if(form) form.style.display = kgsIsOwner() ? '' : 'none';
