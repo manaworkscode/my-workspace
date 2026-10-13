@@ -4028,6 +4028,7 @@
     const map = {};
     kgsLive().forEach(s=>{
       const k = s.venue || '';
+      if(!k) return; // 沒填場地的演出不列在場地聯絡簿
       if(!map[k]) map[k] = { count:0, latest:'' };
       map[k].count++;
       const d = s.date ? String(s.date).slice(0,10) : '';
