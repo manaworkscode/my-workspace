@@ -973,7 +973,7 @@
 <!-- ================= AUTH OVERLAY ================= -->
 <div id="authOverlay">
   <div class="auth-card">
-    <div class="auth-eyebrow">藝業合作 ・ MANAWORKSPACE</div>
+    <div class="auth-eyebrow">藝業合作 ・ ArtsWork.hub</div>
     <div class="auth-title" id="authTitle">登入</div>
     <div class="auth-sub" id="authSub">輸入 Email 與密碼，進入你的工作台。</div>
 
@@ -988,7 +988,7 @@
       </div>
       <button class="auth-btn" id="loginBtn">登入</button>
       <div class="auth-error" id="loginError"></div>
-      <div class="auth-switch">還沒有帳號？<a id="toSetupLink">建立新帳號</a>　<a id="forgotLink">忘記密碼？</a></div>
+      <div class="auth-switch" style="text-align:center;">還沒有帳號？<a id="toSetupLink">建立新帳號</a>　<a id="forgotLink">忘記密碼？</a></div>
     </div>
 
     <div id="setupForm" style="display:none;">
@@ -1006,7 +1006,7 @@
       </div>
       <button class="auth-btn" id="setupBtn">建立帳號</button>
       <div class="auth-error" id="setupError"></div>
-      <div class="auth-switch">已經有帳號了？<a id="toLoginLink">直接登入</a></div>
+      <div class="auth-switch" style="text-align:center;">已經有帳號了？<a id="toLoginLink">直接登入</a></div>
     </div>
 
     <div class="auth-note">新帳號需要先到信箱點擊驗證連結，並經管理者審核通過後才能使用。</div>
@@ -1042,7 +1042,7 @@
     <div class="sidebar-foot">
       <div class="sidebar-foot-time">最後更新<br><span class="mono" id="lastUpdate"></span></div>
       <div class="nav-item" data-view="settings" style="margin-top:14px;color:#B7C0CE;"><span class="nav-icon">⚙️</span><span class="nav-text">設定</span></div>
-      <div style="margin-top:6px;"><span class="logout-link" id="logoutLink" title="登出">登出</span></div>
+      <div style="margin-top:6px;display:flex;justify-content:flex-end;padding-right:8px;"><span class="logout-link" id="logoutLink" title="登出">登出</span></div>
     </div>
   </aside>
 
@@ -1400,7 +1400,8 @@
   firebase.initializeApp(firebaseConfig);
   const fbAuth = firebase.auth();
   // 關閉分頁／瀏覽器後就不再自動保持登入，下次打開一定要重新輸入帳號密碼
-  fbAuth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(()=>{});
+  // 不保存登入狀態：重新整理或重新開啟網站都要重新登入
+  try{ fbAuth.setPersistence(firebase.auth.Auth.Persistence.NONE).catch(()=>{}); }catch(e){}
   const fbDb = firebase.firestore();
 
   let currentUser = null;
@@ -1408,6 +1409,7 @@
   // ---- 新帳號審核：approvals/{uid} = {username,email,status:'pending'|'approved'|'rejected'} ----
   // 沒有紀錄的舊帳號視為已通過；管理者（Mana）永遠通過
   let signupWork = null, authNotice = '', pendingForce = null;
+  let loginInitiated = false; // 只有在這個頁面按下登入／建立帳號後，才接受登入狀態（不沿用舊的登入）
   async function kgsApprovalStatus(user){
     if(KGS_OWNER_EMAILS.includes(String(user.email || '').toLowerCase())) return 'approved';
     if(pendingForce && pendingForce === user.uid) return 'pending';
@@ -1733,6 +1735,7 @@
     btn.disabled = true;
     try{
       // 新帳號需管理者審核：先登記「待審核」，再由 onAuthStateChanged 擋下尚未通過的帳號
+      loginInitiated = true;
       let resolveWork; signupWork = new Promise(res=>{ resolveWork = res; });
       try{
         const cred = await fbAuth.createUserWithEmailAndPassword(usernameToEmail(u), p);
@@ -1762,6 +1765,7 @@
     if(!u || !p){ err.textContent = '請輸入帳號與密碼'; return; }
     err.textContent = '登入中…';
     btn.disabled = true;
+    loginInitiated = true;
     try{
       await fbAuth.signInWithEmailAndPassword(usernameToEmail(u), p);
       err.textContent = '';
@@ -1794,6 +1798,11 @@
   // Firebase 會自動判斷目前有沒有已登入的使用者（同裝置重開瀏覽器也會記得），
   // 這裡統一處理登入/登出後的畫面切換與資料載入
   fbAuth.onAuthStateChanged(async (user)=>{
+    if(user && !loginInitiated && !window.__skipLoginGate){
+      // 瀏覽器殘留的舊登入：一律登出，回到登入頁
+      try{ await fbAuth.signOut(); }catch(e){}
+      return;
+    }
     if(user){
       if(signupWork){ try{ await signupWork; }catch(e){} }
       if(!isLegacyEmail(user.email) && !user.emailVerified){
@@ -1825,7 +1834,7 @@
       refreshGreeting();
       enterApp();
     }else{
-      currentUser = null;
+      currentUser = null; loginInitiated = false;
       if(kgsSharedUnsub){ try{ kgsSharedUnsub(); }catch(e){} kgsSharedUnsub = null; }
       kgsLoadOk = false; kgsBase = null;
       appRoot.classList.add('locked');
