@@ -825,6 +825,21 @@
     max-height:90vh; overflow-y:auto; box-shadow:var(--shadow);
   }
   .kgs-modal h3{ margin:0 0 14px; font-size:15px; font-weight:500; color:var(--ink); }
+  /* 分區式編輯視窗（演出編輯用） */
+  .kgs-modal.kgs-wide{ max-width:720px; padding:0; }
+  .kgs-wide .kgs-mh{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:18px 24px 14px; border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--surface); z-index:2; }
+  .kgs-wide .kgs-mh h3{ margin:0; font-size:17px; font-weight:600; font-family:'Noto Serif TC',serif; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .kgs-wide .kgs-mx{ border:none; background:transparent; font-size:22px; line-height:1; color:var(--ink-soft); cursor:pointer; padding:2px 6px; border-radius:6px; }
+  .kgs-wide .kgs-mx:hover{ background:var(--surface-2); color:var(--ink); }
+  .kgs-wide .kgs-body{ padding:6px 24px 4px; }
+  .kgs-sec{ padding:16px 0 6px; border-bottom:1px solid var(--line); }
+  .kgs-sec:last-child{ border-bottom:none; }
+  .kgs-sec-t{ font-size:13px; font-weight:600; color:var(--seal); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+  .kgs-wide .kgs-field select{ text-align:left !important; text-align-last:left !important; }
+  .kgs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
+  .kgs-grid .kgs-field.full{ grid-column:1 / -1; }
+  .kgs-wide .kgs-modal-actions{ padding:14px 24px 18px; margin-top:0; border-top:1px solid var(--line); position:sticky; bottom:0; background:var(--surface); }
+  @media (max-width:560px){ .kgs-grid{ grid-template-columns:1fr; } .kgs-wide .kgs-mh, .kgs-wide .kgs-body, .kgs-wide .kgs-modal-actions{ padding-left:16px; padding-right:16px; } }
   .kgs-field{ margin-bottom:12px; }
   .kgs-field label{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:4px; }
   .kgs-field input, .kgs-field select, .kgs-field textarea{
@@ -3698,7 +3713,9 @@
   function kgsOpenForm(title, fields, values, onSave, onDelete){
     const ov = document.getElementById('kgsModal');
     const box = document.getElementById('kgsModalBox');
-    box.innerHTML = `<h3>${kgsEsc(title)}</h3>` + fields.map(f=>{
+    const sectioned = fields.some(f=>f.sec);
+    box.className = 'kgs-modal' + (sectioned ? ' kgs-wide' : '');
+    const fieldHtml = f=>{
       const val = values[f.key] == null ? '' : values[f.key];
       let input;
       if(f.type === 'select'){
@@ -3710,8 +3727,15 @@
         input = `<input type="${f.type || 'text'}" data-kgs-f="${f.key}" value="${kgsEsc(val)}" ${f.list ? `list="kgsDl-${f.key}"` : ''} placeholder="${kgsEsc(f.placeholder || '')}">`
           + (f.list ? `<datalist id="kgsDl-${f.key}">${f.list.map(x=>`<option value="${kgsEsc(x)}">`).join('')}</datalist>` : '');
       }
-      return `<div class="kgs-field"><label>${kgsEsc(f.label)}${f.required ? ' *' : ''}</label>${input}</div>`;
-    }).join('') + `<div class="kgs-modal-actions">${onDelete ? '<button class="icon-btn kgs-btn2 danger" id="kgsFormDelete" style="margin-right:auto;">刪除</button>' : ''}<button class="icon-btn kgs-btn2" id="kgsFormCancel">取消</button><button class="add-form-btn" id="kgsFormSave">儲存</button></div>`;
+      return `<div class="kgs-field${f.full ? ' full' : ''}"><label>${kgsEsc(f.label)}${f.required ? ' *' : ''}</label>${input}</div>`;
+    };
+    let bodyHtml;
+    if(sectioned){
+      const secs = []; fields.forEach(f=>{ let g = secs.find(x=>x.name === f.sec); if(!g){ g = { name:f.sec, items:[] }; secs.push(g); } g.items.push(f); });
+      bodyHtml = `<div class="kgs-mh"><h3>${kgsEsc(title)}</h3><button class="kgs-mx" id="kgsFormX" title="關閉" aria-label="關閉">×</button></div><div class="kgs-body">` +
+        secs.map(g=>`<div class="kgs-sec"><div class="kgs-sec-t">${kgsEsc(g.name)}</div><div class="kgs-grid">${g.items.map(fieldHtml).join('')}</div></div>`).join('') + `</div>`;
+    }else bodyHtml = `<h3>${kgsEsc(title)}</h3>` + fields.map(fieldHtml).join('');
+    box.innerHTML = bodyHtml + `<div class="kgs-modal-actions">${onDelete ? '<button class="icon-btn kgs-btn2 danger" id="kgsFormDelete" style="margin-right:auto;">刪除</button>' : ''}<button class="icon-btn kgs-btn2" id="kgsFormCancel">取消</button><button class="add-form-btn" id="kgsFormSave">儲存</button></div>`;
     ov.classList.add('open');
     const first = box.querySelector('input,select,textarea'); if(first) first.focus();
     const submit = ()=>{
@@ -3723,6 +3747,7 @@
     };
     document.getElementById('kgsFormSave').addEventListener('click', submit);
     document.getElementById('kgsFormCancel').addEventListener('click', kgsCloseForm);
+    const fx = document.getElementById('kgsFormX'); if(fx) fx.addEventListener('click', kgsCloseForm);
     if(onDelete) document.getElementById('kgsFormDelete').addEventListener('click', ()=>{ kgsCloseForm(); onDelete(); });
     box.querySelectorAll('input').forEach(el=> el.addEventListener('keydown', e=>{ if(e.key === 'Enter') submit(); }));
   }
@@ -3742,23 +3767,39 @@
     if(current && !list.includes(current)) list.push(current);
     return [''].concat(list);
   }
+  // 場地下拉：資料來源同場地聯絡簿（有演出的場地 + 場地租借廠商）
+  function kgsVenueOptions(current){
+    const set = new Set();
+    kgsLive().forEach(s=>{ if(s.venue) set.add(s.venue); });
+    kgsVenueVendors().forEach(v=>set.add(v.name));
+    if(current) set.add(current);
+    return [''].concat(Array.from(set).sort((a,b)=>a.localeCompare(b, 'zh-Hant')));
+  }
   function kgsOpenShowForm(id){
     const sh = id ? kgShows.find(x=>x.id === id) : null;
     const vals = sh ? { ...sh } : { status:'洽談中', type:'即興劇', producer: kgsMe || '' };
-    kgsOpenForm(sh ? '編輯演出' : '新增演出', [
-      { key:'name', label:'演出名稱', required:true },
-      { key:'producer', label:'製作人', type:'select', options: kgsProducerOptions(vals.producer) },
-      { key:'type', label:'類型', type:'select', options: KGS_TYPES.concat(vals.type && !KGS_TYPES.includes(vals.type) ? [vals.type] : []) },
-      { key:'status', label:'整體狀態', type:'select', options: KGS_ACTIVE_STATUS.map(s=>s.v) },
-      { key:'date', label:'演出日期時間', type:'datetime-local' },
-      { key:'county', label:'縣市', type:'select', options:[''].concat(KGS_COUNTIES) },
-      { key:'venue', label:'場地', list: kgsAllVenues(), placeholder:'輸入或選擇場地' },
-      { key:'ticketStatus', label:'售票狀態', type:'select', options:[''].concat(KGS_TICKET_STATUS) },
-      { key:'ticketCount', label:'售票數', type:'number' },
-      { key:'dueDate', label:'結算期限（報價單用）', type:'date' },
+    // 現場購票存在結算資料裡
+    vals.onsite = sh && sh.box ? kgsNum(sh.box.onsite) : 0;
+    kgsOpenForm(sh ? `✏️ 編輯：${sh.name}` : '➕ 新增演出', [
+      { sec:'📌 演出資訊', key:'name', label:'演出名稱', required:true },
+      { sec:'📌 演出資訊', key:'producer', label:'製作人', type:'select', options: kgsProducerOptions(vals.producer) },
+      { sec:'📌 演出資訊', key:'type', label:'演出類型', type:'select', options: KGS_TYPES.concat(vals.type && !KGS_TYPES.includes(vals.type) ? [vals.type] : []) },
+      { sec:'📌 演出資訊', key:'date', label:'演出日期、時間', type:'datetime-local' },
+      { sec:'📌 演出資訊', key:'county', label:'縣市', type:'select', options:[''].concat(KGS_COUNTIES) },
+      { sec:'📌 演出資訊', key:'venue', label:'場地', type:'select', options: kgsVenueOptions(vals.venue) },
+      { sec:'📌 演出資訊', key:'performers', label:'演員名單', placeholder:'例：演員：人數待確認' },
+      { sec:'📌 演出資訊', key:'status', label:'整體狀態', type:'select', options: KGS_ACTIVE_STATUS.map(s=>s.v) },
+      { sec:'🎟️ 票務', key:'price', label:'票價（元）', type:'number', placeholder:'例：500' },
+      { sec:'🎟️ 票務', key:'seats', label:'座位數', type:'number', placeholder:'例：80' },
+      { sec:'🎟️ 票務', key:'ticketCount', label:'線上購票', type:'number', placeholder:'0' },
+      { sec:'🎟️ 票務', key:'onsite', label:'現場購票', type:'number', placeholder:'0' },
+      { sec:'🎟️ 票務', key:'ticketStatus', label:'售票狀態', type:'select', options:[''].concat(KGS_TICKET_STATUS) },
+      { sec:'🧾 結算', key:'dueDate', label:'結算期限（報價單用）', type:'date' },
     ], vals, out=>{
-      if(sh){ Object.assign(sh, out); }
-      else{ kgShows.unshift({ id:newId('s'), ...out, status: out.status || '洽談中', archived:false }); }
+      const onsite = Math.max(0, Math.round(kgsNum(out.onsite)));
+      delete out.onsite;
+      if(sh){ Object.assign(sh, out); kgsBox(sh).onsite = onsite; }
+      else{ const ns = { id:newId('s'), ...out, status: out.status || '洽談中', archived:false }; kgsBox(ns).onsite = onsite; kgShows.unshift(ns); }
       scheduleCloudSave();
       kgsRenderAll(true);
     });
@@ -3771,7 +3812,7 @@
     '已上架': { keys:['name','producer','type','date','venue','ticketStatus','ticketCount'], cols:'minmax(0,2.2fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.6fr) minmax(0,1.3fr) minmax(0,1fr) 56px' },
     '待結帳': { keys:['name','producer','type','status','date','venue','ticketCount'], cols:'minmax(0,2.2fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.6fr) minmax(0,1fr) 56px' },
   };
-  const KGS_COL_LABEL = { name:'演出名稱', producer:'製作人', type:'類型', status:'整體狀態', date:'演出日期', venue:'場地', ticketStatus:'售票狀態', ticketCount:'售票數' };
+  const KGS_COL_LABEL = { name:'演出名稱', producer:'製作人', type:'類型', status:'整體狀態', date:'演出日期', venue:'場地', ticketStatus:'售票狀態', ticketCount:'線上購票' };
   const kgsVariant = v => KGS_VARIANTS[v] || KGS_VARIANTS[''];
   const kgsHead = v => { const o = kgsVariant(v); return `<div class="kgs-table-head" ${o.cols ? `style="--cols:${o.cols}"` : ''}>` + o.keys.map(k=>`<div ${k === 'venue' ? 'class="kgs-left"' : ''}>${KGS_COL_LABEL[k]}</div>`).join('') + '<div></div></div>'; };
   function kgsSelectHtml(id, field, options, value){
@@ -3795,7 +3836,7 @@
       date: `<div class="kgs-c ${sh.date ? '' : 'kgs-muted'}" data-label="演出日期">${kgsEsc(kgsDateText(sh))}</div>`,
       venue: `<div class="kgs-c kgs-wide kgs-left" data-label="場地">${sh.venue ? kgsEsc(sh.venue) : '<span class="kgs-muted">—</span>'}</div>`,
       ticketStatus: `<div class="kgs-c" data-label="售票狀態">${kgsSelectHtml(sh.id, 'ticketStatus', [''].concat(KGS_TICKET_STATUS), sh.ticketStatus || '')}</div>`,
-      ticketCount: `<div class="kgs-c" data-label="售票數"><input class="kgs-inp" type="number" min="0" data-kgs-ticket="${sh.id}" value="${sh.ticketCount == null ? '' : kgsEsc(sh.ticketCount)}" placeholder="0" style="width:72px;"></div>`,
+      ticketCount: `<div class="kgs-c" data-label="線上購票"><input class="kgs-inp" type="number" min="0" data-kgs-ticket="${sh.id}" value="${sh.ticketCount == null ? '' : kgsEsc(sh.ticketCount)}" placeholder="0" style="width:72px;"></div>`,
     };
     return `
     <div class="kgs-row" data-kgs-row="${sh.id}" ${o.cols ? `style="--cols:${o.cols}"` : ''}>
@@ -3851,7 +3892,7 @@
         if(act === 'quote' && sh){ kgsDownloadQuote(sh); kgsRenderAll(false); return; }
         if(act === 'report' && sh){ kgsDownloadReport(sh); kgsRenderAll(false); return; }
         if(act === 'copy' && sh){
-          // 複製整場演出資料；售票數、售票狀態、結算狀態重置；收支明細不複製
+          // 複製整場演出資料；線上購票、售票狀態、結算狀態重置；收支明細不複製
           const idx = kgShows.indexOf(sh);
           const nb = sh.box ? JSON.parse(JSON.stringify(sh.box)) : null;
           if(nb){ nb.settle = '未結算'; nb.onsite = 0; nb.revenue = 0; }
@@ -4231,7 +4272,7 @@
     const line = t => row(kgsEsc(`${t.category || ''}${t.content ? '・' + t.content : ''}`), kgsMoney(t.amount));
     const body = `<div class="top"><div><div class="brand">🎤 藝業合作工作室</div><div class="sub">演出結算報告</div></div><div class="rt"><div class="h">結算報告</div><div class="sub">日期：${today.getFullYear()} 年 ${today.getMonth()+1} 月 ${today.getDate()} 日</div></div></div>
       <div class="info"><b>演出：${kgsEsc(sh.name)}</b>　類型：${kgsEsc(sh.type || '—')}　場地：${kgsEsc(sh.venue || '—')}</div>
-      <div class="cards"><div class="c"><div class="l">票房收入</div><div class="v">${rev > 0 ? kgsMoney(rev) : '—'}</div></div><div class="c"><div class="l">現場購票</div><div class="v">${kgsNum(b.onsite)} 張</div></div><div class="c"><div class="l">成本</div><div class="v">${cost > 0 ? kgsMoney(cost) : '—'}</div></div><div class="c"><div class="l">淨利</div><div class="v">${rev > 0 || cost > 0 ? kgsMoney(net) : '—'}</div></div></div>
+      <div class="cards"><div class="c"><div class="l">票房收入</div><div class="v">${rev > 0 ? kgsMoney(rev) : '—'}</div></div><div class="c"><div class="l">線上購票</div><div class="v">${kgsNum(sh.ticketCount)} 張</div></div><div class="c"><div class="l">現場購票</div><div class="v">${kgsNum(b.onsite)} 張</div></div><div class="c"><div class="l">成本</div><div class="v">${cost > 0 ? kgsMoney(cost) : '—'}</div></div><div class="c"><div class="l">淨利</div><div class="v">${rev > 0 || cost > 0 ? kgsMoney(net) : '—'}</div></div></div>
       ${row('演出日期', kgsEsc(kgsDateText(sh)))}${row('製作人', kgsEsc(sh.producer || '—'))}${row('結算狀態', kgsEsc(b.settle || '—'))}
       <h4>收入明細</h4>${incomes.length ? incomes.map(line).join('') : row('（無）', '')}${row('<b>票房（收入合計）</b>', `<b>${kgsMoney(rev)}</b>`)}
       <h4>${expenses.length ? '支出明細' : '成本（尚無實際支出，以下為試算預估）'}</h4>${expenses.length ? expenses.map(line).join('') : (kgsCostItems(sh).length ? kgsCostItems(sh).map(i=>row(kgsEsc((i.name || '（未命名）') + '（試算）'), kgsMoney(i.amount))).join('') : row('（無）', ''))}${row('<b>成本合計</b>', `<b>${kgsMoney(cost)}</b>`)}
@@ -4253,6 +4294,7 @@
       ['藝業合作　演出結算報告', ''],
       ...kgsShowInfoRows(sh).map(r=>kgsMark(r, '_b')),
       kgsMark(['結算狀態', b.settle || '—'], '_b'),
+      kgsMark(['線上購票（張）', kgsNum(sh.ticketCount)], '_b'),
       kgsMark(['現場購票（張）', kgsNum(b.onsite)], '_b'),
       ['', ''],
       kgsMark(['收入明細', '金額（NT$）'], '_h'),
@@ -4293,6 +4335,14 @@
   function kgsSettleSelect(id, value){
     return `<select class="kgs-sel kgs-sel-status" data-kgs-field="settle" data-id="${id}">` +
       KGS_SETTLE.map(o=>`<option value="${o.v}" ${o.v===(value || '未結算')?'selected':''}>${o.e} ${o.v}</option>`).join('') + `</select>`;
+  }
+  // 結算狀態變成「已結清」→ 演出的整體狀態自動變成「已結案」；改回其他結算狀態就還原
+  function kgsSetSettle(sh, v){
+    const b = kgsBox(sh), was = b.settle;
+    b.settle = v || '未結算';
+    if(sh.archived) return;
+    if(b.settle === '已結清' && sh.status !== '已結案'){ sh.statusBeforeClose = sh.status || ''; sh.status = '已結案'; }
+    else if(was === '已結清' && b.settle !== '已結清' && sh.status === '已結案'){ sh.status = sh.statusBeforeClose || '待結帳'; }
   }
   const kgsBox = sh => { sh.box = sh.box || { onsite:0, revenue:0, cost:{}, settle:'未結算' }; sh.box.cost = sh.box.cost || {}; return sh.box; };
 
@@ -4340,14 +4390,14 @@
       kgsBox(sh).onsite = Math.round(kgsNum(inp.value)); scheduleCloudSave();
     }));
     el.querySelectorAll('select[data-kgs-field="settle"]').forEach(sel=>{
-      sel.addEventListener('change', ()=>{ const sh = kgShows.find(x=>x.id === sel.dataset.id); if(!sh) return; kgsBox(sh).settle = sel.value; scheduleCloudSave(); kgsRenderFinance(); });
+      sel.addEventListener('change', ()=>{ const sh = kgShows.find(x=>x.id === sel.dataset.id); if(!sh) return; kgsSetSettle(sh, sel.value); scheduleCloudSave(); kgsRenderFinance(); });
     });
     el.querySelectorAll('[data-kgs-fin]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         const sh = kgShows.find(x=>x.id === btn.dataset.id); if(!sh) return;
         const act = btn.dataset.kgsFin;
         const b = kgsBox(sh);
-        if(act === 'settle'){ b.settle = b.settle === '已結清' ? '未結算' : '已結清'; scheduleCloudSave(); kgsRenderFinance(); }
+        if(act === 'settle'){ kgsSetSettle(sh, b.settle === '已結清' ? '未結算' : '已結清'); scheduleCloudSave(); kgsRenderFinance(); }
         if(act === 'detail-tx') kgOpenDetail(sh.id, 'settle');
         if(act === 'cost') kgsOpenCostForm(sh);
         if(act === 'edit') kgsOpenShowForm(sh.id);
@@ -4358,7 +4408,7 @@
           const exp = kgsActualExpense(sh);
           const box = document.getElementById('kgsModalBox');
           box.innerHTML = `<h3>結算明細：${kgsEsc(sh.name)}</h3>` +
-            row('票房（收入合計）', kgsMoney(r)) + row('現場購票', kgsNum(b.onsite) + ' 張') +
+            row('票房（收入合計）', kgsMoney(r)) + row('線上購票', kgsNum(sh.ticketCount) + ' 張') + row('現場購票', kgsNum(b.onsite) + ' 張') +
             (exp > 0 ? row('實際支出', kgsMoney(exp)) : row('試算成本（尚未記實際支出）', kgsMoney(kgsEstimate(sh)))) +
             row('成本', kgsMoney(c)) + row('<b>淨利</b>', `<b>${kgsMoney(r - c)}</b>`) +
             row('淨利率', r > 0 ? Math.round((r - c) / r * 100) + '%' : '—') + row('結算狀態', kgsEsc(b.settle || '—')) +
@@ -4501,6 +4551,7 @@
   }
 
   function kgsRenderAll(rebuildFilters){
+    (kgShows || []).forEach(sh=>{ if(sh && !sh.archived && sh.box && sh.box.settle === '已結清' && sh.status !== '已結案'){ sh.statusBeforeClose = sh.status || ''; sh.status = '已結案'; } }); // 已結清的演出一律是「已結案」
     (kgShows || []).forEach(sh=>{ if(sh && !sh.status && !sh.archived) sh.status = '洽談中'; }); // 沒有狀態的演出一律是「洽談中」
     (kgVendors || []).forEach(v=>{ if(v && (v.category === '場地佈置' || v.category === '場地')) v.category = '場地租借'; }); // 舊的「場地佈置」「場地」類別改名為「場地租借」
     kgsRenderStats();
