@@ -68,58 +68,50 @@
     from{ opacity: 0; transform: translateY(6px) scale(.97); }
     to{ opacity: 1; transform: translateY(0) scale(1); }
   }
+  /* 登入頁：橘色底、置中的白色卡片 */
+  #authOverlay{ background: var(--seal) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
   .auth-card{
     width: 100%;
-    max-width: 320px;
+    max-width: 500px;
     background: var(--surface);
-    border: 1px solid var(--line);
+    border: 1px solid rgba(0,0,0,.06);
     border-radius: 16px;
-    box-shadow: 0 20px 50px rgba(20,24,16,0.28), 0 4px 14px rgba(20,24,16,0.12);
-    padding: 30px 26px 24px;
+    box-shadow: 0 18px 44px rgba(120,45,15,0.28), 0 3px 10px rgba(120,45,15,0.14);
+    padding: 40px 40px 32px;
     position: relative;
     animation: modalPop .2s cubic-bezier(.2,.7,.3,1);
   }
-  .auth-seal{
-    width: 56px; height: 56px;
-    border-radius: 8px;
-    background: var(--seal);
-    color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Noto Serif TC', serif;
-    font-weight: 700;
-    font-size: 22px;
-    margin: 0 auto 18px;
-    transform: rotate(-3deg);
-    box-shadow: 0 3px 10px rgba(28,27,23,0.28);
+  .auth-eyebrow{
+    font-size: 12.5px; letter-spacing: .14em; color: var(--ink-soft);
+    margin-bottom: 14px;
   }
   .auth-title{
     font-family: 'Noto Serif TC', serif;
-    font-size: 19px;
+    font-size: 30px;
     font-weight: 700;
-    text-align: center;
-    margin-bottom: 4px;
+    margin-bottom: 12px;
+    color: var(--ink);
   }
   .auth-sub{
-    text-align: center;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--ink-soft);
-    margin-bottom: 24px;
-    line-height: 1.6;
+    margin-bottom: 28px;
+    line-height: 1.7;
   }
-  .auth-field{ margin-bottom: 14px; }
+  .auth-field{ margin-bottom: 18px; }
   .auth-label{
-    font-size: 11.5px;
-    color: var(--ink-soft);
-    margin-bottom: 6px;
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 10px;
     display: block;
-    letter-spacing: .02em;
   }
   .auth-input{
     width: 100%;
-    padding: 10px 12px;
+    padding: 16px 16px;
     border: 1px solid var(--line);
-    border-radius: 9px;
-    font-size: 14px;
+    border-radius: 10px;
+    font-size: 15px;
     font-family: 'Noto Sans TC', sans-serif;
     background: var(--surface-2);
     color: var(--ink);
@@ -129,44 +121,45 @@
   .auth-input:focus{ border-color: var(--seal); }
   .auth-btn{
     width: 100%;
-    padding: 11px 12px;
+    padding: 16px 12px;
     border: none;
-    border-radius: 9px;
-    background: var(--seal);
+    border-radius: 10px;
+    background: var(--teal);
     color: #fff;
-    font-size: 14px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     font-family: 'Noto Sans TC', sans-serif;
     cursor: pointer;
-    margin-top: 6px;
+    margin-top: 10px;
     transition: opacity .15s ease;
   }
   .auth-btn:hover{ opacity: .9; }
+  .auth-btn:disabled{ opacity:.6; cursor:default; }
   .auth-error{
-    font-size: 12px;
+    font-size: 13px;
     color: var(--seal);
-    text-align: center;
-    margin-top: 10px;
-    min-height: 16px;
+    margin-top: 12px;
+    min-height: 18px;
+    line-height: 1.6;
   }
   .auth-switch{
-    text-align: center;
-    font-size: 11.5px;
+    font-size: 13px;
     color: var(--ink-faint);
-    margin-top: 16px;
+    margin-top: 14px;
   }
   .auth-switch a{
     color: var(--teal);
     cursor: pointer;
     text-decoration: underline;
+    margin-left: 4px;
   }
   .auth-note{
-    text-align:center;
-    font-size: 10.5px;
+    font-size: 12px;
     color: var(--ink-faint);
     margin-top: 18px;
-    line-height: 1.6;
+    line-height: 1.7;
   }
+  @media (max-width:560px){ .auth-card{ padding: 28px 22px 24px; } .auth-title{ font-size: 25px; } }
 
   /* ================= APP ================= */
   #appRoot{ display: block; transition: filter .2s ease; }
@@ -980,13 +973,13 @@
 <!-- ================= AUTH OVERLAY ================= -->
 <div id="authOverlay">
   <div class="auth-card">
-    <div class="auth-seal" id="authSealIcon">M</div>
-    <div class="auth-title" id="authTitle">Manaworkspace</div>
-    <div class="auth-sub" id="authSub">輸入帳號密碼，進入你的工作台</div>
+    <div class="auth-eyebrow">藝業合作 ・ MANAWORKSPACE</div>
+    <div class="auth-title" id="authTitle">登入</div>
+    <div class="auth-sub" id="authSub">輸入 Email 與密碼，進入你的工作台。</div>
 
     <div id="loginForm">
       <div class="auth-field">
-        <label class="auth-label">帳號</label>
+        <label class="auth-label">Email（舊帳號可輸入原本的帳號名稱）</label>
         <input class="auth-input" id="loginUser" type="text" autocomplete="username">
       </div>
       <div class="auth-field">
@@ -995,13 +988,13 @@
       </div>
       <button class="auth-btn" id="loginBtn">登入</button>
       <div class="auth-error" id="loginError"></div>
-      <div class="auth-switch">還沒有帳號？<a id="toSetupLink">建立新帳號</a></div>
+      <div class="auth-switch">還沒有帳號？<a id="toSetupLink">建立新帳號</a>　<a id="forgotLink">忘記密碼？</a></div>
     </div>
 
     <div id="setupForm" style="display:none;">
       <div class="auth-field">
-        <label class="auth-label">建立帳號</label>
-        <input class="auth-input" id="setupUser" type="text" autocomplete="username">
+        <label class="auth-label">Email</label>
+        <input class="auth-input" id="setupUser" type="email" autocomplete="email">
       </div>
       <div class="auth-field">
         <label class="auth-label">設定密碼</label>
@@ -1011,12 +1004,12 @@
         <label class="auth-label">再輸入一次密碼</label>
         <input class="auth-input" id="setupPass2" type="password" autocomplete="new-password">
       </div>
-      <button class="auth-btn" id="setupBtn">建立並登入</button>
+      <button class="auth-btn" id="setupBtn">建立帳號</button>
       <div class="auth-error" id="setupError"></div>
       <div class="auth-switch">已經有帳號了？<a id="toLoginLink">直接登入</a></div>
     </div>
 
-    <div class="auth-note">帳號密碼與資料存放在雲端，登入後任何裝置都能同步使用；請記住你的密碼，目前沒有提供忘記密碼救援機制。</div>
+    <div class="auth-note">新帳號需要先到信箱點擊驗證連結，並經管理者審核通過後才能使用。</div>
   </div>
 </div>
 
@@ -1416,8 +1409,7 @@
   // 沒有紀錄的舊帳號視為已通過；管理者（Mana）永遠通過
   let signupWork = null, authNotice = '', pendingForce = null;
   async function kgsApprovalStatus(user){
-    const local = String(user.email || '').split('@')[0].toLowerCase();
-    if(typeof KGS_OWNERS !== 'undefined' && KGS_OWNERS.includes(local)) return 'approved';
+    if(KGS_OWNER_EMAILS.includes(String(user.email || '').toLowerCase())) return 'approved';
     if(pendingForce && pendingForce === user.uid) return 'pending';
     try{
       const d = await fbDb.collection('approvals').doc(user.uid).get();
@@ -1426,9 +1418,16 @@
   }
 
   // Firebase 帳號登入需要 email 格式，這裡把使用者輸入的簡單帳號名稱轉成內部用的假 email
+  // 輸入 Email 就直接使用；只輸入帳號名稱的舊帳號，轉成原本的內部 Email
+  const LEGACY_DOMAIN = '@manaworkspace.local';
+  const KGS_OWNER_EMAILS = ['manaworkcode@manaworkspace.local'];
   function usernameToEmail(u){
-    return u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') + '@manaworkspace.local';
+    const t = String(u || '').trim().toLowerCase();
+    if(t.indexOf('@') >= 0) return t;
+    return t.replace(/[^a-z0-9._-]/g, '') + LEGACY_DOMAIN;
   }
+  const kgsNormEmail = v => usernameToEmail(v);
+  const isLegacyEmail = e => String(e || '').toLowerCase().endsWith(LEGACY_DOMAIN);
   function usernameFromUser(user){
     if(user.displayName) return user.displayName;
     return (user.email || '').split('@')[0];
@@ -1436,8 +1435,8 @@
 
   function firebaseErrorToZh(code){
     const map = {
-      'auth/email-already-in-use': '這個帳號名稱已經被註冊過了，請直接登入，或換一個帳號名稱。',
-      'auth/invalid-email': '帳號名稱格式不正確，請只使用英文字母、數字。',
+      'auth/email-already-in-use': '這個 Email 已經註冊過了，請直接登入，或按「忘記密碼？」。',
+      'auth/invalid-email': 'Email 格式不正確。',
       'auth/weak-password': '密碼太簡單，至少需要 6 個字元。',
       'auth/user-not-found': '帳號或密碼不正確。',
       'auth/wrong-password': '帳號或密碼不正確。',
@@ -1688,14 +1687,14 @@
   function showSetup(){
     loginForm.style.display = 'none';
     setupForm.style.display = 'block';
-    authTitle.textContent = '建立你的工作台帳號';
-    authSub.textContent = '這組帳密之後在任何裝置都能登入使用';
+    authTitle.textContent = '建立帳號';
+    authSub.textContent = '用你的 Email 註冊，驗證信箱並經管理者審核後即可使用。';
   }
   function showLogin(){
     setupForm.style.display = 'none';
     loginForm.style.display = 'block';
-    authTitle.textContent = 'Manaworkspace';
-    authSub.textContent = '輸入帳號密碼，進入你的工作台';
+    authTitle.textContent = '登入';
+    authSub.textContent = '輸入 Email 與密碼，進入你的工作台。';
   }
 
   function enterApp(){
@@ -1706,6 +1705,14 @@
   document.getElementById('toSetupLink').addEventListener('click', ()=>{
     document.getElementById('setupError').textContent = '';
     showSetup();
+  });
+  document.getElementById('forgotLink').addEventListener('click', async ()=>{
+    const err = document.getElementById('loginError');
+    const v = document.getElementById('loginUser').value.trim();
+    if(v.indexOf('@') < 0){ err.textContent = '請先在上方輸入註冊時使用的 Email，再按「忘記密碼？」'; return; }
+    if(isLegacyEmail(usernameToEmail(v))){ err.textContent = '舊帳號沒有真實信箱，無法寄信，請洽管理者重設。'; return; }
+    try{ await fbAuth.sendPasswordResetEmail(usernameToEmail(v)); err.textContent = '已寄出重設密碼信，請到信箱查收。'; }
+    catch(e){ err.textContent = firebaseErrorToZh(e.code); }
   });
   document.getElementById('toLoginLink').addEventListener('click', ()=>{
     document.getElementById('loginError').textContent = '';
@@ -1718,7 +1725,8 @@
     const p2 = document.getElementById('setupPass2').value;
     const err = document.getElementById('setupError');
     const btn = document.getElementById('setupBtn');
-    if(!u || !p){ err.textContent = '請輸入帳號與密碼'; return; }
+    if(!u || !p){ err.textContent = '請輸入 Email 與密碼'; return; }
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(u)){ err.textContent = '請輸入正確的 Email'; return; }
     if(p.length < 6){ err.textContent = '密碼至少需要 6 個字元'; return; }
     if(p !== p2){ err.textContent = '兩次輸入的密碼不一致'; return; }
     err.textContent = '建立中…';
@@ -1729,9 +1737,10 @@
       try{
         const cred = await fbAuth.createUserWithEmailAndPassword(usernameToEmail(u), p);
         try{
-          await cred.user.updateProfile({ displayName: u });
+          await cred.user.updateProfile({ displayName: u.split('@')[0] });
+          try{ if(typeof cred.user.sendEmailVerification === 'function') await cred.user.sendEmailVerification(); }catch(ve){ console.error('驗證信寄送失敗', ve); }
           await fbDb.collection('approvals').doc(cred.user.uid).set({ username:u, email:cred.user.email || usernameToEmail(u), status:'pending', createdAt:Date.now() });
-          authNotice = '帳號已建立，正在等待管理者審核。通過後才能登入使用，請稍後再試。';
+          authNotice = `帳號已建立。請先到 ${u} 信箱點擊驗證連結（沒看到請檢查垃圾郵件），並等管理者審核通過後才能登入。`;
         }catch(e2){
           console.error('登記審核失敗', e2);
           authNotice = '帳號已建立，但審核申請沒有送出（請通知管理者，或稍後再試登入）。';
@@ -1787,6 +1796,13 @@
   fbAuth.onAuthStateChanged(async (user)=>{
     if(user){
       if(signupWork){ try{ await signupWork; }catch(e){} }
+      if(!isLegacyEmail(user.email) && !user.emailVerified){
+        try{ if(typeof user.sendEmailVerification === 'function') await user.sendEmailVerification(); }catch(ve){}
+        if(!authNotice) authNotice = `這個 Email 還沒驗證：已（再）寄出驗證信到 ${user.email}，請點信中的連結後再登入。`;
+        currentUser = null;
+        await fbAuth.signOut();
+        return;
+      }
       const ap = await kgsApprovalStatus(user);
       if(ap !== 'approved'){
         if(!authNotice) authNotice = ap === 'rejected' ? '這個帳號的申請未通過，請洽管理者。' : '帳號還在等待管理者審核，通過後才能登入。';
@@ -3818,19 +3834,18 @@
 
   /* ---- 設定：帳號與製作人列表 ---- */
   // Mana 是管理員（可管理設定裡的製作人名單）；其他登入的帳號都是製作人（可編輯藝業合作資料）
-  const KGS_OWNERS = ['manaworkcode'];
-  const kgsIsOwner = () => !!currentUser && KGS_OWNERS.includes(String(currentUser.email || '').split('@')[0].toLowerCase());
+  const kgsIsOwner = () => !!currentUser && KGS_OWNER_EMAILS.includes(String(currentUser.email || '').toLowerCase());
   const kgsRoleOf = name => { const m = kgProducerMeta[name] || {}; return m.role === '製作人' ? '製作人' : '檢視'; };
   // 目前登入者的角色：Mana=管理員；名單裡帳號相符者用其設定的權限；不在名單裡一律是檢視
   function kgsMyRole(){
     if(!currentUser) return '檢視';
     if(kgsIsOwner()) return '管理員';
-    const mine = String(currentUser.email || '').split('@')[0].toLowerCase();
-    if(!mine) return '檢視';
+    const mine = kgsNormEmail(currentUser.email);
+    if(!currentUser.email) return '檢視';
     let role = '檢視';
     kgProducers.forEach(p=>{
       const m = kgProducerMeta[p] || {};
-      const acc = String(m.email || '').split('@')[0].toLowerCase();
+      const acc = m.email ? kgsNormEmail(m.email) : '';
       if(acc && acc === mine && m.role === '製作人') role = '製作人';
     });
     return role;
@@ -3841,7 +3856,7 @@
     const cols = 'repeat(5, minmax(0,1fr))'; // 五欄等寬、整列分散對齊
     const owner = kgsIsOwner();
     const me = typeof getDisplayName === 'function' ? getDisplayName() : '';
-    const accShort = v => String(v || '').split('@')[0] || '—';
+    const accShort = v => { v = String(v || ''); return (isLegacyEmail(v) ? v.split('@')[0] : v) || '—'; };
     const myAcc = currentUser ? (currentUser.email || usernameFromUser(currentUser)) : '—';
     const rows = [`<div class="kgs-row" style="--cols:${cols}">
         <div class="kgs-c kgs-name" style="font-weight:500;">${kgsEsc(me)} <span class="kgs-muted" style="font-weight:400;">（我）</span></div>
