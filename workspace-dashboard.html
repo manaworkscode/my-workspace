@@ -1291,6 +1291,11 @@
       </div>
       <div class="card" style="padding:0;margin-bottom:0;"><div id="kgsProducerChips"></div></div>
       <div id="kgsAccStatus" class="gcal-status" style="margin:8px 0 20px 4px;"></div>
+      <div id="kgsDeleteBox" style="display:none;margin-bottom:20px;">
+        <div class="card-head" style="margin-bottom:8px;"><div class="card-title">📨 審核訊息</div></div>
+        <div class="page-sub" style="margin:-2px 0 10px;">製作人要刪除合作廠商時，會先送到這裡，由你核准後才會真的刪除。</div>
+        <div class="card" style="padding:0;margin-bottom:0;"><div id="kgsDeleteList"></div></div>
+      </div>
       <div id="kgsApprovalBox" style="display:none;margin-bottom:20px;">
         <div class="card-head" style="margin-bottom:8px;"><div class="card-title">🔔 新帳號審核</div><button class="icon-btn kgs-btn2" id="kgsApprovalRefresh">重新整理</button></div>
         <div class="page-sub" style="margin:-2px 0 10px;">新註冊的帳號要在這裡按「核准」才能登入使用。</div>
@@ -1498,13 +1503,13 @@
      為了避免兩個人同時修改時互相蓋掉，存檔時會用「三方合併」：
      只把「我這次改動過的項目」套到雲端最新版上，而不是整份覆蓋。 */
   const kgsSharedRef = () => fbDb.collection('shared').doc('kaigang');
-  const KGS_LISTS = ['kgShows','kgRosterSeries','kgRosterSessions','kgTransactions','kgVendors'];   // 以 id 辨識的清單
+  const KGS_LISTS = ['kgShows','kgRosterSeries','kgRosterSessions','kgTransactions','kgVendors','kgDeleteRequests'];   // 以 id 辨識的清單
   const KGS_MAPS = ['kgProducerMeta','kgVenueContacts'];                                             // 以名稱當 key 的對照表
-  const kgsGetVar = k => ({ kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgVendors, kgRosterSeries, kgRosterSessions, kgTransactions })[k];
+  const kgsGetVar = k => ({ kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgVendors, kgRosterSeries, kgRosterSessions, kgTransactions, kgDeleteRequests })[k];
   function kgsSetVar(k, v){
     if(k === 'kgShows') kgShows = v; else if(k === 'kgProducers') kgProducers = v; else if(k === 'kgProducerMeta') kgProducerMeta = v;
     else if(k === 'kgVenueContacts') kgVenueContacts = v; else if(k === 'kgVendors') kgVendors = v; else if(k === 'kgRosterSeries') kgRosterSeries = v;
-    else if(k === 'kgRosterSessions') kgRosterSessions = v; else if(k === 'kgTransactions') kgTransactions = v;
+    else if(k === 'kgRosterSessions') kgRosterSessions = v; else if(k === 'kgTransactions') kgTransactions = v; else if(k === 'kgDeleteRequests') kgDeleteRequests = v;
   }
   const kgsClone = v => JSON.parse(JSON.stringify(v));
   const kgsJ = v => JSON.stringify(v == null ? null : v);
@@ -1658,7 +1663,7 @@
         todos = defaultTodos();
         events = defaultEvents();
         activityRules = defaultActivityRules();
-        kgTransactions = []; kgMigrated = true;
+        kgTransactions = []; kgDeleteRequests = []; kgMigrated = true;
         dailyQuotes = defaultDailyQuotes();
         kgShows = []; kgProducers = []; kgProducerMeta = {}; kgVenueContacts = {}; kgVendors = []; kgRosterSeries = []; kgRosterSessions = [];
         await saveUserData();
@@ -1673,7 +1678,7 @@
       todos = defaultTodos();
       events = defaultEvents();
       activityRules = defaultActivityRules();
-      kgTransactions = [];
+      kgTransactions = []; kgDeleteRequests = [];
       dailyQuotes = defaultDailyQuotes();
       currentRuleTemplateId = activityRules[0].id;
     }
@@ -2724,6 +2729,7 @@
     kgEvents = kgsLive().map(sh=>({ id: sh.id, name: sh.name, date: sh.date ? String(sh.date).slice(0,10) : '', status: sh.status || '', note: '' }));
   }
   let kgTransactions = [];
+  let kgDeleteRequests = []; // 製作人送出的「刪除廠商」申請，等管理員審核：{id, type:'vendor', vendorId, vendorName, by, at, status}
   let kgSelectedEventId = null;
   let editingTxId = null;
   let expandedTxIds = {}; // 收支明細：點名稱展開/收合下方細項用
@@ -3653,8 +3659,11 @@
   // 類別是「場地租借」的合作廠商，也算場地（會出現在場地聯絡簿與場地選單）
   const kgsVenueVendors = () => (kgVendors || []).filter(v=>v && v.category === '場地租借' && v.active !== false && v.name);
   function kgsAllVenues(){ return Array.from(new Set(kgShows.map(s=>s.venue).concat(kgsVenueVendors().map(v=>v.name)).filter(Boolean))); }
+  // 管理者 Mana 固定是製作人選項之一
+  const KGS_OWNER_NAME = 'Mana';
+  const kgsAllProducers = () => Array.from(new Set([KGS_OWNER_NAME].concat(kgProducers)));
   function kgsProducerOptions(current){
-    const list = kgProducers.slice();
+    const list = kgsAllProducers();
     if(current && !list.includes(current)) list.push(current);
     return [''].concat(list);
   }
@@ -3674,7 +3683,7 @@
       { key:'dueDate', label:'結算期限（報價單用）', type:'date' },
     ], vals, out=>{
       if(sh){ Object.assign(sh, out); }
-      else{ kgShows.unshift({ id:newId('s'), ...out, archived:false }); }
+      else{ kgShows.unshift({ id:newId('s'), ...out, status: out.status || '洽談中', archived:false }); }
       scheduleCloudSave();
       kgsRenderAll(true);
     });
@@ -3692,13 +3701,15 @@
   const kgsHead = v => { const o = kgsVariant(v); return `<div class="kgs-table-head" ${o.cols ? `style="--cols:${o.cols}"` : ''}>` + o.keys.map(k=>`<div ${k === 'venue' ? 'class="kgs-left"' : ''}>${KGS_COL_LABEL[k]}</div>`).join('') + '<div></div></div>'; };
   function kgsSelectHtml(id, field, options, value){
     const cls = field === 'status' ? 'kgs-sel kgs-sel-status' : 'kgs-sel';
-    const opts = options.map(o=>{ const v = typeof o === 'string' ? o : o.v; return `<option value="${kgsEsc(v)}" ${v===value?'selected':''}>${kgsEsc(v || '—')}</option>`; }).join('');
+    // 製作人選單：不顯示「—」選項（還沒指派時只在欄位上顯示「—」）
+    if(field === 'producer'){ options = options.filter(o=>(typeof o === 'string' ? o : o.v) !== ''); if(!value) options = [{ v:'' }].concat(options); }
+    const opts = options.map(o=>{ const v = typeof o === 'string' ? o : o.v; if(field === 'producer' && v === '') return `<option value="" selected hidden>—</option>`; return `<option value="${kgsEsc(v)}" ${v===value?'selected':''}>${kgsEsc(v || '—')}</option>`; }).join('');
     return `<select class="${cls}" data-kgs-field="${field}" data-id="${id}">${opts}</select>`;
   }
   function kgsShowRow(sh, archiveMode, variant){
     const statusCell = archiveMode
       ? `<span class="kgs-badge"><span class="kgs-dot" style="background:${kgsStatusColor('已封存')}"></span>已封存</span>`
-      : `<span style="display:flex;align-items:center;"><span class="kgs-dot" style="background:${sh.status ? kgsStatusColor(sh.status) : 'transparent'};margin-right:4px;"></span>${kgsSelectHtml(sh.id, 'status', [''].concat(KGS_ACTIVE_STATUS.map(s=>s.v)), sh.status)}</span>`;
+      : `<span style="display:flex;align-items:center;"><span class="kgs-dot" style="background:${sh.status ? kgsStatusColor(sh.status) : 'transparent'};margin-right:4px;"></span>${kgsSelectHtml(sh.id, 'status', KGS_ACTIVE_STATUS.map(s=>s.v), sh.status || '洽談中')}</span>`;
     const menuOpen = kgsMenuKey === 's:' + sh.id;
     const o = kgsVariant(variant);
     const cell = {
@@ -3768,7 +3779,7 @@
           // 複製整場演出資料；售票數、售票狀態、結算狀態重置；收支明細不複製
           const idx = kgShows.indexOf(sh);
           const nb = sh.box ? JSON.parse(JSON.stringify(sh.box)) : null;
-          if(nb){ nb.settle = ''; nb.onsite = 0; nb.revenue = 0; }
+          if(nb){ nb.settle = '未結算'; nb.onsite = 0; nb.revenue = 0; }
           const copy = { ...JSON.parse(JSON.stringify(sh)), id:newId('s'), name: sh.name + '（複製）', archived:false, ticketCount:'', ticketStatus:'' };
           delete copy.prevStatus;
           if(nb) copy.box = nb; else delete copy.box;
@@ -3782,7 +3793,19 @@
         if(act === 'delete' && sh){ if(!confirm('確定要刪除這場演出嗎？')) { kgsRenderAll(false); return; } kgShows = kgShows.filter(x=>x.id !== id); }
         if(act === 'v-edit'){ kgsOpenVendorForm(id); return; }
         if(act === 'v-toggle' && vd){ vd.active = vd.active === false ? true : false; }
-        if(act === 'v-delete' && vd){ if(!confirm('確定要刪除這家廠商嗎？')) { kgsRenderAll(false); return; } kgVendors = kgVendors.filter(x=>x.id !== id); }
+        if(act === 'v-delete' && vd){
+          if(kgsIsOwner()){
+            if(!confirm('確定要刪除這家廠商嗎？')) { kgsRenderAll(false); return; }
+            kgVendors = kgVendors.filter(x=>x.id !== id);
+            kgDeleteRequests = kgDeleteRequests.filter(q=>!(q.type === 'vendor' && q.vendorId === id && q.status === 'pending'));
+          }else{
+            // 非管理員：只能送出刪除申請，由管理員在「設定 → 審核訊息」核准後才會真的刪除
+            if(kgsPendingDelete(id)){ alert('這家廠商已經送出刪除申請，正在等管理員審核。'); kgsRenderAll(false); return; }
+            if(!confirm(`要申請刪除「${vd.name}」嗎？\n需要管理員審核通過後才會刪除。`)) { kgsRenderAll(false); return; }
+            kgDeleteRequests.push({ id:newId('q'), type:'vendor', vendorId:id, vendorName:vd.name || '', by:kgsMyLabel(), at:Date.now(), status:'pending' });
+          }
+        }
+        if(act === 'v-cancel-delete' && vd){ kgDeleteRequests = kgDeleteRequests.filter(q=>!(q.type === 'vendor' && q.vendorId === id && q.status === 'pending')); }
         scheduleCloudSave();
         kgsRenderAll(true);
       });
@@ -3815,7 +3838,7 @@
       const sa = live.find(s=>s.venue === a), sb = live.find(s=>s.venue === b);
       return kgsCountyRank(kgsCountyOf(sa)) - kgsCountyRank(kgsCountyOf(sb)) || a.localeCompare(b, 'zh-Hant');
     });
-    const producers = Array.from(new Set(kgProducers.concat(live.map(s=>s.producer).filter(Boolean))));
+    const producers = Array.from(new Set(kgsAllProducers().concat(live.map(s=>s.producer).filter(Boolean))));
     // 目前選的條件如果已經不存在，就清掉
     if(kgsFilter.month && !months.includes(kgsFilter.month)) kgsFilter.month = '';
     if(kgsFilter.county && !counties.includes(kgsFilter.county)) kgsFilter.county = '';
@@ -3897,6 +3920,7 @@
         <div class="kgs-c kgs-actions">${owner ? `<button class="icon-btn kgs-btn2 danger" data-kgs-del-producer="${kgsEsc(p)}" title="移除">移除</button>` : ''}</div>
       </div>`);
     });
+    kgsRenderDeleteRequests();
     if(owner){ if(kgsApprovals === null){ kgsApprovals = []; kgsLoadApprovals(); } else kgsRenderApprovals(); }
     el.innerHTML = `<div class="kgs-pic kgs-acc"><div class="kgs-table-head" style="--cols:${cols}"><div>顯示名稱</div><div>帳號</div><div>密碼</div><div>權限</div><div></div></div>${rows.join('')}</div>`;
   }
@@ -3912,12 +3936,13 @@
 
   /* ---- 我的製作頁 ---- */
   function kgsRenderMine(){
-    if(!kgProducers.includes(kgsMe)) kgsMe = kgProducers[0] || '';
+    const allProd = kgsAllProducers();
+    if(!allProd.includes(kgsMe)) kgsMe = allProd[0] || '';
     const sel = document.getElementById('kgsMeSelect');
-    sel.innerHTML = kgProducers.length ? kgProducers.map(p=>`<option value="${kgsEsc(p)}" ${p===kgsMe?'selected':''}>${kgsEsc(p)}</option>`).join('') : '<option value="">（尚未新增）</option>';
+    sel.innerHTML = allProd.length ? allProd.map(p=>`<option value="${kgsEsc(p)}" ${p===kgsMe?'selected':''}>${kgsEsc(p)}</option>`).join('') : '<option value="">（尚未新增）</option>';
     kgsRenderAccounts();
     const el = document.getElementById('kgsMineList');
-    if(!kgProducers.length){ el.innerHTML = '<div class="empty-state">還沒有製作人，請先到「設定」新增製作人</div>'; return; }
+    if(!allProd.length){ el.innerHTML = '<div class="empty-state">還沒有製作人，請先到「設定」新增製作人</div>'; return; }
     const list = kgsSorted(kgsLive().filter(s=>s.producer === kgsMe));
     el.innerHTML = kgsShowTable(list, false, '目前沒有指派給你的演出');
     kgsBindShowRows(el); kgsBindMenus(el);
@@ -3962,6 +3987,8 @@
   }
 
   /* ---- 合作廠商聯絡簿頁 ---- */
+  const kgsPendingDelete = vid => (kgDeleteRequests || []).find(q=>q.type === 'vendor' && q.vendorId === vid && q.status === 'pending');
+  const kgsMyLabel = () => (typeof getDisplayName === 'function' && getDisplayName()) || (currentUser && currentUser.email) || '';
   function kgsOpenVendorForm(id){
     const vd = id ? kgVendors.find(x=>x.id === id) : null;
     const vals = vd ? { ...vd } : { category:'燈光音響' };
@@ -3989,7 +4016,7 @@
     el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>廠商</div><div>類別</div><div>窗口</div><div>聯絡方式</div><div>備註</div><div></div></div>` + list.map(v=>{
       const menuOpen = kgsMenuKey === 'v:' + v.id;
       return `<div class="kgs-row" style="--cols:${cols};${v.active === false ? 'opacity:.55;' : ''}">
-        <div class="kgs-c kgs-name" style="font-weight:500;">${kgsEsc(v.name)}${v.active === false ? ' <span class="kgs-muted" style="font-weight:400;">（已停用）</span>' : ''}</div>
+        <div class="kgs-c kgs-name" style="font-weight:500;">${kgsEsc(v.name)}${v.active === false ? ' <span class="kgs-muted" style="font-weight:400;">（已停用）</span>' : ''}${kgsPendingDelete(v.id) ? ' <span class="kgs-muted" style="font-weight:400;color:var(--seal);">（待審核刪除）</span>' : ''}</div>
         <div class="kgs-c" data-label="類別">${kgsEsc(v.category || '—')}</div>
         <div class="kgs-c" data-label="窗口">${kgsEsc(v.contact || '—')}</div>
         <div class="kgs-c" data-label="聯絡方式">${kgsEsc(v.how || '—')}</div>
@@ -3999,7 +4026,7 @@
           ${menuOpen ? `<div class="kgs-menu">
             <button data-kgs-act="v-edit" data-id="${v.id}">編輯</button>
             <button data-kgs-act="v-toggle" data-id="${v.id}">${v.active === false ? '啟用' : '停用'}</button>
-            <button class="danger" data-kgs-act="v-delete" data-id="${v.id}">刪除</button>
+            ${kgsIsOwner() ? `<button class="danger" data-kgs-act="v-delete" data-id="${v.id}">刪除</button>` : (kgsPendingDelete(v.id) ? `<button data-kgs-act="v-cancel-delete" data-id="${v.id}">撤回刪除申請</button>` : `<button class="danger" data-kgs-act="v-delete" data-id="${v.id}">申請刪除</button>`)}
           </div>` : ''}
         </div>
       </div>`;
@@ -4188,14 +4215,14 @@
   const KGS_SETTLE = [{ v:'未結算', e:'🔴' }, { v:'部分結算', e:'🟡' }, { v:'已結清', e:'🟢' }];
   const kgsSettleFix = v => v === '待結算' ? '未結算' : v === '已結算' ? '已結清' : (v || '');
   function kgsSettleSelect(id, value){
-    return `<select class="kgs-sel kgs-sel-status" data-kgs-field="settle" data-id="${id}"><option value="">—</option>` +
-      KGS_SETTLE.map(o=>`<option value="${o.v}" ${o.v===value?'selected':''}>${o.e} ${o.v}</option>`).join('') + `</select>`;
+    return `<select class="kgs-sel kgs-sel-status" data-kgs-field="settle" data-id="${id}">` +
+      KGS_SETTLE.map(o=>`<option value="${o.v}" ${o.v===(value || '未結算')?'selected':''}>${o.e} ${o.v}</option>`).join('') + `</select>`;
   }
-  const kgsBox = sh => { sh.box = sh.box || { onsite:0, revenue:0, cost:{}, settle:'' }; sh.box.cost = sh.box.cost || {}; return sh.box; };
+  const kgsBox = sh => { sh.box = sh.box || { onsite:0, revenue:0, cost:{}, settle:'未結算' }; sh.box.cost = sh.box.cost || {}; return sh.box; };
 
   function kgsRenderFinance(){
     const live = kgsLive();
-    live.forEach(sh=>{ if(sh.box) sh.box.settle = kgsSettleFix(sh.box.settle); });
+    live.forEach(sh=>{ const b = kgsBox(sh); b.settle = kgsSettleFix(b.settle) || '未結算'; }); // 沒有結算狀態的一律是「未結算」
     const totalRev = live.reduce((a,s)=>a + kgsIncome(s), 0);
     const totalCost = live.reduce((a,s)=>a + kgsCostTotal(s), 0);
     const pendingRev = live.filter(s=> kgsIncome(s) > 0 && !(s.box && s.box.settle === '已結清')).reduce((a,s)=>a + kgsIncome(s), 0);
@@ -4398,6 +4425,7 @@
   }
 
   function kgsRenderAll(rebuildFilters){
+    (kgShows || []).forEach(sh=>{ if(sh && !sh.status && !sh.archived) sh.status = '洽談中'; }); // 沒有狀態的演出一律是「洽談中」
     (kgVendors || []).forEach(v=>{ if(v && (v.category === '場地佈置' || v.category === '場地')) v.category = '場地租借'; }); // 舊的「場地佈置」「場地」類別改名為「場地租借」
     kgsRenderStats();
     if(rebuildFilters !== false) kgsRenderFilters();
@@ -4436,6 +4464,37 @@
   }
   document.getElementById('kgsProducerAddBtn').addEventListener('click', kgsAddProducer);
   document.getElementById('kgsProducerInput').addEventListener('keydown', e=>{ if(e.key === 'Enter') kgsAddProducer(); });
+  /* ---- 審核訊息：廠商刪除申請（只有管理者看得到） ---- */
+  function kgsRenderDeleteRequests(){
+    const box = document.getElementById('kgsDeleteBox'); if(!box) return;
+    box.style.display = kgsIsOwner() ? '' : 'none';
+    if(!kgsIsOwner()) return;
+    const list = (kgDeleteRequests || []).slice().sort((a,b)=>((a.status === 'pending' ? 0 : 1) - (b.status === 'pending' ? 0 : 1)) || (b.at||0) - (a.at||0));
+    const cols = 'repeat(5, minmax(0,1fr))';
+    const stLabel = { pending:'待審核', approved:'已核准刪除', rejected:'已拒絕' };
+    const rows = list.map(q=>{
+      const st = q.status || 'pending';
+      const acts = st === 'pending' ? `<button class="icon-btn kgs-btn2 danger" data-kgs-dq="approve" data-id="${kgsEsc(q.id)}">核准刪除</button><button class="icon-btn kgs-btn2" data-kgs-dq="reject" data-id="${kgsEsc(q.id)}">拒絕</button>` : `<button class="icon-btn kgs-btn2" data-kgs-dq="clear" data-id="${kgsEsc(q.id)}">清除</button>`;
+      return `<div class="kgs-row" style="--cols:${cols};${st === 'pending' ? '' : 'opacity:.6;'}"><div class="kgs-c kgs-name" style="font-weight:500;">刪除廠商「${kgsEsc(q.vendorName)}」</div><div class="kgs-c" data-label="申請人">${kgsEsc(q.by || '—')}</div><div class="kgs-c" data-label="申請日">${q.at ? new Date(q.at).toLocaleDateString('zh-TW') : '—'}</div><div class="kgs-c" data-label="狀態">${stLabel[st] || st}</div><div class="kgs-c kgs-actions">${acts}</div></div>`;
+    });
+    document.getElementById('kgsDeleteList').innerHTML = `<div class="kgs-pic kgs-acc"><div class="kgs-table-head" style="--cols:${cols}"><div>申請內容</div><div>申請人</div><div>申請日</div><div>狀態</div><div></div></div>${rows.join('') || '<div class="empty-state">目前沒有審核訊息</div>'}</div>`;
+    // 設定選單上顯示待審核數量
+    const n = list.filter(q=>q.status === 'pending').length;
+    const t = document.querySelector('.nav-item[data-view="settings"] .nav-text'); if(t) t.textContent = n ? `設定（${n}）` : '設定';
+  }
+  document.getElementById('kgsDeleteList').addEventListener('click', e=>{
+    const b = e.target.closest('[data-kgs-dq]'); if(!b || !kgsIsOwner()) return;
+    const q = kgDeleteRequests.find(x=>x.id === b.dataset.id); if(!q) return;
+    const act = b.dataset.kgsDq;
+    if(act === 'approve'){
+      if(!confirm(`確定核准並刪除廠商「${q.vendorName}」嗎？`)) return;
+      kgVendors = kgVendors.filter(v=>v.id !== q.vendorId);
+    }
+    // 核准或拒絕後，這筆申請直接清除
+    kgDeleteRequests = kgDeleteRequests.filter(x=>x.id !== q.id);
+    scheduleCloudSave(); kgsRenderAll(true);
+  });
+
   /* ---- 新帳號審核（只有管理者看得到） ---- */
   let kgsApprovals = null;
   async function kgsLoadApprovals(){
