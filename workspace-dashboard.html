@@ -3544,7 +3544,7 @@
   const KGS_TYPES = ['即興劇','拼盤秀','開放麥','專場','其他'];
   // 由南到北，場地篩選會照這個順序排
   const KGS_COUNTIES = ['屏東','高雄','台南','嘉義','雲林','彰化','台中','苗栗','新竹','桃園','新北','台北','基隆','宜蘭','花蓮','台東'];
-  const KGS_VENDOR_CATS = ['燈光音響','場地','印刷','攝影','餐飲','保全','其他'];
+  const KGS_VENDOR_CATS = ['燈光音響','場地租借','印刷','攝影','餐飲','保全','其他'];
 
   let kgShows = [];          // { id, name, producer, type, status, date, venue, county, archived, prevStatus }
   let kgProducers = [];      // ['阿海', ...]
@@ -4393,7 +4393,7 @@
   }
 
   function kgsRenderAll(rebuildFilters){
-    (kgVendors || []).forEach(v=>{ if(v && v.category === '場地佈置') v.category = '場地'; }); // 舊的「場地佈置」類別改名為「場地」
+    (kgVendors || []).forEach(v=>{ if(v && (v.category === '場地佈置' || v.category === '場地')) v.category = '場地租借'; }); // 舊的「場地佈置」「場地」類別改名為「場地租借」
     kgsRenderStats();
     if(rebuildFilters !== false) kgsRenderFilters();
     kgsRenderAllList();
