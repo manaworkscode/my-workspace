@@ -1291,15 +1291,15 @@
       </div>
       <div class="card" style="padding:0;margin-bottom:0;"><div id="kgsProducerChips"></div></div>
       <div id="kgsAccStatus" class="gcal-status" style="margin:8px 0 20px 4px;"></div>
-      <div id="kgsDeleteBox" style="display:none;margin-bottom:20px;">
-        <div class="card-head" style="margin-bottom:8px;"><div class="card-title">📨 審核訊息</div></div>
-        <div class="page-sub" style="margin:-2px 0 10px;">製作人要刪除合作廠商時，會先送到這裡，由你核准後才會真的刪除。</div>
-        <div class="card" style="padding:0;margin-bottom:0;"><div id="kgsDeleteList"></div></div>
-      </div>
       <div id="kgsApprovalBox" style="display:none;margin-bottom:20px;">
         <div class="card-head" style="margin-bottom:8px;"><div class="card-title">🔔 新帳號審核</div><button class="icon-btn kgs-btn2" id="kgsApprovalRefresh">重新整理</button></div>
         <div class="page-sub" style="margin:-2px 0 10px;">新註冊的帳號要在這裡按「核准」才能登入使用。</div>
         <div class="card" style="padding:0;margin-bottom:0;"><div id="kgsApprovalList"></div></div>
+      </div>
+      <div id="kgsDeleteBox" style="display:none;margin-bottom:20px;">
+        <div class="card-head" style="margin-bottom:8px;"><div class="card-title">📨 審核訊息</div></div>
+        <div class="page-sub" style="margin:-2px 0 10px;">製作人要刪除合作廠商時，會先送到這裡，由你核准後才會真的刪除。</div>
+        <div class="card" style="padding:0;margin-bottom:0;"><div id="kgsDeleteList"></div></div>
       </div>
       <div style="height:20px;"></div>
 
@@ -1489,7 +1489,7 @@
         selectedCalendarIds,
         googleWriteCalendarId,
         dailyQuotes,
-        kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgVendors, kgRosterSeries, kgRosterSessions,
+        kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgRosterSeries, kgRosterSessions,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
     }catch(err){
@@ -1503,7 +1503,7 @@
      為了避免兩個人同時修改時互相蓋掉，存檔時會用「三方合併」：
      只把「我這次改動過的項目」套到雲端最新版上，而不是整份覆蓋。 */
   const kgsSharedRef = () => fbDb.collection('shared').doc('kaigang');
-  const KGS_LISTS = ['kgShows','kgRosterSeries','kgRosterSessions','kgTransactions','kgVendors','kgDeleteRequests'];   // 以 id 辨識的清單
+  const KGS_LISTS = ['kgShows','kgRosterSeries','kgRosterSessions','kgTransactions','kgDeleteRequests'];   // 以 id 辨識的清單
   const KGS_MAPS = ['kgProducerMeta','kgVenueContacts'];                                             // 以名稱當 key 的對照表
   const kgsGetVar = k => ({ kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgVendors, kgRosterSeries, kgRosterSessions, kgTransactions, kgDeleteRequests })[k];
   function kgsSetVar(k, v){
@@ -1574,35 +1574,109 @@
     kgsApplyData(merged); kgsBase = kgsClone(remote);
     if(changed) kgsRenderAll(true);
   }
+  /* ---- 合作廠商：每家廠商是 shared/kaigang/vendors 底下的獨立文件 ----
+     這樣 Firebase 規則可以限制「只有管理員能刪除」，製作人就算繞過網頁也刪不掉。 */
+  const kgsVendorsCol = () => kgsSharedRef().collection('vendors');
+  let kgsVendorBase = {}, kgsVendorsReady = false, kgsVendorsUnsub = null;
+  const kgsSortVendors = l => l.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  function kgsApplyVendors(list){
+    const old = new Map((kgVendors || []).map(x=>[x.id, x]));
+    kgVendors = list.map(item=>{
+      const o = old.get(item.id);
+      if(!o) return kgsClone(item);
+      if(o !== item && kgsJ(o) !== kgsJ(item)){ Object.keys(o).forEach(key=>{ if(!(key in item)) delete o[key]; }); Object.assign(o, kgsClone(item)); }
+      return o;
+    });
+  }
+  const kgsVendorsFromSnap = qs => { const l = []; qs.forEach(d=>{ const v = d.data(); l.push({ ...v, id: v.id || d.id }); }); return kgsSortVendors(l); };
+  function kgsOnRemoteVendors(remoteList){
+    const rmap = new Map(remoteList.map(v=>[v.id, v])), lmap = new Map((kgVendors || []).map(v=>[v.id, v]));
+    const out = [];
+    rmap.forEach((rv, id)=>{ const lv = lmap.get(id); const dirty = lv && kgsVendorBase[id] !== undefined && kgsJ(lv) !== kgsVendorBase[id]; out.push(dirty ? lv : rv); });
+    lmap.forEach((lv, id)=>{ if(!rmap.has(id) && kgsVendorBase[id] === undefined) out.push(lv); }); // 我剛新增、還沒存出去的
+    const changed = kgsJ(out) !== kgsJ(kgVendors);
+    kgsApplyVendors(kgsSortVendors(out));
+    kgsVendorBase = {}; remoteList.forEach(v=>{ kgsVendorBase[v.id] = kgsJ(v); });
+    if(changed) kgsRenderAll(true);
+  }
+  async function kgsLoadVendors(docData){
+    if(kgsVendorsUnsub){ try{ kgsVendorsUnsub(); }catch(e){} kgsVendorsUnsub = null; }
+    kgsVendorsReady = false;
+    const col = kgsVendorsCol();
+    const snap = await col.get();
+    let list = kgsVendorsFromSnap(snap);
+    const legacy = (docData && docData.kgVendors) || [];
+    if(!list.length && legacy.length){
+      if(kgsIsOwner()){
+        // 舊版把廠商放在同一份文件裡：管理員第一次登入時，搬成一家一份文件
+        const t = Date.now();
+        list = legacy.map((v, i)=>({ ...v, createdAt: v.createdAt || (t - i) }));
+        for(const v of list) await col.doc(v.id).set(kgsClone(v));
+        try{ await kgsSharedRef().update({ kgVendors: firebase.firestore.FieldValue.delete() }); }catch(e){ console.error('清除舊廠商欄位失敗', e); }
+      }else list = kgsSortVendors(legacy.map((v, i)=>({ ...v, createdAt: v.createdAt || (Date.now() - i) })));
+    }
+    kgsApplyVendors(list);
+    kgsVendorBase = {}; list.forEach(v=>{ kgsVendorBase[v.id] = kgsJ(v); });
+    kgsVendorsReady = true;
+    if(typeof col.onSnapshot === 'function'){
+      kgsVendorsUnsub = col.onSnapshot(qs=>{ if(!qs.metadata?.hasPendingWrites) kgsOnRemoteVendors(kgsVendorsFromSnap(qs)); }, err=>console.error('廠商同步失敗', err));
+    }
+  }
+  async function kgsLoadVendorsSafe(d){
+    try{ await kgsLoadVendors(d); }
+    catch(err){ console.error('廠商讀取失敗', err); kgVendors = []; kgsShowShareNotice('合作廠商資料讀取失敗：請到 Firebase 補上 shared/kaigang/vendors 的規則'); }
+  }
+  async function kgsSaveVendors(){
+    if(!kgsVendorsReady) return;
+    const col = kgsVendorsCol(), seen = new Set();
+    for(const v of (kgVendors || [])){
+      seen.add(v.id);
+      if(!v.createdAt) v.createdAt = Date.now();
+      const j = kgsJ(v);
+      if(kgsVendorBase[v.id] !== j){ await col.doc(v.id).set(kgsClone(v)); kgsVendorBase[v.id] = j; }
+    }
+    // 刪除廠商：只有管理員做得到（製作人要走「申請刪除」，Firebase 規則也會擋）
+    if(kgsIsOwner()){
+      for(const id of Object.keys(kgsVendorBase)){ if(!seen.has(id)){ await col.doc(id).delete(); delete kgsVendorBase[id]; } }
+    }
+  }
   async function kgsLoadShared(){
     if(kgsSharedUnsub){ try{ kgsSharedUnsub(); }catch(e){} kgsSharedUnsub = null; }
-    kgsLoadOk = false; kgsBase = null;
+    kgsLoadOk = false; kgsBase = null; kgsVendorsReady = false;
     try{
       const ref = kgsSharedRef();
       const snap = await ref.get();
       if(snap.exists){
         const d = snap.data();
         kgsApplyData(d); kgsBase = kgsClone(kgsSnapshotLocal());
+        await kgsLoadVendorsSafe(d);
       }else if(kgsIsOwner()){
         // 第一次：管理員把自己原本的藝業合作資料發布成共用資料
         await ref.set({ ...kgsSnapshotLocal(), kgMigrated:true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
         kgsBase = kgsClone(kgsSnapshotLocal());
+        await kgsLoadVendorsSafe(null);
       }else{
         kgsApplyData({}); kgsBase = kgsClone(kgsSnapshotLocal());
+        await kgsLoadVendorsSafe(null);
       }
       kgsLoadOk = true;
       if(kgsAutoStatus() && kgsLoadOk) scheduleCloudSave();
       if(typeof ref.onSnapshot === 'function'){
         kgsSharedUnsub = ref.onSnapshot(s=>{ if(s.exists && !s.metadata?.hasPendingWrites) kgsOnRemote(kgsClone(s.data())); }, err=>console.error('共用資料同步失敗', err));
       }
-      kgsShowShareNotice('');
+      if(kgsVendorsReady) kgsShowShareNotice('');
     }catch(err){
       console.error('共用資料讀取失敗', err);
       kgsShowShareNotice('藝業合作共用資料讀取失敗：請先到 Firebase 設定 shared 的讀寫規則');
     }
   }
   async function kgsSaveShared(){
-    if(!currentUser || !kgsLoadOk || !kgsCanWrite() || !kgsDirty()) return; // 檢視者絕不寫入共用位置
+    if(!currentUser || !kgsLoadOk || !kgsCanWrite()) return; // 檢視者絕不寫入共用位置
+    try{ await kgsSaveVendors(); }catch(err){
+      console.error('廠商儲存失敗', err);
+      kgsShowShareNotice('合作廠商資料沒有同步出去：請確認網路與 Firebase 規則');
+    }
+    if(!kgsDirty()) return;
     try{
       const ref = kgsSharedRef();
       const local = kgsSnapshotLocal();
@@ -1623,7 +1697,7 @@
       const changed = kgsJ(result) !== kgsJ(local);
       kgsApplyData(result); kgsBase = kgsClone(result);
       if(changed) kgsRenderAll(true);
-      kgsShowShareNotice('');
+      if(kgsVendorsReady) kgsShowShareNotice('');
     }catch(err){
       console.error('共用資料儲存失敗', err);
       kgsShowShareNotice('藝業合作資料沒有同步出去：請確認網路與 Firebase 的 shared 規則');
@@ -1652,7 +1726,7 @@
         selectedCalendarIds = d.selectedCalendarIds || null;
         googleWriteCalendarId = d.googleWriteCalendarId || null;
         dailyQuotes = (d.dailyQuotes && d.dailyQuotes.length) ? d.dailyQuotes : defaultDailyQuotes();
-        kgShows = d.kgShows || []; kgProducers = d.kgProducers || []; kgProducerMeta = d.kgProducerMeta || {}; kgVenueContacts = d.kgVenueContacts || {}; kgVendors = d.kgVendors || [];
+        kgShows = d.kgShows || []; kgProducers = d.kgProducers || []; kgProducerMeta = d.kgProducerMeta || {}; kgVenueContacts = d.kgVenueContacts || {}; kgVendors = [];
         kgRosterSeries = d.kgRosterSeries || []; kgRosterSessions = d.kgRosterSessions || [];
         // 舊的「財務管理」活動資料第一次載入時自動轉成演出（只做一次），並把舊版手動輸入的票房轉成收支明細
         if(kgPostLoad(d.kgEvents || [])) await saveUserData();
@@ -1850,7 +1924,8 @@
     }else{
       currentUser = null; loginInitiated = false;
       if(kgsSharedUnsub){ try{ kgsSharedUnsub(); }catch(e){} kgsSharedUnsub = null; }
-      kgsLoadOk = false; kgsBase = null;
+      kgsLoadOk = false; kgsBase = null; kgsVendorsReady = false; kgVendors = [];
+      if(kgsVendorsUnsub){ try{ kgsVendorsUnsub(); }catch(e){} kgsVendorsUnsub = null; }
       appRoot.classList.add('locked');
       authOverlay.style.display = 'flex';
       document.getElementById('loginUser').value = '';
@@ -3969,8 +4044,8 @@
       const editable = k !== '';
       return `<div class="kgs-row" style="--cols:${cols}">
         <div class="kgs-c kgs-name" style="font-weight:500;">${k ? kgsEsc(k) : '<span class="kgs-muted">（未填場地）</span>'}</div>
-        <div class="kgs-c" data-label="窗口">${editable ? `<input class="kgs-inp" data-kgs-vc="contact" data-venue="${kgsEsc(k)}" value="${kgsEsc(c.contact || '')}" placeholder="—">` : '<span class="kgs-muted">—</span>'}</div>
-        <div class="kgs-c" data-label="聯絡方式">${editable ? `<input class="kgs-inp" data-kgs-vc="how" data-venue="${kgsEsc(k)}" value="${kgsEsc(c.how || '')}" placeholder="—">` : '<span class="kgs-muted">—</span>'}</div>
+        <div class="kgs-c ${editable && c.contact ? '' : 'kgs-muted'}" data-label="窗口">${editable && c.contact ? kgsEsc(c.contact) : '—'}</div>
+        <div class="kgs-c ${editable && c.how ? '' : 'kgs-muted'}" data-label="聯絡方式">${editable && c.how ? kgsEsc(c.how) : '—'}</div>
         <div class="kgs-c" data-label="合作次數">${map[k].count}</div>
         <div class="kgs-c ${map[k].latest ? '' : 'kgs-muted'}" data-label="最近演出">${map[k].latest || ''}</div>
       </div>`;
@@ -4000,7 +4075,7 @@
       { key:'note', label:'備註', type:'textarea' },
     ], vals, out=>{
       if(vd) Object.assign(vd, out);
-      else kgVendors.unshift({ id:newId('v'), ...out, active:true });
+      else kgVendors.unshift({ id:newId('v'), ...out, active:true, createdAt:Date.now() });
       scheduleCloudSave();
       kgsRenderAll(true);
     });
