@@ -201,12 +201,12 @@
     font-family: 'Noto Serif TC', serif;
     font-weight: 700;
     font-size: 15px;
-    transform: rotate(-2deg);
+    transform: rotate(-2deg); flex: none;
     box-shadow: 0 2px 6px rgba(242,120,75,0.35);
   }
   .brand-name{
     font-family: 'Noto Serif TC', serif;
-    font-size: 15px;
+    font-size: 14px; white-space: nowrap;
     font-weight: 600;
     line-height: 1.2;
     color: #fff;
@@ -979,7 +979,7 @@
 
     <div id="loginForm">
       <div class="auth-field">
-        <label class="auth-label">Email（舊帳號可輸入原本的帳號名稱）</label>
+        <label class="auth-label">Email</label>
         <input class="auth-input" id="loginUser" type="text" autocomplete="username">
       </div>
       <div class="auth-field">
@@ -988,7 +988,7 @@
       </div>
       <button class="auth-btn" id="loginBtn">登入</button>
       <div class="auth-error" id="loginError"></div>
-      <div class="auth-switch" style="text-align:center;">還沒有帳號？<a id="toSetupLink">建立新帳號</a>　<a id="forgotLink">忘記密碼？</a></div>
+      <div class="auth-switch" style="text-align:center;">還沒有帳號？<br><a id="toSetupLink" style="margin-left:0;">建立新帳號</a>　<a id="forgotLink" style="margin-left:0;">忘記密碼？</a></div>
     </div>
 
     <div id="setupForm" style="display:none;">
@@ -1020,10 +1020,10 @@
 <div class="app">
   <aside class="sidebar" id="appSidebar">
     <div class="brand">
-      <div class="brand-seal">工</div>
+      <div class="brand-seal">藝</div>
         <div class="brand-text">
-        <div class="brand-name">Manaworkspace</div>
-        <div class="brand-sub">WORKSPACE</div>
+        <div class="brand-name">藝業合作工作室</div>
+        <div class="brand-sub">Artswork.hub</div>
       </div>
       <button class="sidebar-toggle" id="sidebarToggle" title="收合選單" aria-label="收合選單">‹</button>
     </div>
@@ -1711,9 +1711,10 @@
   document.getElementById('forgotLink').addEventListener('click', async ()=>{
     const err = document.getElementById('loginError');
     const v = document.getElementById('loginUser').value.trim();
-    if(v.indexOf('@') < 0){ err.textContent = '請先在上方輸入註冊時使用的 Email，再按「忘記密碼？」'; return; }
-    if(isLegacyEmail(usernameToEmail(v))){ err.textContent = '舊帳號沒有真實信箱，無法寄信，請洽管理者重設。'; return; }
-    try{ await fbAuth.sendPasswordResetEmail(usernameToEmail(v)); err.textContent = '已寄出重設密碼信，請到信箱查收。'; }
+    if(!v){ err.textContent = '請先在上方輸入帳號，再按「忘記密碼？」'; return; }
+    const resetMail = v.indexOf('@') >= 0 ? v : v + '@gmail.com';
+    if(isLegacyEmail(usernameToEmail(v)) && v.indexOf('@') >= 0){ err.textContent = '舊帳號沒有真實信箱，無法寄信，請洽管理者重設。'; return; }
+    try{ await fbAuth.sendPasswordResetEmail(usernameToEmail(resetMail)); err.textContent = '已寄出重設密碼信，請到信箱查收。'; }
     catch(e){ err.textContent = firebaseErrorToZh(e.code); }
   });
   document.getElementById('toLoginLink').addEventListener('click', ()=>{
@@ -1767,7 +1768,14 @@
     btn.disabled = true;
     loginInitiated = true;
     try{
-      await fbAuth.signInWithEmailAndPassword(usernameToEmail(u), p);
+      // 只輸入 @ 前面的帳號時，依序嘗試：舊帳號（內部網域）→ gmail.com；輸入完整 Email 則直接使用
+      const cands = u.indexOf('@') >= 0 ? [usernameToEmail(u)] : [usernameToEmail(u), u.trim().toLowerCase() + '@gmail.com'];
+      let lastErr = null, ok = false;
+      for(const em of cands){
+        try{ await fbAuth.signInWithEmailAndPassword(em, p); ok = true; break; }
+        catch(e2){ lastErr = e2; if(!/user-not-found|wrong-password|invalid-credential|invalid-login/.test(String(e2 && e2.code))) break; }
+      }
+      if(!ok) throw lastErr;
       err.textContent = '';
     }catch(e){
       err.textContent = firebaseErrorToZh(e.code);
