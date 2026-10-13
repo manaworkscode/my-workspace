@@ -3650,7 +3650,9 @@
   document.addEventListener('click', ()=>{ if(kgsMenuKey !== null){ kgsMenuKey = null; kgsRenderAll(false); } });
 
   /* ---- 新增／編輯演出 ---- */
-  function kgsAllVenues(){ return Array.from(new Set(kgShows.map(s=>s.venue).filter(Boolean))); }
+  // 類別是「場地租借」的合作廠商，也算場地（會出現在場地聯絡簿與場地選單）
+  const kgsVenueVendors = () => (kgVendors || []).filter(v=>v && v.category === '場地租借' && v.active !== false && v.name);
+  function kgsAllVenues(){ return Array.from(new Set(kgShows.map(s=>s.venue).concat(kgsVenueVendors().map(v=>v.name)).filter(Boolean))); }
   function kgsProducerOptions(current){
     const list = kgProducers.slice();
     if(current && !list.includes(current)) list.push(current);
@@ -3931,24 +3933,27 @@
       const d = s.date ? String(s.date).slice(0,10) : '';
       if(d && d > map[k].latest) map[k].latest = d;
     });
+    const vendorOf = {};
+    kgsVenueVendors().forEach(v=>{ vendorOf[v.name] = v; if(!map[v.name]) map[v.name] = { count:0, latest:'' }; });
     const rows = Object.keys(map).sort((a,b)=> map[b].count - map[a].count || a.localeCompare(b, 'zh-Hant'));
     const el = document.getElementById('kgsVenueList');
-    if(!rows.length){ el.innerHTML = '<div class="empty-state">還沒有演出資料，新增演出後場地會自動出現在這裡</div>'; return; }
+    if(!rows.length){ el.innerHTML = '<div class="empty-state">還沒有場地資料，新增演出或「場地租借」類別的廠商後會自動出現在這裡</div>'; return; }
     const cols = 'minmax(0,2.4fr) minmax(0,1.4fr) minmax(0,1.6fr) minmax(0,1fr) minmax(0,1.2fr)';
     el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>場地</div><div>窗口</div><div>聯絡方式</div><div>合作次數</div><div>最近演出</div></div>` + rows.map(k=>{
-      const c = kgVenueContacts[k] || {};
+      const c = vendorOf[k] ? { contact: vendorOf[k].contact, how: vendorOf[k].how } : (kgVenueContacts[k] || {});
       const editable = k !== '';
       return `<div class="kgs-row" style="--cols:${cols}">
         <div class="kgs-c kgs-name" style="font-weight:500;">${k ? kgsEsc(k) : '<span class="kgs-muted">（未填場地）</span>'}</div>
         <div class="kgs-c" data-label="窗口">${editable ? `<input class="kgs-inp" data-kgs-vc="contact" data-venue="${kgsEsc(k)}" value="${kgsEsc(c.contact || '')}" placeholder="—">` : '<span class="kgs-muted">—</span>'}</div>
         <div class="kgs-c" data-label="聯絡方式">${editable ? `<input class="kgs-inp" data-kgs-vc="how" data-venue="${kgsEsc(k)}" value="${kgsEsc(c.how || '')}" placeholder="—">` : '<span class="kgs-muted">—</span>'}</div>
         <div class="kgs-c" data-label="合作次數">${map[k].count}</div>
-        <div class="kgs-c ${map[k].latest ? '' : 'kgs-muted'}" data-label="最近演出">${map[k].latest || '—'}</div>
+        <div class="kgs-c ${map[k].latest ? '' : 'kgs-muted'}" data-label="最近演出">${map[k].latest || ''}</div>
       </div>`;
     }).join('') + `</div>`;
     el.querySelectorAll('[data-kgs-vc]').forEach(inp=>{
       inp.addEventListener('change', ()=>{
         const v = inp.dataset.venue;
+        if(vendorOf[v]){ vendorOf[v][inp.dataset.kgsVc] = inp.value.trim(); scheduleCloudSave(); return; } // 廠商來的場地：資料同步寫回廠商
         kgVenueContacts[v] = kgVenueContacts[v] || { contact:'', how:'' };
         kgVenueContacts[v][inp.dataset.kgsVc] = inp.value.trim();
         scheduleCloudSave();
