@@ -775,13 +775,13 @@
   .kgs-filters{ gap:10px; align-items:center; margin:14px 0; }
   .kgs-filters input, .kgs-filters select{ padding:10px 12px; font-size:13.5px; height:40px; }
   .kgs-filters input{ flex:588 1 0; width:auto; min-width:0; text-align:left; }
-  .kgs-filters select{ width:auto; min-width:0; text-align:left; text-align-last:left; field-sizing:fixed; }
+  .kgs-filters select{ width:auto; min-width:0; text-align:center; text-align-last:center; field-sizing:fixed; }
   .kgs-filters #kgsMonth{ flex:152 1 0; } .kgs-filters #kgsCounty{ flex:150 1 0; } .kgs-filters #kgsVenue{ flex:350 1 0; } .kgs-filters #kgsProducer{ flex:150 1 0; }
   .kgs-filters .icon-btn{ flex:none; width:auto; height:40px; padding:0 14px; font-size:13px; }
   @media (max-width:1100px){ .kgs-filters{ flex-wrap:wrap; } .kgs-filters input{ flex:1 1 100%; } .kgs-filters select{ flex:1 1 140px !important; } }
   .kgs-filters input:focus, .kgs-filters select:focus, .kgs-sel:focus, .kgs-inp:focus{ border-color:var(--teal); }
   .kgs-table-head, .kgs-row{
-    display:grid; grid-template-columns:var(--cols, minmax(0,2.2fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.6fr) 56px);
+    display:grid; grid-template-columns:var(--cols, minmax(0,2.4fr) repeat(5,minmax(0,1fr)) 56px);
     gap:10px; align-items:center;
   }
   .kgs-table-head{ font-size:12px; color:var(--ink-soft); padding:8px 6px; border-bottom:1px solid var(--line); }
@@ -835,11 +835,15 @@
   .kgs-sec{ padding:16px 0 6px; border-bottom:1px solid var(--line); }
   .kgs-sec:last-child{ border-bottom:none; }
   .kgs-sec-t{ font-size:13px; font-weight:600; color:var(--seal); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
-  .kgs-wide .kgs-field select{ text-align:left !important; text-align-last:left !important; }
+  .kgs-wide .kgs-field select, .kgs-wide .kgs-field select option{ text-align:left !important; text-align-last:left !important; }
   .kgs-grid{ display:grid; grid-template-columns:1fr 1fr; gap:0 16px; }
   .kgs-grid .kgs-field.full{ grid-column:1 / -1; }
   .kgs-wide .kgs-modal-actions{ padding:14px 24px 18px; margin-top:0; border-top:1px solid var(--line); position:sticky; bottom:0; background:var(--surface); }
   @media (max-width:560px){ .kgs-grid{ grid-template-columns:1fr; } .kgs-wide .kgs-mh, .kgs-wide .kgs-body, .kgs-wide .kgs-modal-actions{ padding-left:16px; padding-right:16px; } }
+  .kgs-chks{ display:flex; gap:10px; flex-wrap:wrap; }
+  .kgs-chk{ display:flex !important; align-items:center; gap:6px; margin:0 !important; padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); font-size:13.5px !important; color:var(--ink) !important; cursor:pointer; }
+  .kgs-chk input{ width:auto !important; margin:0; }
+  .kgs-tk{ display:flex; gap:6px; justify-content:center; } .kgs-tk .kgs-inp{ width:76px; min-width:0; text-align:center; border:none !important; background:transparent !important; box-shadow:none; padding:4px 2px; border-radius:0; } .kgs-tk .kgs-inp:focus{ border-bottom:1px solid var(--seal) !important; outline:none; }
   .kgs-field{ margin-bottom:12px; }
   .kgs-field label{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:4px; }
   .kgs-field input, .kgs-field select, .kgs-field textarea{
@@ -875,16 +879,24 @@
   .kgs-acc .kgs-actions{ justify-content:center; }
   .kgs-pic.kgs-acc .kgs-table-head > div:first-child, .kgs-pic.kgs-acc .kgs-row > .kgs-c.kgs-name:first-child{ text-align:left !important; justify-content:flex-start; padding-left:20px; }
   .kgs-btn2{ width:auto !important; height:auto !important; padding:8px 16px !important; border-radius:8px !important; font-size:13px !important; font-weight:500; font-family:'Noto Sans TC',sans-serif; }
-  .kgs-cc-sub{ font-size:12.5px; color:var(--ink-soft); margin:-8px 0 12px; }
-  .kgs-cc-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
-  .kgs-cc-card{ border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:var(--surface-2); }
+  .kgs-cc-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:14px; }
+  .kgs-cc-head h3{ margin:0 0 4px; font-size:17px; }
+  .kgs-cc-sub{ font-size:13px; color:var(--ink-soft); margin:0; }
+  .kgs-cc-foot{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:16px 0 22px; }
+  .kgs-cc-hint{ font-size:12px; color:var(--ink-soft); }
+  .kgs-cc-card{ text-align:left; } .kgs-cc-v{ font-size:22px; }
+  .kgs-cc-cards{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0 20px; }
+  .kgs-cc-card{ border:1px solid var(--line); border-radius:12px; padding:16px 18px; background:var(--surface-2); }
   .kgs-cc-l{ font-size:11.5px; color:var(--ink-soft); margin-bottom:4px; }
   .kgs-cc-v{ font-size:15px; font-weight:600; }
-  .kgs-cc-list{ border:1px solid var(--line); border-radius:10px; padding:8px; max-height:300px; overflow:auto; }
-  .kgs-cc-row{ display:grid; grid-template-columns:1fr 110px auto 28px; gap:8px; align-items:center; padding:4px 0; }
+  .kgs-cc-list{ border:1px solid var(--line); border-radius:12px; padding:14px 16px; min-height:100px; max-height:300px; overflow:auto; }
+  .kgs-cc-row{ display:grid; grid-template-columns:96px 1.3fr .9fr .9fr 1.1fr 100px 1.3fr 28px; gap:8px; align-items:center; padding:4px 0; }
+  .kgs-cc-row .kgs-inp{ min-width:0; width:100%; }
+  .kgs-cc-hd{ font-size:12px; color:var(--ink-soft); padding:6px 0; border-bottom:1px solid var(--line); margin-bottom:4px; }
+  .kgs-cc-list{ overflow-x:auto; } .kgs-cc-list .kgs-cc-row{ min-width:780px; }
   .kgs-cc-paid{ font-size:12.5px; color:var(--ink-soft); display:flex; align-items:center; gap:4px; white-space:nowrap; }
-  .kgs-cc-empty{ text-align:center; padding:22px 0; color:var(--ink-soft); font-size:13px; }
-  @media (max-width:880px){ .kgs-cc-cards{ grid-template-columns:1fr 1fr; } .kgs-cc-row{ grid-template-columns:1fr 90px; } }
+  .kgs-cc-empty{ text-align:center; padding:30px 0; color:var(--ink-soft); font-size:14px; }
+  @media (max-width:880px){ .kgs-cc-cards{ grid-template-columns:1fr 1fr; } }
   .kgs-modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:16px; }
   @media (max-width:1100px){
     .kgs-table-head{ display:none; }
@@ -931,6 +943,7 @@
   /* ===== 藝業合作：所有選單與表格文字一律置中 ===== */
   .kgs-menu button{ text-align:left !important; }
   .kgs-field select, #kgsMeSelect{ text-align:center; text-align-last:center; }
+  select, select option{ text-align:center; text-align-last:center; }
   .kgs-filters input, .kgs-filters input::placeholder{ text-align:left; }
   @media (min-width:1101px){
     .kgs-pic .kgs-table-head > div:first-child, .kgs-pic .kgs-row > .kgs-c.kgs-name, .kgs-pic .kgs-row > .kgs-c.kgs-name .kgs-link, .kgs-pic .kgs-table-head > div.kgs-left, .kgs-pic .kgs-row > .kgs-c.kgs-left{ text-align:left !important; }
@@ -1205,11 +1218,6 @@
       <div class="page-head">
         <div style="font-size:11.5px;color:var(--seal);font-weight:600;letter-spacing:.05em;margin-bottom:4px;">⚓ 藝業合作</div>
         <div class="page-title">💰 票房結算</div>
-      </div>
-      <div class="kg-tabs">
-        <button class="kg-tab active" data-kg-tab="settle">各場結算</button>
-        <button class="kg-tab" data-kg-tab="overview">總覽</button>
-        <button class="kg-tab" data-kg-tab="report">月報表</button>
       </div>
       <div id="kgsFinPane">
         <div class="kg-metrics" id="kgsFinStats"></div>
@@ -3633,11 +3641,12 @@
   /* ================= 藝業合作・演出管理模組 =================
      演出、製作人、場地窗口、合作廠商都存在帳號的雲端資料裡（跟其他工作台資料一起存）。 */
   const KGS_STATUS = [
-    { v:'洽談中', c:'#E0A81C' }, { v:'籌辦中', c:'#3B7FC4' }, { v:'已上架', c:'#F2784B' }, { v:'待結帳', c:'#D14B5A' },
-    { v:'已結案', c:'#2FA36B' }, { v:'已封存', c:'#7C5CC4' },
+    { v:'洽談中', c:'#E0A81C' }, { v:'籌辦中', c:'#3B7FC4' }, { v:'已上架', c:'#F2784B' }, { v:'準備完成', c:'#7C5CC4' }, { v:'待結帳', c:'#D14B5A' },
+    { v:'已結案', c:'#2FA36B' }, { v:'暫緩', c:'#E0457B' }, { v:'已封存', c:'#7C5CC4' },
   ];
   const KGS_ACTIVE_STATUS = KGS_STATUS.filter(s=>s.v !== '已封存');
-  const KGS_TYPES = ['即興劇','拼盤秀','開放麥','專場','其他'];
+  const KGS_TYPES = ['開放麥','即興劇','拼盤秀','個人專場','其他演出'];
+  const kgsTypeFix = v => v === '專場' ? '個人專場' : v === '其他' ? '其他演出' : (v || '');
   // 由南到北，場地篩選會照這個順序排
   const KGS_COUNTIES = ['屏東','高雄','台南','嘉義','雲林','彰化','台中','苗栗','新竹','桃園','新北','台北','基隆','宜蘭','花蓮','台東'];
   const KGS_VENDOR_CATS = ['燈光音響','場地租借','印刷','攝影','餐飲','保全','其他'];
@@ -3652,7 +3661,8 @@
   let kgRosterSessions = []; // { id, seriesId, date, performers:[], needed, note }
   let kgsFilter = { q:'', month:'', county:'', venue:'', producer:'' };
   let kgsStatusFilter = '';   // 統計卡片篩選：'' | 籌辦中 | 已上架 | 待結帳
-  const KGS_TICKET_STATUS = ['未開賣','售票中','已完售','停售'];
+  const KGS_TICKET_STATUS = ['未開賣','售票中','已結束','完售'];
+  const kgsTicketFix = v => v === '已完售' ? '完售' : v === '停售' ? '已結束' : (v || '');
   let kgsMe = '';
   try{ kgsMe = localStorage.getItem('kgs_me') || ''; }catch(e){}
   let kgsShowInactive = false;
@@ -3709,8 +3719,8 @@
   const kgsLive = () => kgShows.filter(s=>!s.archived);
 
   /* ---- 共用：彈出表單 ---- */
-  function kgsCloseForm(){ document.getElementById('kgsModal').classList.remove('open'); document.getElementById('kgsModalBox').style.maxWidth = ''; }
-  function kgsOpenForm(title, fields, values, onSave, onDelete){
+  function kgsCloseForm(){ document.getElementById('kgsModal').classList.remove('open'); const _b = document.getElementById('kgsModalBox'); _b.style.maxWidth = ''; _b.style.width = ''; _b.style.padding = ''; }
+  function kgsOpenForm(title, fields, values, onSave, onDelete, saveLabel){
     const ov = document.getElementById('kgsModal');
     const box = document.getElementById('kgsModalBox');
     const sectioned = fields.some(f=>f.sec);
@@ -3721,6 +3731,8 @@
       if(f.type === 'select'){
         const opts = f.options.map(o=>{ const v = typeof o === 'string' ? o : o.v; const l = typeof o === 'string' ? (o || '—') : o.l; return `<option value="${kgsEsc(v)}" ${v===val?'selected':''}>${kgsEsc(l)}</option>`; }).join('');
         input = `<select data-kgs-f="${f.key}">${opts}</select>`;
+      }else if(f.type === 'checks'){
+        input = `<div class="kgs-chks">${f.options.map(o=>`<label class="kgs-chk"><input type="checkbox" data-kgs-chk="${o.key}" ${(values[o.key] == null ? o.def : values[o.key]) ? 'checked' : ''}> ${kgsEsc(o.label)}</label>`).join('')}</div>`;
       }else if(f.type === 'textarea'){
         input = `<textarea rows="3" data-kgs-f="${f.key}">${kgsEsc(val)}</textarea>`;
       }else{
@@ -3733,14 +3745,15 @@
     if(sectioned){
       const secs = []; fields.forEach(f=>{ let g = secs.find(x=>x.name === f.sec); if(!g){ g = { name:f.sec, items:[] }; secs.push(g); } g.items.push(f); });
       bodyHtml = `<div class="kgs-mh"><h3>${kgsEsc(title)}</h3><button class="kgs-mx" id="kgsFormX" title="關閉" aria-label="關閉">×</button></div><div class="kgs-body">` +
-        secs.map(g=>`<div class="kgs-sec"><div class="kgs-sec-t">${kgsEsc(g.name)}</div><div class="kgs-grid">${g.items.map(fieldHtml).join('')}</div></div>`).join('') + `</div>`;
+        secs.map(g=>`<div class="kgs-sec">${g.name === '-' ? '' : `<div class="kgs-sec-t">${kgsEsc(g.name)}</div>`}<div class="kgs-grid">${g.items.map(fieldHtml).join('')}</div></div>`).join('') + `</div>`;
     }else bodyHtml = `<h3>${kgsEsc(title)}</h3>` + fields.map(fieldHtml).join('');
-    box.innerHTML = bodyHtml + `<div class="kgs-modal-actions">${onDelete ? '<button class="icon-btn kgs-btn2 danger" id="kgsFormDelete" style="margin-right:auto;">刪除</button>' : ''}<button class="icon-btn kgs-btn2" id="kgsFormCancel">取消</button><button class="add-form-btn" id="kgsFormSave">儲存</button></div>`;
+    box.innerHTML = bodyHtml + `<div class="kgs-modal-actions">${onDelete ? '<button class="icon-btn kgs-btn2 danger" id="kgsFormDelete" style="margin-right:auto;">刪除</button>' : ''}<button class="icon-btn kgs-btn2" id="kgsFormCancel">取消</button><button class="add-form-btn" id="kgsFormSave">${kgsEsc(saveLabel || '儲存')}</button></div>`;
     ov.classList.add('open');
     const first = box.querySelector('input,select,textarea'); if(first) first.focus();
     const submit = ()=>{
       const out = {};
       box.querySelectorAll('[data-kgs-f]').forEach(el=>{ out[el.dataset.kgsF] = el.value.trim(); });
+      box.querySelectorAll('[data-kgs-chk]').forEach(el=>{ out[el.dataset.kgsChk] = el.checked; });
       for(const f of fields){ if(f.required && !out[f.key]){ const el = box.querySelector(`[data-kgs-f="${f.key}"]`); if(el) el.focus(); return; } }
       kgsCloseForm();
       onSave(out);
@@ -3777,23 +3790,23 @@
   }
   function kgsOpenShowForm(id){
     const sh = id ? kgShows.find(x=>x.id === id) : null;
-    const vals = sh ? { ...sh } : { status:'洽談中', type:'即興劇', producer: kgsMe || '' };
+    const vals = sh ? { ...sh, ticketStatus: kgsTicketFix(sh.ticketStatus), type: kgsTypeFix(sh.type) } : { status:'洽談中', type:'即興劇', producer: kgsMe || '' };
     // 現場購票存在結算資料裡
     vals.onsite = sh && sh.box ? kgsNum(sh.box.onsite) : 0;
     kgsOpenForm(sh ? `✏️ 編輯：${sh.name}` : '➕ 新增演出', [
       { sec:'📌 演出資訊', key:'name', label:'演出名稱', required:true },
       { sec:'📌 演出資訊', key:'producer', label:'製作人', type:'select', options: kgsProducerOptions(vals.producer) },
       { sec:'📌 演出資訊', key:'type', label:'演出類型', type:'select', options: KGS_TYPES.concat(vals.type && !KGS_TYPES.includes(vals.type) ? [vals.type] : []) },
-      { sec:'📌 演出資訊', key:'date', label:'演出日期、時間', type:'datetime-local' },
+      { sec:'📌 演出資訊', key:'venue', label:'場地', list: kgsVenueOptions(vals.venue).filter(Boolean), placeholder:'例：小島國際單口喜劇俱樂部' },
       { sec:'📌 演出資訊', key:'county', label:'縣市', type:'select', options:[''].concat(KGS_COUNTIES) },
-      { sec:'📌 演出資訊', key:'venue', label:'場地', type:'select', options: kgsVenueOptions(vals.venue) },
-      { sec:'📌 演出資訊', key:'performers', label:'演員名單', placeholder:'例：演員：人數待確認' },
+      { sec:'📌 演出資訊', key:'date', label:'演出日期、時間', type:'datetime-local' },
       { sec:'📌 演出資訊', key:'status', label:'整體狀態', type:'select', options: KGS_ACTIVE_STATUS.map(s=>s.v) },
+      { sec:'📌 演出資訊', key:'performers', label:'演出者名單', placeholder:'例：演員：人數待確認' },
       { sec:'🎟️ 票務', key:'price', label:'票價（元）', type:'number', placeholder:'例：500' },
       { sec:'🎟️ 票務', key:'seats', label:'座位數', type:'number', placeholder:'例：80' },
-      { sec:'🎟️ 票務', key:'ticketCount', label:'線上購票', type:'number', placeholder:'0' },
-      { sec:'🎟️ 票務', key:'onsite', label:'現場購票', type:'number', placeholder:'0' },
-      { sec:'🎟️ 票務', key:'ticketStatus', label:'售票狀態', type:'select', options:[''].concat(KGS_TICKET_STATUS) },
+      { sec:'🎟️ 票務', key:'ticketCount', label:'線上購票（張）', type:'number', placeholder:'0' },
+      { sec:'🎟️ 票務', key:'onsite', label:'現場購票（張）', type:'number', placeholder:'0' },
+      { sec:'🎟️ 票務', key:'ticketStatus', label:'售票狀態', type:'select', options:[{v:'',l:'請選擇'}].concat(KGS_TICKET_STATUS) },
       { sec:'🧾 結算', key:'dueDate', label:'結算期限（報價單用）', type:'date' },
     ], vals, out=>{
       const onsite = Math.max(0, Math.round(kgsNum(out.onsite)));
@@ -3809,12 +3822,12 @@
   // 依統計卡片篩選切換欄位配置
   const KGS_VARIANTS = {
     '': { keys:['name','producer','type','status','date','venue'], cols:'' },
-    '已上架': { keys:['name','producer','type','date','venue','ticketStatus','ticketCount'], cols:'minmax(0,2.2fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.6fr) minmax(0,1.3fr) minmax(0,1fr) 56px' },
-    '待結帳': { keys:['name','producer','type','status','date','venue','ticketCount'], cols:'minmax(0,2.2fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1.6fr) minmax(0,1fr) 56px' },
+    '已上架': { keys:['name','producer','type','date','venue','ticketStatus','ticketCount'], cols:'minmax(0,2.4fr) repeat(6,minmax(0,1fr)) 56px' },
+    '待結帳': { keys:['name','producer','type','status','date','venue','ticketCount'], cols:'minmax(0,2.4fr) repeat(6,minmax(0,1fr)) 56px' },
   };
   const KGS_COL_LABEL = { name:'演出名稱', producer:'製作人', type:'類型', status:'整體狀態', date:'演出日期', venue:'場地', ticketStatus:'售票狀態', ticketCount:'線上購票' };
   const kgsVariant = v => KGS_VARIANTS[v] || KGS_VARIANTS[''];
-  const kgsHead = v => { const o = kgsVariant(v); return `<div class="kgs-table-head" ${o.cols ? `style="--cols:${o.cols}"` : ''}>` + o.keys.map(k=>`<div ${k === 'venue' ? 'class="kgs-left"' : ''}>${KGS_COL_LABEL[k]}</div>`).join('') + '<div></div></div>'; };
+  const kgsHead = v => { const o = kgsVariant(v); return `<div class="kgs-table-head" ${o.cols ? `style="--cols:${o.cols}"` : ''}>` + o.keys.map(k=>`<div >${KGS_COL_LABEL[k]}</div>`).join('') + '<div></div></div>'; };
   function kgsSelectHtml(id, field, options, value){
     const cls = field === 'status' ? 'kgs-sel kgs-sel-status' : 'kgs-sel';
     // 製作人選單：不顯示「—」選項（還沒指派時只在欄位上顯示「—」）
@@ -3824,18 +3837,18 @@
   }
   function kgsShowRow(sh, archiveMode, variant){
     const statusCell = archiveMode
-      ? `<span class="kgs-badge"><span class="kgs-dot" style="background:${kgsStatusColor('已封存')}"></span>已封存</span>`
-      : `<span style="display:flex;align-items:center;"><span class="kgs-dot" style="background:${sh.status ? kgsStatusColor(sh.status) : 'transparent'};margin-right:4px;"></span>${kgsSelectHtml(sh.id, 'status', KGS_ACTIVE_STATUS.map(s=>s.v), sh.status || '洽談中')}</span>`;
+      ? `<span class="kgs-badge">已封存</span>`
+      : `${kgsSelectHtml(sh.id, 'status', KGS_ACTIVE_STATUS.map(s=>s.v), sh.status || '洽談中')}`;
     const menuOpen = kgsMenuKey === 's:' + sh.id;
     const o = kgsVariant(variant);
     const cell = {
       name: `<div class="kgs-c kgs-name"><button class="kgs-link" data-kgs-open="${sh.id}">${kgsEsc(sh.name)}</button></div>`,
       producer: `<div class="kgs-c" data-label="製作人">${archiveMode ? kgsEsc(sh.producer || '—') : kgsSelectHtml(sh.id, 'producer', kgsProducerOptions(sh.producer), sh.producer || '')}</div>`,
-      type: `<div class="kgs-c" data-label="類型">${archiveMode ? kgsEsc(sh.type || '—') : kgsSelectHtml(sh.id, 'type', [''].concat(KGS_TYPES.concat(sh.type && !KGS_TYPES.includes(sh.type) ? [sh.type] : [])), sh.type || '')}</div>`,
+      type: `<div class="kgs-c" data-label="類型">${archiveMode ? kgsEsc(kgsTypeFix(sh.type) || '—') : kgsSelectHtml(sh.id, 'type', [''].concat(KGS_TYPES.concat(kgsTypeFix(sh.type) && !KGS_TYPES.includes(kgsTypeFix(sh.type)) ? [kgsTypeFix(sh.type)] : [])), kgsTypeFix(sh.type))}</div>`,
       status: `<div class="kgs-c" data-label="整體狀態">${statusCell}</div>`,
       date: `<div class="kgs-c ${sh.date ? '' : 'kgs-muted'}" data-label="演出日期">${kgsEsc(kgsDateText(sh))}</div>`,
-      venue: `<div class="kgs-c kgs-wide kgs-left" data-label="場地">${sh.venue ? kgsEsc(sh.venue) : '<span class="kgs-muted">—</span>'}</div>`,
-      ticketStatus: `<div class="kgs-c" data-label="售票狀態">${kgsSelectHtml(sh.id, 'ticketStatus', [''].concat(KGS_TICKET_STATUS), sh.ticketStatus || '')}</div>`,
+      venue: `<div class="kgs-c kgs-wide" data-label="場地">${sh.venue ? kgsEsc(sh.venue) : '<span class="kgs-muted">—</span>'}</div>`,
+      ticketStatus: `<div class="kgs-c" data-label="售票狀態">${kgsSelectHtml(sh.id, 'ticketStatus', [''].concat(KGS_TICKET_STATUS), kgsTicketFix(sh.ticketStatus))}</div>`,
       ticketCount: `<div class="kgs-c" data-label="線上購票"><input class="kgs-inp" type="number" min="0" data-kgs-ticket="${sh.id}" value="${sh.ticketCount == null ? '' : kgsEsc(sh.ticketCount)}" placeholder="0" style="width:72px;"></div>`,
     };
     return `
@@ -4108,19 +4121,19 @@
   const kgsMyLabel = () => (typeof getDisplayName === 'function' && getDisplayName()) || (currentUser && currentUser.email) || '';
   function kgsOpenVendorForm(id){
     const vd = id ? kgVendors.find(x=>x.id === id) : null;
-    const vals = vd ? { ...vd } : { category:'燈光音響' };
-    kgsOpenForm(vd ? '編輯廠商' : '新增廠商', [
-      { key:'name', label:'廠商名稱', required:true },
-      { key:'category', label:'類別', type:'select', options: KGS_VENDOR_CATS.concat(vals.category && !KGS_VENDOR_CATS.includes(vals.category) ? [vals.category] : []) },
-      { key:'contact', label:'窗口' },
-      { key:'how', label:'聯絡方式', placeholder:'電話 / LINE / Email' },
-      { key:'note', label:'備註', type:'textarea' },
+    const vals = vd ? { ...vd } : { category:'' };
+    kgsOpenForm(vd ? '✏️ 編輯廠商' : '➕ 新增廠商', [
+      { sec:'-', key:'name', label:'廠商名稱', required:true, placeholder:'例：小島音響工作室' },
+      { sec:'-', key:'category', label:'類別', type:'select', options: [{v:'',l:'請選擇'}].concat(KGS_VENDOR_CATS, vals.category && !KGS_VENDOR_CATS.includes(vals.category) ? [vals.category] : []) },
+      { sec:'-', key:'contact', label:'聯絡窗口', placeholder:'例：陳經理' },
+      { sec:'-', key:'how', label:'聯絡方式', placeholder:'email / 電話 / LINE' },
+      { sec:'-', key:'note', label:'備註', type:'textarea', full:true, placeholder:'合作經驗、報價、評價…' },
     ], vals, out=>{
       if(vd) Object.assign(vd, out);
       else kgVendors.unshift({ id:newId('v'), ...out, active:true, createdAt:Date.now() });
       scheduleCloudSave();
       kgsRenderAll(true);
-    });
+    }, null, vd ? '儲存' : '建立廠商');
   }
   function kgsRenderVendors(){
     const el = document.getElementById('kgsVendorList');
@@ -4162,11 +4175,15 @@
     const b = kgsBox(sh);
     let items = kgsCostItems(sh).map(x=>({ ...x }));
     const box = document.getElementById('kgsModalBox');
-    box.style.maxWidth = '640px';
+    box.style.maxWidth = '96vw'; box.style.width = 'clamp(760px, 72vw, 1180px)'; box.style.padding = '26px 30px 24px';
     const card = (l, v, c)=>`<div class="kgs-cc-card"><div class="kgs-cc-l">${l}</div><div class="kgs-cc-v" ${c ? `style="color:${c}"` : ''} data-cc="${l}">${v}</div></div>`;
+    const CATS = ['場地','演出費','宣傳','交通住宿','器材技術','餐飲','雜項'];
+    const STS = ['未付款','部分付款','已付款'];
+    const stOf = i => i.status || (i.paid ? '已付款' : '未付款');
     const sums = ()=>{
-      const budget = items.reduce((a,i)=>a + kgsNum(i.amount), 0), actual = kgsActualExpense(sh);
-      return { budget, actual, diff:budget - actual, unpaid: items.filter(i=>!i.paid).reduce((a,i)=>a + kgsNum(i.amount), 0) };
+      const budget = items.reduce((a,i)=>a + kgsNum(i.amount), 0), actual = items.reduce((a,i)=>a + kgsNum(i.actual), 0) || kgsTxSum(sh, 'expense');
+      const unpaid = items.reduce((a,i)=>{ const st = stOf(i); return a + (st === '已付款' ? 0 : st === '部分付款' ? Math.max(0, kgsNum(i.amount) - kgsNum(i.actual)) : kgsNum(i.amount)); }, 0);
+      return { budget, actual, diff:budget - actual, unpaid };
     };
     const refreshCards = ()=>{
       const t = sums();
@@ -4175,29 +4192,34 @@
     };
     const draw = ()=>{
       const t = sums();
-      box.innerHTML = `<h3>💰 成本試算：${kgsEsc(sh.name)}</h3><div class="kgs-cc-sub">預算、實際支出與付款進度</div>
+      box.innerHTML = `<div class="kgs-cc-head"><div><h3>💰 成本試算：${kgsEsc(sh.name)}</h3><div class="kgs-cc-sub">預算、實際支出與付款進度</div></div><button class="kgs-mx" id="kgsCcX" title="關閉" aria-label="關閉" style="border:none;background:transparent;font-size:22px;line-height:1;color:var(--ink-soft);cursor:pointer;">×</button></div>
         <div class="kgs-cc-cards">${card('預算總額', kgsMoney(t.budget)) + card('實際支出', kgsMoney(t.actual), 'var(--seal)') + card('預算差額', kgsMoney(t.diff)) + card('待付款', kgsMoney(t.unpaid), '#D14B5A')}</div>
-        <div class="kgs-cc-list">${items.length ? items.map((it,idx)=>`<div class="kgs-cc-row" data-idx="${idx}">
-          <input class="kgs-inp" data-ci="name" value="${kgsEsc(it.name || '')}" placeholder="成本項目（例如：場地費）">
-          <input class="kgs-inp" data-ci="amount" type="number" min="0" value="${kgsNum(it.amount) || ''}" placeholder="金額" style="text-align:right;">
-          <label class="kgs-cc-paid"><input type="checkbox" data-ci="paid" ${it.paid ? 'checked' : ''}> 已付款</label>
+        <div class="kgs-cc-list">${items.length ? `<div class="kgs-cc-row kgs-cc-hd"><div>類別</div><div>項目</div><div>預算</div><div>實際支出</div><div>收款人 / 廠商</div><div>付款狀態</div><div>備註</div><div></div></div>` + items.map((it,idx)=>`<div class="kgs-cc-row" data-idx="${idx}">
+          <select class="kgs-inp" data-ci="cat">${(it.cat && !CATS.includes(it.cat) ? CATS.concat([it.cat]) : CATS).map(c=>`<option ${c === (it.cat || '雜項') ? 'selected' : ''}>${kgsEsc(c)}</option>`).join('')}</select>
+          <input class="kgs-inp" data-ci="name" value="${kgsEsc(it.name || '')}" placeholder="例：場租">
+          <input class="kgs-inp" data-ci="amount" type="number" min="0" value="${kgsNum(it.amount) || ''}" placeholder="0">
+          <input class="kgs-inp" data-ci="actual" type="number" min="0" value="${kgsNum(it.actual) || ''}" placeholder="0">
+          <input class="kgs-inp" data-ci="payee" value="${kgsEsc(it.payee || '')}" placeholder="姓名或廠商">
+          <select class="kgs-inp" data-ci="status">${STS.map(x=>`<option ${x === stOf(it) ? 'selected' : ''}>${x}</option>`).join('')}</select>
+          <input class="kgs-inp" data-ci="note" value="${kgsEsc(it.note || '')}" placeholder="備註">
           <button class="icon-btn" data-ci-del="${idx}" title="刪除這筆">✕</button>
         </div>`).join('') : '<div class="kgs-cc-empty">尚無成本明細，請新增第一筆。</div>'}</div>
-        <div style="margin-top:12px;"><button class="icon-btn kgs-btn2" id="kgsCcAdd">＋ 新增成本</button></div>
+        <div class="kgs-cc-foot"><button class="icon-btn kgs-btn2" id="kgsCcAdd">＋ 新增成本</button><span class="kgs-cc-hint">「實際支出」總額會自動帶入票房結算與演出結算報告。</span></div>
         <div class="kgs-modal-actions"><button class="icon-btn kgs-btn2" id="kgsCcCancel">取消</button><button class="add-form-btn" id="kgsCcSave">儲存成本試算</button></div>`;
       box.querySelectorAll('.kgs-cc-row').forEach(row=>{
         const it = items[+row.dataset.idx];
         row.querySelectorAll('[data-ci]').forEach(inp=> inp.addEventListener('input', ()=>{
           const k = inp.dataset.ci;
-          it[k] = k === 'paid' ? inp.checked : inp.value;
+          it[k] = inp.value; if(k === 'status') it.paid = inp.value === '已付款';
           refreshCards();
         }));
       });
       box.querySelectorAll('[data-ci-del]').forEach(btn=> btn.addEventListener('click', ()=>{ items.splice(+btn.dataset.ciDel, 1); draw(); }));
-      document.getElementById('kgsCcAdd').addEventListener('click', ()=>{ items.push({ id:newId('ci'), name:'', amount:'', paid:false }); draw(); const ins = box.querySelectorAll('.kgs-cc-row [data-ci="name"]'); if(ins.length) ins[ins.length-1].focus(); });
+      document.getElementById('kgsCcAdd').addEventListener('click', ()=>{ items.push({ id:newId('ci'), cat:'雜項', name:'', amount:'', actual:'', payee:'', status:'未付款', note:'', paid:false }); draw(); const ins = box.querySelectorAll('.kgs-cc-row [data-ci="name"]'); if(ins.length) ins[ins.length-1].focus(); });
       document.getElementById('kgsCcCancel').addEventListener('click', kgsCloseForm);
+      document.getElementById('kgsCcX').addEventListener('click', kgsCloseForm);
       document.getElementById('kgsCcSave').addEventListener('click', ()=>{
-        b.costItems = items.filter(i=>(i.name || '').trim() || kgsNum(i.amount) > 0).map(i=>({ id:i.id, name:(i.name || '').trim(), amount:kgsNum(i.amount), paid:!!i.paid }));
+        b.costItems = items.filter(i=>(i.name || '').trim() || kgsNum(i.amount) > 0 || kgsNum(i.actual) > 0).map(i=>({ id:i.id, cat:i.cat || '雜項', name:(i.name || '').trim(), amount:kgsNum(i.amount), actual:kgsNum(i.actual), payee:(i.payee || '').trim(), status:stOf(i), note:(i.note || '').trim(), paid:stOf(i) === '已付款' }));
         kgsCloseForm(); scheduleCloudSave(); kgsRenderAll(true);
       });
     };
@@ -4265,15 +4287,16 @@
   function kgsOpenReportPage(sh){
     const b = kgsBox(sh);
     const tx = kgTransactions.filter(t=>t.eventId === sh.id);
-    const incomes = tx.filter(t=>t.type === 'income'), expenses = tx.filter(t=>t.type === 'expense');
+    const incomes = kgsTicketIncomeLines(sh).concat(tx.filter(t=>t.type === 'income')), expenses = tx.filter(t=>t.type === 'expense');
     const rev = kgsIncome(sh), cost = kgsCostTotal(sh), net = rev - cost;
+    const soldN = kgsNum(sh.ticketCount) + kgsNum(b.onsite), seatsN = kgsNum(sh.seats);
     const today = new Date();
     const row = (l, v)=>`<div class="r"><span>${l}</span><span>${v}</span></div>`;
     const line = t => row(kgsEsc(`${t.category || ''}${t.content ? '・' + t.content : ''}`), kgsMoney(t.amount));
     const body = `<div class="top"><div><div class="brand">🎤 藝業合作工作室</div><div class="sub">演出結算報告</div></div><div class="rt"><div class="h">結算報告</div><div class="sub">日期：${today.getFullYear()} 年 ${today.getMonth()+1} 月 ${today.getDate()} 日</div></div></div>
       <div class="info"><b>演出：${kgsEsc(sh.name)}</b>　類型：${kgsEsc(sh.type || '—')}　場地：${kgsEsc(sh.venue || '—')}</div>
-      <div class="cards"><div class="c"><div class="l">票房收入</div><div class="v">${rev > 0 ? kgsMoney(rev) : '—'}</div></div><div class="c"><div class="l">線上購票</div><div class="v">${kgsNum(sh.ticketCount)} 張</div></div><div class="c"><div class="l">現場購票</div><div class="v">${kgsNum(b.onsite)} 張</div></div><div class="c"><div class="l">成本</div><div class="v">${cost > 0 ? kgsMoney(cost) : '—'}</div></div><div class="c"><div class="l">淨利</div><div class="v">${rev > 0 || cost > 0 ? kgsMoney(net) : '—'}</div></div></div>
-      ${row('演出日期', kgsEsc(kgsDateText(sh)))}${row('製作人', kgsEsc(sh.producer || '—'))}${row('結算狀態', kgsEsc(b.settle || '—'))}
+      <div class="cards"><div class="c"><div class="l">票房收入</div><div class="v">${rev > 0 ? kgsMoney(rev) : '—'}</div></div><div class="c"><div class="l">售票率</div><div class="v">${seatsN > 0 ? Math.round(soldN / seatsN * 100) + '%' : '—'}</div></div><div class="c"><div class="l">成本</div><div class="v">${cost > 0 ? kgsMoney(cost) : '—'}</div></div><div class="c"><div class="l">淨利</div><div class="v">${rev > 0 || cost > 0 ? kgsMoney(net) : '—'}</div></div></div>
+      ${row('演出日期', kgsEsc(kgsDateText(sh)))}${row('製作人', kgsEsc(sh.producer || '—'))}${row('結算狀態', kgsEsc(b.settle || '—'))}${row('線上購票', kgsNum(sh.ticketCount) + ' 張')}${row('現場購票', kgsNum(b.onsite) + ' 張')}${row('票價 × 已售 / 座位', `${sh.price ? kgsMoney(kgsNum(sh.price)) : '—'} × ${soldN} / ${seatsN || '—'}`)}${row('演出者', kgsEsc(sh.performers || '—'))}
       <h4>收入明細</h4>${incomes.length ? incomes.map(line).join('') : row('（無）', '')}${row('<b>票房（收入合計）</b>', `<b>${kgsMoney(rev)}</b>`)}
       <h4>${expenses.length ? '支出明細' : '成本（尚無實際支出，以下為試算預估）'}</h4>${expenses.length ? expenses.map(line).join('') : (kgsCostItems(sh).length ? kgsCostItems(sh).map(i=>row(kgsEsc((i.name || '（未命名）') + '（試算）'), kgsMoney(i.amount))).join('') : row('（無）', ''))}${row('<b>成本合計</b>', `<b>${kgsMoney(cost)}</b>`)}
       ${row('<b>淨利率</b>', `<b>${rev > 0 ? Math.round(net / rev * 100) + '%' : '—'}</b>`)}
@@ -4287,7 +4310,7 @@
   function kgsDownloadReport(sh){
     const b = kgsBox(sh);
     const tx = kgTransactions.filter(t=>t.eventId === sh.id);
-    const incomes = tx.filter(t=>t.type === 'income'), expenses = tx.filter(t=>t.type === 'expense');
+    const incomes = kgsTicketIncomeLines(sh).concat(tx.filter(t=>t.type === 'income')), expenses = tx.filter(t=>t.type === 'expense');
     const rev = kgsIncome(sh), cost = kgsCostTotal(sh);
     const line = t => kgsMark([`${t.category}${t.content ? '・' + t.content : ''}`, Number(t.amount) || 0], '_b');
     const aoa = [
@@ -4315,8 +4338,9 @@
   const kgsMoney = n => 'NT$ ' + (Number(n) || 0).toLocaleString('en-US');
   const kgsNum = v => Math.max(0, Number(v) || 0);
   const kgsTxSum = (sh, type) => kgTransactions.filter(t=>t.eventId === sh.id && t.type === type).reduce((a,t)=>a + Number(t.amount || 0), 0);
-  const kgsIncome = sh => kgsTxSum(sh, 'income');            // 票房＝這場所有收入明細加總
-  const kgsActualExpense = sh => kgsTxSum(sh, 'expense');
+  const kgsTicketIncomeLines = sh => [['線上購票', sh.onlineAmt], ['現場購票', (sh.box || {}).onsiteAmt]].filter(x=>kgsNum(x[1]) > 0).map(x=>({ type:'income', category:'售票收入', content:x[0], amount:kgsNum(x[1]) }));
+  const kgsIncome = sh => kgsTxSum(sh, 'income') + kgsTicketIncomeLines(sh).reduce((a,t)=>a + t.amount, 0);            // 票房＝這場所有收入明細加總
+  const kgsActualExpense = sh => kgsTxSum(sh, 'expense') || (Array.isArray(kgsBox(sh).costItems) ? kgsBox(sh).costItems.reduce((a,i)=>a + kgsNum(i.actual), 0) : 0);
   // 成本試算項目：新版存在 box.costItems；舊版只有場地費／演員費／其他成本三欄，讀取時自動換成項目
   const kgsCostItems = sh => {
     const b = sh.box || {};
@@ -4358,23 +4382,19 @@
       card('淨利', kgsMoney(totalRev - totalCost), totalRev - totalCost >= 0 ? 'pos' : 'neg') + card('待結帳票房', kgsMoney(pendingRev), 'neg');
     const el = document.getElementById('kgsFinList');
     if(!live.length){ el.innerHTML = '<div class="empty-state">還沒有任何演出，請先到「所有演出」新增</div>'; return; }
-    const cols = 'minmax(0,2.6fr) minmax(0,1.2fr) minmax(0,1.1fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.2fr) minmax(0,2fr) 124px';
-    el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>演出</div><div>演出日期</div><div class="kgs-rr">現場購票</div><div class="kgs-cc">收入</div><div class="kgs-cc">支出</div><div class="kgs-cc">淨利</div><div class="kgs-cc">結算狀態</div><div></div></div>` +
+    const cols = 'minmax(0,2.4fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.2fr) minmax(0,1.2fr) minmax(0,2fr) 124px';
+    el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>演出</div><div>演出日期</div><div class="kgs-cc">線上購票（金額）</div><div class="kgs-cc">現場購票（金額）</div><div class="kgs-cc">成本</div><div class="kgs-cc">淨利</div><div class="kgs-cc">結算狀態</div><div></div></div>` +
       kgsSorted(live).map(sh=>{
         const b = sh.box || {};
         const r = kgsIncome(sh), c = kgsCostTotal(sh);
         const settled = b.settle === '已結清';
-        const costCell = kgsActualExpense(sh) > 0
-          ? `<button class="kgs-link" data-kgs-fin="detail-tx" data-id="${sh.id}">${kgsMoney(kgsActualExpense(sh))}</button>`
-          : kgsEstimate(sh) > 0
-            ? `<button class="kgs-link" data-kgs-fin="cost" data-id="${sh.id}" title="尚未記實際支出，目前是試算的預估值"><span class="kgs-muted">試算 </span>${kgsMoney(kgsEstimate(sh))}</button>`
-            : `<button class="icon-btn" data-kgs-fin="cost" data-id="${sh.id}" style="width:auto;padding:0 10px;">＋ 試算</button>`;
+        const costCell = kgsMoney(c);
         return `<div class="kgs-row" style="--cols:${cols}">
           <div class="kgs-c kgs-name"><button class="kgs-link" data-kgs-open="${sh.id}">${kgsEsc(sh.name)}</button></div>
           <div class="kgs-c ${sh.date ? '' : 'kgs-muted'}" data-label="演出日期">${sh.date ? String(sh.date).slice(0,10) : '—'}</div>
-          <div class="kgs-c kgs-rr" data-label="現場購票"><input class="kgs-inp" type="number" min="0" data-kgs-onsite="${sh.id}" value="${kgsNum(b.onsite)}" style="text-align:right;"></div>
-          <div class="kgs-c kgs-cc" data-label="收入"><button class="kgs-link" data-kgs-fin="detail-tx" data-id="${sh.id}" title="開啟收支明細">${kgsMoney(r)}</button></div>
-          <div class="kgs-c kgs-cc" data-label="支出">${costCell}</div>
+          <div class="kgs-c kgs-tk" data-label="線上購票"><input class="kgs-inp" type="number" min="0" data-kgs-onlineamt="${sh.id}" value="${kgsNum(sh.onlineAmt) || ''}" placeholder="0" title="金額（NT$）"></div>
+          <div class="kgs-c kgs-tk" data-label="現場購票"><input class="kgs-inp" type="number" min="0" data-kgs-onsiteamt="${sh.id}" value="${kgsNum(b.onsiteAmt) || ''}" placeholder="0" title="金額（NT$）"></div>
+          <div class="kgs-c kgs-cc" data-label="成本">${costCell}</div>
           <div class="kgs-c kgs-cc ${r > 0 || c > 0 ? '' : 'kgs-muted'}" data-label="淨利">${r > 0 || c > 0 ? kgsMoney(r - c) : '—'}</div>
           <div class="kgs-c kgs-cc" data-label="結算狀態">${kgsSettleSelect(sh.id, b.settle || '')}</div>
           <div class="kgs-c kgs-actions">
@@ -4385,10 +4405,13 @@
         </div>`;
       }).join('') + `</div>`;
     el.querySelectorAll('[data-kgs-open]').forEach(b=> b.addEventListener('click', ()=> kgsOpenShowForm(b.dataset.kgsOpen)));
-    el.querySelectorAll('[data-kgs-onsite]').forEach(inp=> inp.addEventListener('change', ()=>{
-      const sh = kgShows.find(x=>x.id === inp.dataset.kgsOnsite); if(!sh) return;
-      kgsBox(sh).onsite = Math.round(kgsNum(inp.value)); scheduleCloudSave();
-    }));
+    [['onsite', (sh,v)=>{ kgsBox(sh).onsite = Math.round(v); }], ['onsiteamt', (sh,v)=>{ kgsBox(sh).onsiteAmt = Math.round(v); }],
+     ['online', (sh,v)=>{ sh.ticketCount = Math.round(v); }], ['onlineamt', (sh,v)=>{ sh.onlineAmt = Math.round(v); }]].forEach(([k, fn])=>{
+      el.querySelectorAll(`[data-kgs-${k}]`).forEach(inp=> inp.addEventListener('change', ()=>{
+        const sh = kgShows.find(x=>x.id === inp.dataset['kgs' + k.charAt(0).toUpperCase() + k.slice(1)]); if(!sh) return;
+        fn(sh, Math.max(0, kgsNum(inp.value))); scheduleCloudSave(); kgsRenderAll(true);
+      }));
+    });
     el.querySelectorAll('select[data-kgs-field="settle"]').forEach(sel=>{
       sel.addEventListener('change', ()=>{ const sh = kgShows.find(x=>x.id === sel.dataset.id); if(!sh) return; kgsSetSettle(sh, sel.value); scheduleCloudSave(); kgsRenderFinance(); });
     });
@@ -4424,7 +4447,7 @@
   /* ---- 演員排班表 ---- */
   const KGS_PALETTE = ['#3B7FC4','#7C5CC4','#D14B5A','#2FA36B','#E0A81C','#F2784B','#2E9CA6','#8A6D3B'];
   const KGS_WD = ['日','一','二','三','四','五','六'];
-  let kgsRosterRange = 'week';
+  let kgsRosterRange = 'month';
   let kgsRosterFrom = '', kgsRosterTo = '';
   const kgsToday = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
   function kgsCountyColor(c){
@@ -4435,17 +4458,21 @@
   const kgsMD = d => `${d.slice(5,7)}/${d.slice(8,10)}`;
   const kgsWeekday = d => KGS_WD[new Date(d + 'T00:00:00').getDay()];
 
+  const kgsKnownHosts = () => Array.from(new Set(kgRosterSessions.flatMap(x=>x.hosts || [])));
+  const kgsKnownCast = () => Array.from(new Set(kgRosterSessions.flatMap(x=>x.performers || [])));
   function kgsOpenSeriesForm(id){
     const se = id ? kgRosterSeries.find(x=>x.id === id) : null;
     const vals = se ? { ...se, needed: se.needed } : { needed: 4 };
     kgsOpenForm(se ? '編輯活動' : '新增活動', [
-      { key:'name', label:'活動名稱', required:true, placeholder:'例如：週末夜｜高雄' },
-      { key:'county', label:'縣市', type:'select', options:[''].concat(KGS_COUNTIES) },
-      { key:'schedule', label:'固定時間', placeholder:'例如：每月週六' },
-      { key:'ticket', label:'售票說明', placeholder:'例如：售票 15 分鐘' },
-      { key:'needed', label:'每場需要演員組數', type:'number' },
+      { sec:'-', key:'name', label:'名稱', required:true, full:true, placeholder:'週末夜｜高雄' },
+      { sec:'-', key:'county', label:'地點 / 城市', list: KGS_COUNTIES },
+      { sec:'-', key:'schedule', label:'頻率', placeholder:'每週五' },
+      { sec:'-', key:'_checks', label:'這個活動要排什麼', type:'checks', full:true, options:[{ key:'needHost', label:'要主持', def:true }, { key:'needCast', label:'要演員', def:true }] },
+      { sec:'-', key:'needed', label:'一場至少幾組演員', type:'number', full:true },
+      { sec:'-', key:'optional', label:'每場選填演員名額（不必排滿）', type:'number', full:true },
     ], vals, out=>{
       out.needed = Math.max(1, parseInt(out.needed, 10) || 4);
+      out.optional = Math.max(0, parseInt(out.optional, 10) || 0);
       if(se) Object.assign(se, out); else kgRosterSeries.push({ id:newId('r'), ...out });
       scheduleCloudSave(); kgsRenderRoster();
     }, se ? ()=>{
@@ -4454,21 +4481,39 @@
       kgRosterSessions = kgRosterSessions.filter(x=>x.seriesId !== se.id);
       scheduleCloudSave(); kgsRenderRoster();
     } : null);
+    document.getElementById('kgsModalBox').style.maxWidth = '600px';
   }
   function kgsOpenSessionForm(seriesId){
     const se = kgRosterSeries.find(x=>x.id === seriesId); if(!se) return;
-    kgsOpenForm(`新增場次：${se.name}`, [
-      { key:'date', label:'日期', type:'date', required:true },
-      { key:'needed', label:'需要演員組數', type:'number' },
-      { key:'note', label:'備註' },
-    ], { needed: se.needed || 4 }, out=>{
-      kgRosterSessions.push({ id:newId('rs'), seriesId, date: out.date, performers: [], needed: Math.max(1, parseInt(out.needed, 10) || se.needed || 4), note: out.note || '' });
+    const needHost = se.needHost !== false, needCast = se.needCast !== false;
+    const fields = [{ sec:'-', key:'date', label:'日期', type:'date', required:true, full:true },
+      { sec:'-', key:'type', label:'演出類型', type:'select', options:KGS_TYPES, full:!needCast && !needHost }];
+    if(needCast) fields.push({ sec:'-', key:'needed', label:'需要演員組數', type:'number' });
+    else if(needHost) fields.push({ sec:'-', key:'neededHosts', label:'需要主持人數', type:'number' });
+    if(needHost){
+      fields.push({ sec:'-', key:'host', label:'主持人', list: kgsKnownHosts(), full:needCast });
+    }
+    if(needCast) fields.push({ sec:'-', key:'cast', label:'演員（多位請用逗號分隔）', list: kgsKnownCast(), full:true });
+    fields.push({ sec:'-', key:'note', label:'備註', full:!needHost || needCast });
+    kgsOpenForm(`新增場次：${se.name}`, fields, { type: KGS_TYPES[0], needed: se.needed || 4, neededHosts: 1 }, out=>{
+      const split = v => (v || '').split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
+      kgRosterSessions.push({ id:newId('rs'), seriesId, date: out.date, type: out.type || '', hosts: needHost ? split(out.host) : [], performers: needCast ? split(out.cast) : [], needed: Math.max(1, parseInt(out.needed, 10) || se.needed || 4), neededHosts: Math.max(1, parseInt(out.neededHosts, 10) || 1), note: out.note || '' });
+      // 新場次如果不在目前篩選的區間內，自動切到「全部」，才看得到
+      if(kgsRosterRange === 'month' && out.date.slice(0,7) !== kgsToday().slice(0,7)) kgsRosterRange = 'all';
+      else if(kgsRosterRange === 'custom' && ((kgsRosterFrom && out.date < kgsRosterFrom) || (kgsRosterTo && out.date > kgsRosterTo))) kgsRosterRange = 'all';
       scheduleCloudSave(); kgsRenderRoster();
     });
+    document.getElementById('kgsModalBox').style.maxWidth = '560px';
   }
 
   function kgsRenderRoster(){
     const today = kgsToday();
+    // 場次日期已經過了（今天以前）→ 自動刪除；只有能寫入的人（管理員／製作人）會執行，檢視者不動資料
+    if(typeof kgsCanWrite === 'function' && kgsCanWrite() && currentUser && kgsLoadOk){
+      const before = kgRosterSessions.length;
+      kgRosterSessions = kgRosterSessions.filter(x=>!x.date || x.date >= today);
+      if(kgRosterSessions.length !== before) scheduleCloudSave();
+    }
     // 本週：週一～週日（含今天那一週）
     const wd = new Date(today + 'T00:00:00'); const dow = (wd.getDay() + 6) % 7;
     const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -4480,14 +4525,18 @@
     // 待處理提醒：45 天內、人數還沒排滿的場次
     const limit = new Date(); limit.setDate(limit.getDate() + 45);
     const limitStr = `${limit.getFullYear()}-${String(limit.getMonth()+1).padStart(2,'0')}-${String(limit.getDate()).padStart(2,'0')}`;
-    const short = kgRosterSessions.filter(s=>s.date >= today && s.date <= limitStr && s.performers.length < s.needed).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
+    const serOf = s => kgRosterSeries.find(x=>x.id === s.seriesId) || {};
+    const hostNeed = s => Math.max(1, s.neededHosts || 1);
+    const noHost = s => serOf(s).needHost !== false && (s.hosts ? s.hosts.length : 0) < hostNeed(s);
+    const noCast = s => serOf(s).needCast !== false && s.performers.length < s.needed;
+    const short = kgRosterSessions.filter(s=>s.date >= today && s.date <= limitStr && (noHost(s) || noCast(s))).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
     document.getElementById('kgsRosterBanner').innerHTML = short.length ? `<div class="kgs-banner">${short.map(s=>{
       const se = kgRosterSeries.find(x=>x.id === s.seriesId);
-      return `<div>● ${kgsMD(s.date)}（${kgsWeekday(s.date)}）${kgsEsc(se ? se.name : '')}・演員人數待確認（${s.performers.length}/${s.needed} 組）</div>`;
+      return `<div>● ${kgsMD(s.date)}（${kgsWeekday(s.date)}）${kgsEsc(se ? se.name : '')}・${[noHost(s) ? `主持人缺 ${hostNeed(s) - (s.hosts ? s.hosts.length : 0)} 位` : '', noCast(s) ? `演員人數待確認（${s.performers.length}/${s.needed} 組）` : ''].filter(Boolean).join('、')}</div>`;
     }).join('')}</div>` : '';
     const counties = Array.from(new Set(kgRosterSeries.map(s=>s.county).filter(Boolean)));
     document.getElementById('kgsRosterLegend').innerHTML = counties.map(c=>`<span><i style="background:${kgsCountyColor(c)}"></i>${kgsEsc(c)}</span>`).join('');
-    document.getElementById('kgsRosterTabs').innerHTML = [['week','本週'],['month','本月'],['custom','自訂時間'],['all','全部']].map(([k,l])=>
+    document.getElementById('kgsRosterTabs').innerHTML = [['month','本月'],['all','全部'],['custom','自訂時間']].map(([k,l])=>
       `<button class="kg-tab kg-tab-sm ${kgsRosterRange === k ? 'active' : ''}" data-kgs-range="${k}">${l}</button>`).join('') +
       (kgsRosterRange === 'custom' ? `<span class="kgs-range-inputs"><input type="date" id="kgsRangeFrom" value="${kgsRosterFrom}"> ～ <input type="date" id="kgsRangeTo" value="${kgsRosterTo}"></span>` : '');
     const rf = document.getElementById('kgsRangeFrom'), rt = document.getElementById('kgsRangeTo');
@@ -4507,12 +4556,15 @@
           <button class="kgs-linkbtn" data-kgs-series-edit="${se.id}">編輯</button>
         </div>
         ${list.length ? list.map(s=>`
-        <div class="kgs-ses ${s.performers.length < s.needed ? 'short' : ''}">
-          <span class="kgs-ses-date">${kgsMD(s.date)} <span class="kgs-muted">（${kgsWeekday(s.date)}）</span></span>
+        <div class="kgs-ses ${noHost(s) || noCast(s) ? 'short' : ''}">
+          <span class="kgs-ses-date">${kgsMD(s.date)} <span class="kgs-muted">（${kgsWeekday(s.date)}）</span></span>${s.type ? `<span class="kgs-chip2" style="background:#EEF0F4;color:#555;">${kgsEsc(kgsTypeFix(s.type))}</span>` : ''}
+          ${se.needHost === false ? '' : `<span class="kgs-muted" style="font-size:12px;">主持</span>
+          <span class="kgs-ses-chips">${(s.hosts || []).map((p,i)=>`<span class="kgs-chip2">${kgsEsc(p)}<button data-kgs-host-del="${s.id}" data-i="${i}" title="移除">✕</button></span>`).join('')}<button class="kgs-circle" data-kgs-host-add="${s.id}" title="新增主持人">＋</button></span>`}
+          ${se.needCast === false ? '' : `
           <span class="kgs-muted" style="font-size:12px;">演員</span>
           <span class="kgs-ses-chips">${s.performers.map((p,i)=>`<span class="kgs-chip2">${kgsEsc(p)}<button data-kgs-perf-del="${s.id}" data-i="${i}" title="移除">✕</button></span>`).join('')}<button class="kgs-circle" data-kgs-perf-add="${s.id}" title="新增演員">＋</button></span>
-          <span class="kgs-step ${s.performers.length < s.needed ? 'warn' : ''}"><button data-kgs-need="${s.id}" data-d="-1">−</button>${s.performers.length}/${s.needed} 組<button data-kgs-need="${s.id}" data-d="1">＋</button></span>
-          <input class="kgs-note" data-kgs-ses-note="${s.id}" value="${kgsEsc(s.note)}" placeholder="備註">
+          <span class="kgs-step ${noCast(s) ? 'warn' : ''}"><button data-kgs-need="${s.id}" data-d="-1">−</button>${s.performers.length}/${s.needed} 組<button data-kgs-need="${s.id}" data-d="1">＋</button></span>
+          `}
           <button class="kgs-x" data-kgs-ses-del="${s.id}" title="刪除場次">✕</button>
         </div>`).join('') : '<div class="empty-state" style="padding:10px 0;">這個區間沒有場次</div>'}
       </div>`;
@@ -4528,6 +4580,19 @@
         if(!s.performers.includes(out.name)) s.performers.push(out.name);
         scheduleCloudSave(); kgsRenderRoster();
       });
+    }));
+    el.querySelectorAll('[data-kgs-host-add]').forEach(b=> b.addEventListener('click', ()=>{
+      const s = kgRosterSessions.find(x=>x.id === b.dataset.kgsHostAdd); if(!s) return;
+      kgsOpenForm('新增主持人', [{ key:'name', label:'主持人名字', required:true, list: kgsKnownHosts() }], {}, out=>{
+        s.hosts = s.hosts || [];
+        if(!s.hosts.includes(out.name)) s.hosts.push(out.name);
+        scheduleCloudSave(); kgsRenderRoster();
+      });
+    }));
+    el.querySelectorAll('[data-kgs-host-del]').forEach(b=> b.addEventListener('click', ()=>{
+      const s = kgRosterSessions.find(x=>x.id === b.dataset.kgsHostDel); if(!s || !s.hosts) return;
+      s.hosts.splice(Number(b.dataset.i), 1);
+      scheduleCloudSave(); kgsRenderRoster();
     }));
     el.querySelectorAll('[data-kgs-perf-del]').forEach(b=> b.addEventListener('click', ()=>{
       const s = kgRosterSessions.find(x=>x.id === b.dataset.kgsPerfDel); if(!s) return;
