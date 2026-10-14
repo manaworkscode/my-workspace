@@ -3750,11 +3750,14 @@
     box.innerHTML = bodyHtml + `<div class="kgs-modal-actions">${onDelete ? '<button class="icon-btn kgs-btn2 danger" id="kgsFormDelete" style="margin-right:auto;">刪除</button>' : ''}<button class="icon-btn kgs-btn2" id="kgsFormCancel">取消</button><button class="add-form-btn" id="kgsFormSave">${kgsEsc(saveLabel || '儲存')}</button></div>`;
     ov.classList.add('open');
     const first = box.querySelector('input,select,textarea'); if(first) first.focus();
+    let submitted = false;
     const submit = ()=>{
+      if(submitted) return;
       const out = {};
       box.querySelectorAll('[data-kgs-f]').forEach(el=>{ out[el.dataset.kgsF] = el.value.trim(); });
       box.querySelectorAll('[data-kgs-chk]').forEach(el=>{ out[el.dataset.kgsChk] = el.checked; });
       for(const f of fields){ if(f.required && !out[f.key]){ const el = box.querySelector(`[data-kgs-f="${f.key}"]`); if(el) el.focus(); return; } }
+      submitted = true;
       kgsCloseForm();
       onSave(out);
     };
@@ -4468,12 +4471,8 @@
       { sec:'-', key:'county', label:'地點 / 城市', list: KGS_COUNTIES },
       { sec:'-', key:'schedule', label:'頻率', placeholder:'每週五' },
       { sec:'-', key:'_checks', label:'這個活動要排什麼', type:'checks', full:true, options:[{ key:'needHost', label:'要主持', def:true }, { key:'needCast', label:'要演員', def:true }] },
-      { sec:'-', key:'needed', label:'一場至少幾組演員', type:'number', full:true },
-      { sec:'-', key:'optional', label:'每場選填演員名額（不必排滿）', type:'number', full:true },
     ], vals, out=>{
-      out.needed = Math.max(1, parseInt(out.needed, 10) || 4);
-      out.optional = Math.max(0, parseInt(out.optional, 10) || 0);
-      if(se) Object.assign(se, out); else kgRosterSeries.push({ id:newId('r'), ...out });
+      if(se) Object.assign(se, out); else kgRosterSeries.push({ id:newId('r'), needed:4, ...out });
       scheduleCloudSave(); kgsRenderRoster();
     }, se ? ()=>{
       if(!confirm(`確定要刪除「${se.name}」以及底下所有場次嗎？`)) return;
@@ -4557,7 +4556,7 @@
         </div>
         ${list.length ? list.map(s=>`
         <div class="kgs-ses ${noHost(s) || noCast(s) ? 'short' : ''}">
-          <span class="kgs-ses-date">${kgsMD(s.date)} <span class="kgs-muted">（${kgsWeekday(s.date)}）</span></span>${s.type ? `<span class="kgs-chip2" style="background:#EEF0F4;color:#555;">${kgsEsc(kgsTypeFix(s.type))}</span>` : ''}
+          <span class="kgs-ses-date">${kgsMD(s.date)} <span class="kgs-muted">（${kgsWeekday(s.date)}）</span></span>
           ${se.needHost === false ? '' : `<span class="kgs-muted" style="font-size:12px;">主持</span>
           <span class="kgs-ses-chips">${(s.hosts || []).map((p,i)=>`<span class="kgs-chip2">${kgsEsc(p)}<button data-kgs-host-del="${s.id}" data-i="${i}" title="移除">✕</button></span>`).join('')}<button class="kgs-circle" data-kgs-host-add="${s.id}" title="新增主持人">＋</button></span>`}
           ${se.needCast === false ? '' : `
