@@ -4896,7 +4896,7 @@
     return n;
   }
   function pcSeedPending(){ return PC_SEED_EPISODES.some(x=>!pcEpisodes.some(e=>e.id === x.id)) || PC_SEED_MEETINGS.some(x=>!pcMeetings.some(e=>e.id === x.id)); }
-  const pcSeedBtn = () => (kgsCanWrite() && pcSeedPending()) ? `<div style="margin-top:12px;"><button class="add-form-btn" data-pc-seed="1">匯入 Notion 現有資料</button></div>` : '';
+  const pcSeedBtn = () => '';  // 已移除「匯入 Notion 現有資料」按鈕
   function pcBindSeed(el){ el.querySelectorAll('[data-pc-seed]').forEach(b=> b.addEventListener('click', ()=>{ if(kgsCanWrite()) pcImportSeed(); })); }
 
   function pcOpenEpForm(id){
