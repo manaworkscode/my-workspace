@@ -430,6 +430,74 @@
     min-width: 0; max-width: 100%;
   }
   .cal-cell.today .cal-event{ background: rgba(255,255,255,0.22); color: #fff; }
+  .todo-group-title{ font-size:12px; color:#98A2B3; letter-spacing:.06em; padding:14px 2px 6px; }
+  .todo-group-title:first-child{ padding-top:4px; }
+  body.kgs-role-view #pcAddEpBtn, body.kgs-role-view #pcAddMtBtn{ display:none; }
+  .pc-next{ background:var(--surface, #fff); border:1px solid var(--line); border-left:4px solid var(--seal); border-radius:12px; padding:12px 16px; margin:8px 0 14px; font-size:14px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; cursor:pointer; }
+  .pc-next b{ font-weight:600; }
+  .pc-next .pc-sub{ color:var(--ink-faint); font-size:12.5px; }
+  .pc-link a{ color:var(--teal); text-decoration:none; font-size:12.5px; margin-right:8px; white-space:nowrap; }
+  .pc-chip{ display:inline-block; font-size:12px; padding:1px 8px; border-radius:99px; background:rgba(0,0,0,.06); margin:0 4px 2px 0; }
+  .pc-mt{ border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:12px; }
+  .pc-mt summary{ display:flex; gap:10px; align-items:flex-start; cursor:pointer; list-style:none; }
+  .pc-mt summary::-webkit-details-marker{ display:none; }
+  .pc-arrow{ color:var(--ink-faint); font-size:13px; margin-top:3px; transition:transform .15s; }
+  .pc-mt[open] .pc-arrow{ transform:rotate(90deg); }
+  .pc-detail{ margin-top:6px; padding-left:23px; }
+  .pc-mt h4{ margin:0 0 4px; font-size:15px; font-weight:600; }
+  .pc-mt .pc-body{ white-space:pre-wrap; font-size:13px; line-height:1.7; margin-top:8px; }
+  .pc-mt .pc-lab{ font-size:12px; color:var(--ink-faint); margin-top:10px; }
+  .hb-board{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; align-items:start; margin-top:8px; }
+  .hb-col{ background:rgba(0,0,0,.03); border:1px solid var(--line); border-radius:14px; padding:14px; min-height:200px; }
+  .hb-head{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; margin-bottom:12px; }
+  .hb-head .hb-n{ margin-left:auto; font-size:12px; font-weight:500; color:var(--ink-faint); background:var(--card, #fff); border:1px solid var(--line); border-radius:999px; padding:1px 9px; }
+  .hb-dot{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .hb-card{ background:var(--card, #fff); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; cursor:pointer; }
+  .hb-card:hover{ border-color:var(--seal); }
+  .hb-card b{ display:block; font-weight:600; font-size:14px; line-height:1.5; word-break:break-word; }
+  .hb-card.done b{ color:var(--ink-faint); text-decoration:line-through; }
+  .hb-note{ font-size:12px; color:var(--ink-faint); margin-top:4px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .hb-bar{ height:6px; border-radius:99px; background:rgba(0,0,0,.08); margin-top:10px; overflow:hidden; }
+  .hb-bar i{ display:block; height:100%; background:var(--seal); border-radius:99px; }
+  .hb-pct{ font-size:12px; color:var(--ink-faint); margin-top:4px; text-align:right; }
+  .hb-empty{ text-align:center; color:var(--ink-faint); font-size:13px; padding:24px 0; }
+  @media (max-width:860px){ .hb-board{ grid-template-columns:1fr; } }
+  .kc-bar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .kc-nav{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .kc-btn{ height:38px; padding:0 14px; border:1px solid var(--line); background:var(--card, #fff); color:var(--ink); border-radius:10px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .kc-btn:hover{ border-color:var(--seal); }
+  .kc-sq{ width:38px; padding:0; font-size:16px; }
+  .kc-month{ height:38px; padding:0 12px; border:1px solid var(--line); background:var(--card, #fff); color:var(--ink); border-radius:10px; font-size:15px; font-family:inherit; }
+  .kc-count{ font-size:13px; color:var(--ink-faint); margin-bottom:12px; }
+  .kc-wrap{ border:1px solid var(--line); border-radius:14px; overflow:hidden; background:var(--card, #fff); }
+  .kc-dows, .kc-grid{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); }
+  .kc-dows div{ text-align:center; padding:12px 0; font-size:13px; color:var(--ink-faint); border-bottom:1px solid var(--line); }
+  .kc-dows div:first-child, .kc-dows div:last-child{ color:var(--seal); }
+  .kc-cell{ min-height:150px; padding:10px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+  .kc-cell:nth-child(7n){ border-right:none; }
+  .kc-cell.blank{ background:rgba(0,0,0,.03); }
+  .kc-cell.today{ outline:2px solid var(--seal); outline-offset:-2px; }
+  .kc-day{ font-size:13px; color:var(--ink-faint); width:26px; height:26px; line-height:26px; text-align:center; border-radius:50%; }
+  .kc-cell.wk .kc-day{ color:var(--seal); }
+  .kc-cell.today .kc-day{ background:var(--seal); color:#fff; font-weight:700; }
+  .kc-card{ border:1px solid var(--line); border-left:3px solid var(--seal); border-radius:8px; padding:8px 10px; font-size:13px; cursor:pointer; background:rgba(0,0,0,.02); }
+  .kc-card:hover{ border-color:var(--seal); }
+  .kc-card b{ display:block; font-weight:600; line-height:1.4; word-break:break-word; }
+  .kc-card .kc-sub{ font-size:12px; color:var(--ink-faint); margin-top:4px; }
+  .kc-card .kc-st{ font-size:12px; margin-top:4px; display:flex; align-items:center; gap:6px; }
+  .kc-dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .kc-card.ev{ border-left-color:#7C6AF2; }
+  .kc-undated{ margin-top:18px; padding:18px 20px; }
+  .kc-undated summary{ cursor:pointer; font-size:14px; color:var(--ink-faint); list-style:none; margin-bottom:14px; }
+  .kc-undated summary::-webkit-details-marker{ display:none; }
+  .kc-undated summary::before{ content:'▼ '; font-size:11px; }
+  .kc-undated:not([open]) summary::before{ content:'▶ '; }
+  .kc-undated:not([open]) summary{ margin-bottom:0; }
+  .kc-ugrid{ display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+  .kc-foot{ font-size:13px; color:var(--ink-faint); margin-top:14px; }
+  @media (max-width:760px){ .kc-ugrid{ grid-template-columns:1fr; } }
+  @media (max-width:760px){ .kc-cell{ min-height:90px; padding:5px; } .kc-card{ padding:4px 6px; font-size:11px; } .kc-card .kc-sub{ display:none; } }
+  body.kgs-role-view #kgsCalAddBtn{ display:none; }
 
   .upcoming-card{ padding: 20px; min-width: 0; }
   .up-item{ padding: 10px 0; border-bottom: 1px solid var(--line); }
@@ -850,6 +918,7 @@
     width:100%; box-sizing:border-box; font-family:'Noto Sans TC',sans-serif; font-size:13px;
     border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:var(--surface); color:var(--ink); outline:none;
   }
+  .kgs-field textarea{ line-height:1.6; resize:vertical; }
   .kgs-field input:focus, .kgs-field select:focus, .kgs-field textarea:focus{ border-color:var(--teal); }
   .sidebar-toggle{ margin-left:auto; width:26px; height:26px; border-radius:7px; border:1px solid #3A4660; background:transparent; color:#B7C0CE; cursor:pointer; font-size:15px; line-height:1; flex-shrink:0; }
   .sidebar-toggle:hover{ background:var(--navy-2); color:#fff; }
@@ -961,6 +1030,7 @@
   .kgs-series-meta{ font-size:12px; color:var(--ink-soft); flex:1; min-width:0; }
   .kgs-linkbtn{ background:none; border:none; font-family:'Noto Sans TC',sans-serif; font-size:12.5px; color:var(--ink-soft); cursor:pointer; padding:0 4px; }
   .kgs-linkbtn:hover{ color:var(--seal); }
+  .kgs-ses > .kgs-x{ margin-left:auto; }
   .kgs-ses{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:9px 12px; border:1px solid var(--line); border-radius:10px; margin-bottom:8px; background:var(--surface); }
   .kgs-ses.short{ border-style:dashed; }
   .kgs-ses-date{ font-family:'JetBrains Mono',monospace,'Noto Sans TC'; font-size:13px; min-width:92px; }
@@ -1057,20 +1127,23 @@
     </div>
     <nav>
       <div class="nav-item active" data-view="home"><span class="nav-icon">🏠</span><span class="nav-text">首頁</span></div>
-      <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span><span class="nav-text">專案進度</span></div>
+      <div class="nav-item" data-view="projects"><span class="nav-icon">📋</span><span class="nav-text">專案製作</span></div>
       <div class="nav-item" data-view="calendar"><span class="nav-icon">📅</span><span class="nav-text">行事曆</span></div>
       <div class="nav-section-label">藝業合作</div>
       <div class="nav-item" data-view="kgs-all"><span class="nav-icon">📋</span><span class="nav-text">所有演出</span></div>
+      <div class="nav-item" data-view="kgs-calendar"><span class="nav-icon">🗓️</span><span class="nav-text">活動日曆</span></div>
       <div class="nav-item" data-view="kgs-mine"><span class="nav-icon">👤</span><span class="nav-text">我的製作</span></div>
       <div class="nav-item" data-view="kgs-finance"><span class="nav-icon">💰</span><span class="nav-text">票房結算</span></div>
       <div class="nav-item" data-view="kgs-venues"><span class="nav-icon">📍</span><span class="nav-text">場地聯絡簿</span></div>
       <div class="nav-item" data-view="kgs-vendors"><span class="nav-icon">🏢</span><span class="nav-text">合作廠商聯絡簿</span></div>
       <div class="nav-item" data-view="kgs-archive"><span class="nav-icon">🗄️</span><span class="nav-text">已封存</span></div>
+      <div class="nav-section-label">🎙️ 有聊直說 Podcast</div>
+      <div class="nav-item" data-view="pc-episodes"><span class="nav-icon">🎧</span><span class="nav-text">集數進度</span></div>
+      <div class="nav-item" data-view="pc-meetings"><span class="nav-icon">📝</span><span class="nav-text">會議紀錄</span></div>
     </nav>
     <div class="sidebar-foot">
-      <div class="sidebar-foot-time">最後更新<br><span class="mono" id="lastUpdate"></span></div>
       <div class="nav-item" data-view="settings" style="margin-top:14px;color:#B7C0CE;"><span class="nav-icon">⚙️</span><span class="nav-text">設定</span></div>
-      <div style="margin-top:6px;display:flex;justify-content:flex-end;padding-right:8px;"><span class="logout-link" id="logoutLink" title="登出">登出</span></div>
+      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:flex-end;padding:0 8px;"><div class="sidebar-foot-time" style="padding:0;margin:0;">最後更新<br><span class="mono" id="lastUpdate"></span></div><span class="logout-link" id="logoutLink" title="登出">登出</span></div>
     </div>
   </aside>
 
@@ -1085,28 +1158,27 @@
         <div class="quote" id="dailyQuote"></div>
       </div>
 
-      <div class="card" style="margin-bottom:16px;">
-        <div class="card-head"><div class="card-title">🗓 近一週行程</div></div>
-        <div id="homeWeekList"></div>
-      </div>
+      <div class="pc-next" id="pcNextMeeting" style="display:none;"></div>
+      <div class="hb-board" id="homeBoard"></div>
 
-      <div class="card cal-card">
-        <div class="cal-head">
-          <div class="cal-title" id="homeCalTitle"></div>
-          <div class="card-badge">本月</div>
-        </div>
-        <div class="cal-grid" id="homeCalGrid"></div>
+      <div style="display:none;">
+        <div id="homeWeekList"></div>
+        <div id="homeCalTitle"></div>
+        <div id="homeCalGrid"></div>
       </div>
     </div>
 
     <!-- ========== 專案排程與待辦清單（合併成一頁） ========== -->
     <div class="view" id="view-projects">
-      <div class="page-head">
-        <div class="page-title">專案進度</div>
-        <div class="page-sub"><span id="todoCount"></span></div>
+      <div class="kgs-head">
+        <div class="page-head">
+          <div class="page-title">專案製作</div>
+          <div class="page-sub"><span id="todoCount"></span></div>
+        </div>
+        <button class="add-form-btn" id="todoOpenFormBtn">＋ 新增企劃</button>
       </div>
 
-      <div class="add-form">
+      <div class="add-form" style="display:none;">
         <input class="f-name" id="todoAddLabel" type="text" placeholder="項目名稱" style="flex:1;">
         <input class="f-num" id="todoAddPct" type="number" min="0" max="100" placeholder="進度 %">
         <button class="add-form-btn" id="todoAddBtn">新增</button>
@@ -1279,6 +1351,60 @@
         </div>
         <div id="kgsVendorList"></div>
       </div>
+    </div>
+
+    <div class="view" id="view-kgs-calendar">
+      <div class="kgs-head">
+        <div class="page-head">
+          <div style="font-size:11.5px;color:var(--seal);font-weight:600;letter-spacing:.05em;margin-bottom:4px;">⚓ 藝業合作</div>
+          <div class="page-title">🗓️ 活動日曆</div>
+          <div class="page-sub">依演出日期呈現，點選演出即可查看或編輯；點空白日期可直接新增演出</div>
+        </div>
+        <button class="add-form-btn" id="kgsCalAddBtn">＋ 新增演出</button>
+      </div>
+      <div class="kc-bar">
+        <div class="kc-nav">
+          <button class="kc-btn kc-sq" id="kgsCalPrev" title="上個月">‹</button>
+          <input type="month" class="kc-month" id="kgsCalMonthInput">
+          <button class="kc-btn kc-sq" id="kgsCalNext" title="下個月">›</button>
+        </div>
+        <div class="kc-nav">
+          <button class="kc-btn" id="kgsCalListBtn">查看本月列表</button>
+          <button class="kc-btn" id="kgsCalRefresh">↻ 重新整理</button>
+        </div>
+      </div>
+      <div class="kc-count" id="kgsCalCount"></div>
+      <div class="kc-wrap" id="kgsCalWrap"><div class="kc-dows" id="kgsCalDows"></div><div class="kc-grid" id="kgsCalGrid"></div></div>
+      <div class="card" id="kgsCalList" style="display:none;"></div>
+      <details class="kc-undated card" id="kgsCalUndated" open><summary id="kgsCalUndatedTitle"></summary><div class="kc-ugrid" id="kgsCalUndatedGrid"></div></details>
+      <div class="kc-foot">顯示當月所有未封存演出。尚未設定日期的演出列在下方。</div>
+    </div>
+
+    <div class="view" id="view-pc-episodes">
+      <div class="kgs-head">
+        <div class="page-head">
+          <div style="font-size:11.5px;color:var(--seal);font-weight:600;letter-spacing:.05em;margin-bottom:4px;">🎙️ 有聊直說 Podcast</div>
+          <div class="page-title">🎧 集數進度</div>
+          <div class="page-sub">每集約 15 分鐘・每月更新一集。長篇腳本請放在 Google 文件，這裡只存連結</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <label class="kgs-muted" style="font-size:12.5px;"><input type="checkbox" id="pcShowArchived"> 顯示已封存</label>
+          <button class="add-form-btn" id="pcAddEpBtn">＋ 新增集數</button>
+        </div>
+      </div>
+      <div class="card"><div id="pcEpList"></div></div>
+    </div>
+
+    <div class="view" id="view-pc-meetings">
+      <div class="kgs-head">
+        <div class="page-head">
+          <div style="font-size:11.5px;color:var(--seal);font-weight:600;letter-spacing:.05em;margin-bottom:4px;">🎙️ 有聊直說 Podcast</div>
+          <div class="page-title">📝 會議紀錄</div>
+          <div class="page-sub">每月會議與主題會議</div>
+        </div>
+        <button class="add-form-btn" id="pcAddMtBtn">＋ 新增會議</button>
+      </div>
+      <div class="card"><div id="pcMtList"></div></div>
     </div>
 
     <div class="view" id="view-kgs-archive">
@@ -1526,11 +1652,13 @@
      為了避免兩個人同時修改時互相蓋掉，存檔時會用「三方合併」：
      只把「我這次改動過的項目」套到雲端最新版上，而不是整份覆蓋。 */
   const kgsSharedRef = () => fbDb.collection('shared').doc('kaigang');
-  const KGS_LISTS = ['kgShows','kgRosterSeries','kgRosterSessions','kgTransactions','kgDeleteRequests'];   // 以 id 辨識的清單
+  const KGS_LISTS = ['kgShows','kgRosterSeries','kgRosterSessions','kgTransactions','kgDeleteRequests','kgCalEvents','pcEpisodes','pcMeetings'];   // 以 id 辨識的清單
   const KGS_MAPS = ['kgProducerMeta','kgVenueContacts'];                                             // 以名稱當 key 的對照表
-  const kgsGetVar = k => ({ kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgVendors, kgRosterSeries, kgRosterSessions, kgTransactions, kgDeleteRequests })[k];
+  const kgsGetVar = k => ({ pcEpisodes, pcMeetings, kgCalEvents, kgShows, kgProducers, kgProducerMeta, kgVenueContacts, kgVendors, kgRosterSeries, kgRosterSessions, kgTransactions, kgDeleteRequests })[k];
   function kgsSetVar(k, v){
-    if(k === 'kgShows') kgShows = v; else if(k === 'kgProducers') kgProducers = v; else if(k === 'kgProducerMeta') kgProducerMeta = v;
+    if(k === 'pcEpisodes') pcEpisodes = v; else if(k === 'pcMeetings') pcMeetings = v;
+    else if(k === 'kgCalEvents') kgCalEvents = v;
+    else if(k === 'kgShows') kgShows = v; else if(k === 'kgProducers') kgProducers = v; else if(k === 'kgProducerMeta') kgProducerMeta = v;
     else if(k === 'kgVenueContacts') kgVenueContacts = v; else if(k === 'kgVendors') kgVendors = v; else if(k === 'kgRosterSeries') kgRosterSeries = v;
     else if(k === 'kgRosterSessions') kgRosterSessions = v; else if(k === 'kgTransactions') kgTransactions = v; else if(k === 'kgDeleteRequests') kgDeleteRequests = v;
   }
@@ -1960,13 +2088,14 @@
 
   /* ================= 分頁視圖切換 ================= */
   // 只有管理者（Mana）能看到首頁／專案進度／行事曆／設定；製作人與檢視者只看得到藝業合作
-  const KGS_ADMIN_VIEWS = ['home','projects','calendar','settings'];
+  const KGS_ADMIN_VIEWS = ['calendar','settings'];
+  const KGS_PRODUCER_VIEWS = ['projects']; // 製作人也能看；檢視者不行
   function switchView(viewName){
-    if(KGS_ADMIN_VIEWS.includes(viewName) && typeof kgsIsOwner === 'function' && !kgsIsOwner()) viewName = 'kgs-all';
+    if(typeof kgsIsOwner === 'function' && ((KGS_ADMIN_VIEWS.includes(viewName) && !kgsIsOwner()) || (KGS_PRODUCER_VIEWS.includes(viewName) && !kgsCanWrite()))) viewName = 'kgs-all';
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById('view-' + viewName).classList.add('active');
     if(viewName === 'settings') kgsApprovals = null;
-    if(viewName.indexOf('kgs-') === 0 || viewName === 'settings') kgsRenderAll(true);
+    if(viewName.indexOf('kgs-') === 0 || viewName.indexOf('pc-') === 0 || viewName === 'settings') kgsRenderAll(true);
     document.querySelectorAll('.nav-item').forEach(n=>{
       n.classList.toggle('active', n.dataset.view === (viewName === 'kgs-roster' ? 'kgs-all' : viewName));
     });
@@ -2426,12 +2555,26 @@
     });
   }
 
+  function renderHomeBoard(){
+    const el = document.getElementById('homeBoard'); if(!el) return;
+    const pctOf = t => Math.max(0, Math.min(100, Number(t.pct) || 0));
+    const cols = [
+      { name:'待處理', color:'#98A2B3', items: todos.filter(t=>!t.done && pctOf(t) === 0) },
+      { name:'進行中', color:'#F2784B', items: todos.filter(t=>!t.done && pctOf(t) > 0 && pctOf(t) < 100) },
+      { name:'已完成', color:'#2E9E6B', items: todos.filter(t=>t.done || pctOf(t) >= 100) },
+    ];
+    el.innerHTML = cols.map(c=>`<div class="hb-col"><div class="hb-head"><span class="hb-dot" style="background:${c.color}"></span>${c.name}<span class="hb-n">${c.items.length}</span></div>`
+      + (c.items.length ? c.items.map(t=>`<div class="hb-card${c.name === '已完成' ? ' done' : ''}" data-hb-go="1"><b>${kgsEsc(t.label)}</b></div>`).join('') : '<div class="hb-empty">目前沒有項目</div>')
+      + '</div>').join('');
+    el.querySelectorAll('[data-hb-go]').forEach(b=> b.addEventListener('click', ()=> switchView('projects')));
+  }
   function renderTodos(){
     scheduleCloudSave();
+    renderHomeBoard();
     const el = document.getElementById('todoList');
     el.innerHTML = todos.length === 0
       ? '<div class="empty-state">還沒有任何待辦事項</div>'
-      : todos.map((t, i) => {
+      : (()=>{ const rows = todos.map((t, i) => {
         const isEditing = editingTodoId === t.id;
         const isNoteOpen = !!expandedTodoNotes[t.id];
         const pct = Math.max(0, Math.min(100, Number(t.pct) || 0));
@@ -2443,26 +2586,30 @@
             ${isEditing
               ? `<input type="text" data-todo-edit-input="${t.id}" value="${t.label.replace(/"/g,'&quot;')}" style="flex:1;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">
                  <input type="number" data-todo-edit-pct="${t.id}" value="${pct}" min="0" max="100" style="width:64px;font-family:'Noto Sans TC',sans-serif;font-size:13px;border:1px solid var(--gold);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--ink);outline:none;">`
-              : `<span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span><span class="proj-pct">${pct}%</span>`
+              : `<span class="todo-label" style="flex:1;${t.done ? 'color:var(--ink-faint);text-decoration:line-through;' : ''}">${t.label}</span>`
             }
             <div class="item-actions">
               ${isEditing ? `
                 <button class="icon-btn" data-save-todo="${t.id}" title="儲存">✓</button>
                 <button class="icon-btn" data-cancel-todo="${t.id}" title="取消">✕</button>
               ` : `
-                <button class="icon-btn" data-note-todo="${t.id}" title="備註／記事" style="${t.content ? 'border-color:var(--gold);color:var(--gold);' : ''}">📝</button>
                 <button class="icon-btn" data-edit-todo="${t.id}" title="編輯">✎</button>
                 <button class="icon-btn danger" data-del-todo="${t.id}" title="刪除">✕</button>
               `}
             </div>
           </div>
-          <div class="bar-track" style="margin-left:32px;"><div class="bar-fill" style="width:${pct}%"></div></div>
           ${isNoteOpen
             ? `<textarea data-note-input="${t.id}" placeholder="在這裡記點什麼…" rows="6" style="width:100%;font-family:'Noto Sans TC',sans-serif;font-size:13px;line-height:1.6;border:1px solid var(--gold);border-radius:8px;padding:10px 12px;background:var(--surface);color:var(--ink);outline:none;resize:vertical;box-sizing:border-box;">${t.content || ''}</textarea>`
             : ''
           }
         </div>`;
-      }).join('');
+      });
+        return ['待完成','進行中','已完成'].map(g=>{
+          const idx = todos.map((t,i)=> todoStatusOf(t) === g ? i : -1).filter(i=>i >= 0);
+          if(!idx.length) return '';
+          return `<div class="todo-group-title">${g}　${idx.length}</div>` + idx.map(i=>rows[i]).join('');
+        }).join('');
+      })();
 
     const remaining = todos.filter(t=>!t.done).length;
     document.getElementById('todoCount').textContent = `${remaining} 項待完成，共 ${todos.length} 項`;
@@ -2504,10 +2651,7 @@
     });
     el.querySelectorAll('[data-edit-todo]').forEach(btn=>{
       btn.addEventListener('click', ()=>{
-        editingTodoId = btn.dataset.editTodo;
-        renderTodos();
-        const input = el.querySelector(`[data-todo-edit-input="${editingTodoId}"]`);
-        if(input){ input.focus(); input.select(); }
+        openTodoForm(btn.dataset.editTodo);
       });
     });
     function commitTodoEdit(id){
@@ -2556,6 +2700,26 @@
     labelEl.value = ''; pctEl.value = '';
     renderTodos();
   });
+  const TODO_STATUS = ['待完成','進行中','已完成'];
+  const todoStatusOf = t => t.done || (Number(t.pct) || 0) >= 100 ? '已完成' : ((Number(t.pct) || 0) > 0 ? '進行中' : '待完成');
+  function openTodoForm(id){
+    const t = id ? todos.find(x=>x.id === id) : null;
+    kgsOpenForm(t ? '✏️ 編輯企劃' : '➕ 新增企劃', [
+      { sec:'-', key:'label', label:'企劃名稱', required:true },
+      { sec:'-', key:'status', label:'企劃狀態', type:'select', options: TODO_STATUS },
+      { sec:'-', key:'content', label:'企劃內容', type:'textarea', full:true, rows:14 },
+    ], t ? { label:t.label, status:todoStatusOf(t), content:t.content || '' } : { status:'待完成' }, out=>{
+      const label = (out.label || '').trim(); if(!label) return;
+      const prev = t ? Math.max(0, Math.min(100, Number(t.pct) || 0)) : 0;
+      let done = false, pct = 0;
+      if(out.status === '已完成'){ done = true; pct = 100; }
+      else if(out.status === '進行中'){ pct = prev > 0 && prev < 100 ? prev : 50; }
+      if(t){ Object.assign(t, { label, done, pct, content: out.content || '' }); }
+      else todos.push({ id: newId('t'), label, done, pct, content: out.content || '' });
+      renderTodos();
+    }, null, '儲存');
+  }
+  document.getElementById('todoOpenFormBtn').addEventListener('click', ()=> openTodoForm(null));
   document.getElementById('todoAddLabel').addEventListener('keydown', e=>{
     if(e.key === 'Enter') document.getElementById('todoAddBtn').click();
   });
@@ -2827,6 +2991,9 @@
     kgEvents = kgsLive().map(sh=>({ id: sh.id, name: sh.name, date: sh.date ? String(sh.date).slice(0,10) : '', status: sh.status || '', note: '' }));
   }
   let kgTransactions = [];
+  let pcEpisodes = [];  // 有聊直說 Podcast 集數
+  let pcMeetings = [];  // 有聊直說 Podcast 會議紀錄
+  let kgCalEvents = []; // 藝業合作共用行事曆：{id, date:'YYYY-MM-DD', time, title, note}
   let kgDeleteRequests = []; // 製作人送出的「刪除廠商」申請，等管理員審核：{id, type:'vendor', vendorId, vendorName, by, at, status}
   let kgSelectedEventId = null;
   let editingTxId = null;
@@ -3734,7 +3901,7 @@
       }else if(f.type === 'checks'){
         input = `<div class="kgs-chks">${f.options.map(o=>`<label class="kgs-chk"><input type="checkbox" data-kgs-chk="${o.key}" ${(values[o.key] == null ? o.def : values[o.key]) ? 'checked' : ''}> ${kgsEsc(o.label)}</label>`).join('')}</div>`;
       }else if(f.type === 'textarea'){
-        input = `<textarea rows="3" data-kgs-f="${f.key}">${kgsEsc(val)}</textarea>`;
+        input = `<textarea rows="${f.rows || 3}" data-kgs-f="${f.key}">${kgsEsc(val)}</textarea>`;
       }else{
         input = `<input type="${f.type || 'text'}" data-kgs-f="${f.key}" value="${kgsEsc(val)}" ${f.list ? `list="kgsDl-${f.key}"` : ''} placeholder="${kgsEsc(f.placeholder || '')}">`
           + (f.list ? `<datalist id="kgsDl-${f.key}">${f.list.map(x=>`<option value="${kgsEsc(x)}">`).join('')}</datalist>` : '');
@@ -3750,11 +3917,14 @@
     box.innerHTML = bodyHtml + `<div class="kgs-modal-actions">${onDelete ? '<button class="icon-btn kgs-btn2 danger" id="kgsFormDelete" style="margin-right:auto;">刪除</button>' : ''}<button class="icon-btn kgs-btn2" id="kgsFormCancel">取消</button><button class="add-form-btn" id="kgsFormSave">${kgsEsc(saveLabel || '儲存')}</button></div>`;
     ov.classList.add('open');
     const first = box.querySelector('input,select,textarea'); if(first) first.focus();
+    let submitted = false;
     const submit = ()=>{
+      if(submitted) return;
       const out = {};
       box.querySelectorAll('[data-kgs-f]').forEach(el=>{ out[el.dataset.kgsF] = el.value.trim(); });
       box.querySelectorAll('[data-kgs-chk]').forEach(el=>{ out[el.dataset.kgsChk] = el.checked; });
       for(const f of fields){ if(f.required && !out[f.key]){ const el = box.querySelector(`[data-kgs-f="${f.key}"]`); if(el) el.focus(); return; } }
+      submitted = true;
       kgsCloseForm();
       onSave(out);
     };
@@ -3788,9 +3958,10 @@
     if(current) set.add(current);
     return [''].concat(Array.from(set).sort((a,b)=>a.localeCompare(b, 'zh-Hant')));
   }
-  function kgsOpenShowForm(id){
+  function kgsOpenShowForm(id, presetDate){
     const sh = id ? kgShows.find(x=>x.id === id) : null;
     const vals = sh ? { ...sh, ticketStatus: kgsTicketFix(sh.ticketStatus), type: kgsTypeFix(sh.type) } : { status:'洽談中', type:'即興劇', producer: kgsMe || '' };
+    if(!sh && presetDate) vals.date = presetDate + 'T19:00';
     // 現場購票存在結算資料裡
     vals.onsite = sh && sh.box ? kgsNum(sh.box.onsite) : 0;
     kgsOpenForm(sh ? `✏️ 編輯：${sh.name}` : '➕ 新增演出', [
@@ -4057,7 +4228,8 @@
     // 所有登入的帳號都可以編輯藝業合作的資料；只有 Mana 能管理設定裡的製作人名單
     document.body.classList.remove('kgs-role-view','kgs-role-producer');
     const adminOnly = !kgsIsOwner();
-    document.querySelectorAll('.nav-item').forEach(n=>{ if(KGS_ADMIN_VIEWS.includes(n.dataset.view)) n.style.display = adminOnly ? 'none' : ''; });
+    const dq = document.getElementById('dailyQuote'); if(dq) dq.style.display = adminOnly ? 'none' : '';
+    document.querySelectorAll('.nav-item').forEach(n=>{ if(KGS_ADMIN_VIEWS.includes(n.dataset.view)) n.style.display = adminOnly ? 'none' : ''; else if(KGS_PRODUCER_VIEWS.includes(n.dataset.view)) n.style.display = kgsCanWrite() ? '' : 'none'; });
     if(!kgsCanWrite()) document.body.classList.add('kgs-role-view');
     const add = document.getElementById('kgsProducerAddBtn');
     const form = add && add.closest('.add-form'); if(form) form.style.display = kgsIsOwner() ? '' : 'none';
@@ -4468,12 +4640,8 @@
       { sec:'-', key:'county', label:'地點 / 城市', list: KGS_COUNTIES },
       { sec:'-', key:'schedule', label:'頻率', placeholder:'每週五' },
       { sec:'-', key:'_checks', label:'這個活動要排什麼', type:'checks', full:true, options:[{ key:'needHost', label:'要主持', def:true }, { key:'needCast', label:'要演員', def:true }] },
-      { sec:'-', key:'needed', label:'一場至少幾組演員', type:'number', full:true },
-      { sec:'-', key:'optional', label:'每場選填演員名額（不必排滿）', type:'number', full:true },
     ], vals, out=>{
-      out.needed = Math.max(1, parseInt(out.needed, 10) || 4);
-      out.optional = Math.max(0, parseInt(out.optional, 10) || 0);
-      if(se) Object.assign(se, out); else kgRosterSeries.push({ id:newId('r'), ...out });
+      if(se) Object.assign(se, out); else kgRosterSeries.push({ id:newId('r'), needed:4, ...out });
       scheduleCloudSave(); kgsRenderRoster();
     }, se ? ()=>{
       if(!confirm(`確定要刪除「${se.name}」以及底下所有場次嗎？`)) return;
@@ -4485,17 +4653,25 @@
   }
   function kgsOpenSessionForm(seriesId){
     const se = kgRosterSeries.find(x=>x.id === seriesId); if(!se) return;
-    kgsOpenForm(`新增場次：${se.name}`, [
-      { key:'date', label:'日期', type:'date', required:true },
-      { key:'host', label:'主持人', list: kgsKnownHosts() },
-      { key:'cast', label:'演員（多位請用逗號分隔）', list: kgsKnownCast() },
-      { key:'needed', label:'需要演員組數', type:'number' },
-      { key:'note', label:'備註' },
-    ], { needed: se.needed || 4 }, out=>{
+    const needHost = se.needHost !== false, needCast = se.needCast !== false;
+    const fields = [{ sec:'-', key:'date', label:'日期', type:'date', required:true, full:true },
+      { sec:'-', key:'type', label:'演出類型', type:'select', options:KGS_TYPES, full:!needCast && !needHost }];
+    if(needCast) fields.push({ sec:'-', key:'needed', label:'需要演員組數', type:'number' });
+    else if(needHost) fields.push({ sec:'-', key:'neededHosts', label:'需要主持人數', type:'number' });
+    if(needHost){
+      fields.push({ sec:'-', key:'host', label:'主持人', list: kgsKnownHosts(), full:needCast });
+    }
+    if(needCast) fields.push({ sec:'-', key:'cast', label:'演員（多位請用逗號分隔）', list: kgsKnownCast(), full:true });
+    fields.push({ sec:'-', key:'note', label:'備註', full:!needHost || needCast });
+    kgsOpenForm(`新增場次：${se.name}`, fields, { type: KGS_TYPES[0], needed: se.needed || 4, neededHosts: 1 }, out=>{
       const split = v => (v || '').split(/[,，、]/).map(x=>x.trim()).filter(Boolean);
-      kgRosterSessions.push({ id:newId('rs'), seriesId, date: out.date, hosts: split(out.host), performers: split(out.cast), needed: Math.max(1, parseInt(out.needed, 10) || se.needed || 4), note: out.note || '' });
+      kgRosterSessions.push({ id:newId('rs'), seriesId, date: out.date, type: out.type || '', hosts: needHost ? split(out.host) : [], performers: needCast ? split(out.cast) : [], needed: Math.max(1, parseInt(out.needed, 10) || se.needed || 4), neededHosts: Math.max(1, parseInt(out.neededHosts, 10) || 1), note: out.note || '' });
+      // 新場次如果不在目前篩選的區間內，自動切到「全部」，才看得到
+      if(kgsRosterRange === 'month' && out.date.slice(0,7) !== kgsToday().slice(0,7)) kgsRosterRange = 'all';
+      else if(kgsRosterRange === 'custom' && ((kgsRosterFrom && out.date < kgsRosterFrom) || (kgsRosterTo && out.date > kgsRosterTo))) kgsRosterRange = 'all';
       scheduleCloudSave(); kgsRenderRoster();
     });
+    document.getElementById('kgsModalBox').style.maxWidth = '560px';
   }
 
   function kgsRenderRoster(){
@@ -4518,12 +4694,13 @@
     const limit = new Date(); limit.setDate(limit.getDate() + 45);
     const limitStr = `${limit.getFullYear()}-${String(limit.getMonth()+1).padStart(2,'0')}-${String(limit.getDate()).padStart(2,'0')}`;
     const serOf = s => kgRosterSeries.find(x=>x.id === s.seriesId) || {};
-    const noHost = s => serOf(s).needHost !== false && !(s.hosts && s.hosts.length);
+    const hostNeed = s => Math.max(1, s.neededHosts || 1);
+    const noHost = s => serOf(s).needHost !== false && (s.hosts ? s.hosts.length : 0) < hostNeed(s);
     const noCast = s => serOf(s).needCast !== false && s.performers.length < s.needed;
     const short = kgRosterSessions.filter(s=>s.date >= today && s.date <= limitStr && (noHost(s) || noCast(s))).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,5);
     document.getElementById('kgsRosterBanner').innerHTML = short.length ? `<div class="kgs-banner">${short.map(s=>{
       const se = kgRosterSeries.find(x=>x.id === s.seriesId);
-      return `<div>● ${kgsMD(s.date)}（${kgsWeekday(s.date)}）${kgsEsc(se ? se.name : '')}・${[noHost(s) ? '主持人缺 1 位' : '', noCast(s) ? `演員人數待確認（${s.performers.length}/${s.needed} 組）` : ''].filter(Boolean).join('、')}</div>`;
+      return `<div>● ${kgsMD(s.date)}（${kgsWeekday(s.date)}）${kgsEsc(se ? se.name : '')}・${[noHost(s) ? `主持人缺 ${hostNeed(s) - (s.hosts ? s.hosts.length : 0)} 位` : '', noCast(s) ? `演員人數待確認（${s.performers.length}/${s.needed} 組）` : ''].filter(Boolean).join('、')}</div>`;
     }).join('')}</div>` : '';
     const counties = Array.from(new Set(kgRosterSeries.map(s=>s.county).filter(Boolean)));
     document.getElementById('kgsRosterLegend').innerHTML = counties.map(c=>`<span><i style="background:${kgsCountyColor(c)}"></i>${kgsEsc(c)}</span>`).join('');
@@ -4551,10 +4728,11 @@
           <span class="kgs-ses-date">${kgsMD(s.date)} <span class="kgs-muted">（${kgsWeekday(s.date)}）</span></span>
           ${se.needHost === false ? '' : `<span class="kgs-muted" style="font-size:12px;">主持</span>
           <span class="kgs-ses-chips">${(s.hosts || []).map((p,i)=>`<span class="kgs-chip2">${kgsEsc(p)}<button data-kgs-host-del="${s.id}" data-i="${i}" title="移除">✕</button></span>`).join('')}<button class="kgs-circle" data-kgs-host-add="${s.id}" title="新增主持人">＋</button></span>`}
+          ${se.needCast === false ? '' : `
           <span class="kgs-muted" style="font-size:12px;">演員</span>
           <span class="kgs-ses-chips">${s.performers.map((p,i)=>`<span class="kgs-chip2">${kgsEsc(p)}<button data-kgs-perf-del="${s.id}" data-i="${i}" title="移除">✕</button></span>`).join('')}<button class="kgs-circle" data-kgs-perf-add="${s.id}" title="新增演員">＋</button></span>
           <span class="kgs-step ${noCast(s) ? 'warn' : ''}"><button data-kgs-need="${s.id}" data-d="-1">−</button>${s.performers.length}/${s.needed} 組<button data-kgs-need="${s.id}" data-d="1">＋</button></span>
-          <input class="kgs-note" data-kgs-ses-note="${s.id}" value="${kgsEsc(s.note)}" placeholder="備註">
+          `}
           <button class="kgs-x" data-kgs-ses-del="${s.id}" title="刪除場次">✕</button>
         </div>`).join('') : '<div class="empty-state" style="padding:10px 0;">這個區間沒有場次</div>'}
       </div>`;
@@ -4605,6 +4783,246 @@
     }));
   }
 
+  /* ---- 藝業合作共用行事曆 ---- */
+  let kgsCalMonth = (()=>{ const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); })();
+  function kgsOpenCalForm(id, presetDate){
+    if(!kgsCanWrite()) return;
+    const ev = id ? kgCalEvents.find(x=>x.id === id) : null;
+    kgsOpenForm(ev ? '✏️ 編輯行程' : '➕ 新增行程', [
+      { key:'title', label:'行程名稱', required:true, placeholder:'例：排練、開會' },
+      { key:'date', label:'日期', type:'date', required:true },
+      { key:'time', label:'時間', type:'time' },
+      { key:'note', label:'備註', type:'textarea' },
+    ], ev ? { ...ev } : { date: presetDate || '' }, out=>{
+      if(ev) Object.assign(ev, out); else kgCalEvents.push({ id:newId('ce'), ...out });
+      scheduleCloudSave(); kgsRenderCal();
+    }, ev ? ()=>{
+      if(!confirm(`確定要刪除「${ev.title}」嗎？`)) return;
+      kgCalEvents = kgCalEvents.filter(x=>x.id !== ev.id);
+      scheduleCloudSave(); kgsRenderCal();
+    } : null, ev ? '儲存' : '新增');
+  }
+  let kgsCalList = false;
+  function kgsRenderCal(){
+    const grid = document.getElementById('kgsCalGrid'); if(!grid) return;
+    const y = kgsCalMonth.getFullYear(), m = kgsCalMonth.getMonth();
+    const pad = n => String(n).padStart(2, '0');
+    const ym = `${y}-${pad(m + 1)}`;
+    document.getElementById('kgsCalMonthInput').value = ym;
+    document.getElementById('kgsCalDows').innerHTML = ['週日','週一','週二','週三','週四','週五','週六'].map(d=>`<div>${d}</div>`).join('');
+    const todayStr = kgsToday();
+    const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+    const canWrite = kgsCanWrite();
+    const monthShows = kgShows.filter(s=>!s.archived && s.date && String(s.date).slice(0, 7) === ym);
+    document.getElementById('kgsCalCount').textContent = `${y} 年 ${m + 1} 月 · ${monthShows.length} 場演出`;
+    const showCard = s => {
+      const t = String(s.date).slice(11, 16);
+      const sub = [t || '時間待定', s.venue || '場地待定'].join(' · ');
+      return `<div class="kc-card" data-kgs-cal-show="${s.id}"><b>${kgsEsc(s.name)}</b><div class="kc-sub">${kgsEsc(sub)}</div><div class="kc-st"><span class="kc-dot" style="background:${kgsStatusColor(s.status)}"></span>${kgsEsc(s.status || '')}</div></div>`;
+    };
+    const undated = kgShows.filter(s=>!s.archived && !s.date);
+    document.getElementById('kgsCalUndated').style.display = undated.length ? '' : 'none';
+    document.getElementById('kgsCalUndatedTitle').textContent = `尚未排定日期 · ${undated.length} 場`;
+    document.getElementById('kgsCalUndatedGrid').innerHTML = undated.map(s=>`<div class="kc-card" data-kgs-cal-show="${s.id}"><b>${kgsEsc(s.name)}</b><div class="kc-sub">${kgsEsc(['時間待定', s.venue || '場地待定'].join(' · '))}</div><div class="kc-st"><span class="kc-dot" style="background:${kgsStatusColor(s.status)}"></span>${kgsEsc(s.status || '')}</div></div>`).join('');
+    let html = '';
+    for(let i = 0; i < first; i++) html += '<div class="kc-cell blank"></div>';
+    for(let d = 1; d <= days; d++){
+      const ds = `${ym}-${pad(d)}`;
+      const dow = (first + d - 1) % 7;
+      const shows = monthShows.filter(s=>String(s.date).slice(0, 10) === ds).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+      const evs = kgCalEvents.filter(e=>e.date === ds).sort((a,b)=>(a.time || '').localeCompare(b.time || ''));
+      html += `<div class="kc-cell${ds === todayStr ? ' today' : ''}${dow === 0 || dow === 6 ? ' wk' : ''}" ${canWrite ? `data-kgs-cal-day="${ds}"` : ''}><div class="kc-day">${d}</div>`
+        + shows.map(showCard).join('')
+        + evs.map(e=>`<div class="kc-card ev" data-kgs-cal-ev="${e.id}"><b>${kgsEsc(e.title)}</b>${e.time || e.note ? `<div class="kc-sub">${kgsEsc([e.time, e.note].filter(Boolean).join(' · '))}</div>` : ''}</div>`).join('')
+        + '</div>';
+    }
+    const tail = (7 - (first + days) % 7) % 7;
+    for(let i = 0; i < tail; i++) html += '<div class="kc-cell blank"></div>';
+    grid.innerHTML = html;
+    document.getElementById('kgsCalWrap').style.display = kgsCalList ? 'none' : '';
+    const list = document.getElementById('kgsCalList');
+    list.style.display = kgsCalList ? '' : 'none';
+    document.getElementById('kgsCalListBtn').textContent = kgsCalList ? '查看月曆' : '查看本月列表';
+    if(kgsCalList){
+      const rows = monthShows.map(s=>({ d:String(s.date), html:showCard(s) }))
+        .concat(kgCalEvents.filter(e=>e.date && e.date.slice(0, 7) === ym).map(e=>({ d:e.date + 'T' + (e.time || '00:00'), html:`<div class="kc-card ev" data-kgs-cal-ev="${e.id}"><b>${kgsEsc(e.title)}</b><div class="kc-sub">${kgsEsc([e.time, e.note].filter(Boolean).join(' · '))}</div></div>` })))
+        .sort((a,b)=>a.d.localeCompare(b.d));
+      list.innerHTML = rows.length ? rows.map(r=>`<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:10px;"><div style="width:64px;flex:none;font-size:13px;color:var(--ink-faint);padding-top:8px;">${r.d.slice(5, 10).replace('-', '/')}</div><div style="flex:1;">${r.html}</div></div>`).join('') : '<div style="color:var(--ink-faint);padding:20px;text-align:center;">本月沒有行程</div>';
+    }
+    const root = document.getElementById('view-kgs-calendar');
+    root.querySelectorAll('[data-kgs-cal-ev]').forEach(b=> b.addEventListener('click', e=>{ e.stopPropagation(); kgsOpenCalForm(b.dataset.kgsCalEv); }));
+    root.querySelectorAll('[data-kgs-cal-show]').forEach(b=> b.addEventListener('click', e=>{ e.stopPropagation(); if(canWrite) kgsOpenShowForm(b.dataset.kgsCalShow); }));
+    root.querySelectorAll('[data-kgs-cal-day]').forEach(c=> c.addEventListener('click', ()=> kgsOpenShowForm(null, c.dataset.kgsCalDay)));
+  }
+  document.getElementById('kgsCalMonthInput').addEventListener('change', e=>{ const v = e.target.value; if(!v) return; const [yy, mm] = v.split('-').map(Number); kgsCalMonth = new Date(yy, mm - 1, 1); kgsRenderCal(); });
+  document.getElementById('kgsCalListBtn').addEventListener('click', ()=>{ kgsCalList = !kgsCalList; kgsRenderCal(); });
+  document.getElementById('kgsCalRefresh').addEventListener('click', ()=> kgsRenderCal());
+  document.getElementById('kgsCalPrev').addEventListener('click', ()=>{ kgsCalMonth = new Date(kgsCalMonth.getFullYear(), kgsCalMonth.getMonth() - 1, 1); kgsRenderCal(); });
+  document.getElementById('kgsCalNext').addEventListener('click', ()=>{ kgsCalMonth = new Date(kgsCalMonth.getFullYear(), kgsCalMonth.getMonth() + 1, 1); kgsRenderCal(); });
+  document.getElementById('kgsCalAddBtn').addEventListener('click', ()=> kgsOpenShowForm(null));
+
+
+  /* ================= 有聊直說 Podcast ================= */
+  const PC_MEMBERS = ['Mana','七七','凱全','群青'];
+  const PC_EP_STATUS = [
+    { v:'待討論', c:'#98A2B3' }, { v:'撰寫腳本中', c:'#8B7CF6' }, { v:'已定稿', c:'#14B8A6' }, { v:'已錄音', c:'#3B7FC4' },
+    { v:'剪輯中', c:'#F2A33B' }, { v:'已上架', c:'#2E9E6B' },
+  ];
+  const PC_MT_TYPES = ['每月會議','主題會議'];
+  const pcTypeFix = v => v === '每月社群會議' ? '每月會議' : (v || '');
+  const pcStFix = v => ({ '企劃':'待討論', '腳本':'撰寫腳本中' })[v] || v || '待討論'; // 舊名稱自動對應新名稱
+  const pcEpColor = v => pcStFix(v) && (PC_EP_STATUS.find(x=>x.v === pcStFix(v)) || {}).c || '#98A2B3';
+  const pcFmtDt = s => { if(!s) return '—'; const t = String(s); return t.slice(0, 10).replace(/-/g, '/') + (t.length > 10 ? ' ' + t.slice(11, 16) : ''); };
+  const pcSafeUrl = u => /^https?:\/\//i.test(String(u || '').trim()) ? String(u).trim() : '';
+  const pcMemberChecks = (prefix, picked) => PC_MEMBERS.map(m=>({ key: prefix + m, label: m, def: (picked || []).includes(m) }));
+  const pcPickedFrom = (out, prefix) => PC_MEMBERS.filter(m=>out[prefix + m]);
+  const pcMemberVals = (prefix, picked) => { const o = {}; PC_MEMBERS.forEach(m=>{ o[prefix + m] = (picked || []).includes(m); }); return o; };
+
+  // 從 Notion 搬過來的資料（固定 id，重複匯入不會產生重複項目）
+  const PC_SEED_EPISODES = [
+    { id:'pc_seed_trial', ep:'試錄', topic:'搞笑諾貝爾獎', recDate:'2026-11-21T15:00', status:'撰寫腳本中', hosts:['Mana','七七'], owner:'', script:'https://app.notion.com/p/74a59724a47a839abcb501bd58f26f62', publishUrl:'', place:'台南森穗町', note:'', archived:false },
+    { id:'pc_seed_ep1', ep:'EP1', topic:'喜劇與我', recDate:'2026-12-19T13:00', status:'撰寫腳本中', hosts:['Mana','七七'], owner:'', script:'https://app.notion.com/p/39959724a47a83d7b87581eec089c7ae', publishUrl:'', place:'台南森穗町', note:'腳本目前在 Notion（10/18 v1、10/19 v2、10/28 v3 修改中），之後請改放 Google 文件連結', archived:false },
+    { id:'pc_seed_ep2', ep:'EP2', topic:'', recDate:'2027-01-23T13:00', status:'待討論', hosts:['Mana','七七'], owner:'', script:'', publishUrl:'', place:'未定', note:'內容待討論', archived:false },
+  ];
+  const PC_SEED_MEETINGS = [
+    { id:'pc_seed_mt1', name:'主題會議', type:'主題會議', dt:'2026-11-03T20:00', people:['Mana','七七'], agenda:'1. 11/3 開社群\n2. 提案主題討論\n3. EP2 主題方向確認', minutes:'' },
+    { id:'pc_seed_mt2', name:'每月社群會議', type:'每月會議', dt:'2026-11-09T20:00', people:['Mana','七七','群青'], agenda:'1. PODCAST 名稱「有聊直說」\n2. 社群帳號開設！\n3. 台南場地決定！「森穗町」\n4. 工作內容再確認\n5. Podcast 試錄腳本內容確認\n6. 11/21 當天試錄流程＆設備確認', minutes:'' },
+  ];
+  function pcImportSeed(){
+    let n = 0;
+    PC_SEED_EPISODES.forEach(x=>{ if(!pcEpisodes.some(e=>e.id === x.id)){ pcEpisodes.push({ ...x }); n++; } });
+    PC_SEED_MEETINGS.forEach(x=>{ if(!pcMeetings.some(e=>e.id === x.id)){ pcMeetings.push({ ...x }); n++; } });
+    if(n){ scheduleCloudSave(); kgsRenderPc(); }
+    return n;
+  }
+  function pcSeedPending(){ return PC_SEED_EPISODES.some(x=>!pcEpisodes.some(e=>e.id === x.id)) || PC_SEED_MEETINGS.some(x=>!pcMeetings.some(e=>e.id === x.id)); }
+  const pcSeedBtn = () => (kgsCanWrite() && pcSeedPending()) ? `<div style="margin-top:12px;"><button class="add-form-btn" data-pc-seed="1">匯入 Notion 現有資料</button></div>` : '';
+  function pcBindSeed(el){ el.querySelectorAll('[data-pc-seed]').forEach(b=> b.addEventListener('click', ()=>{ if(kgsCanWrite()) pcImportSeed(); })); }
+
+  function pcOpenEpForm(id){
+    if(!kgsCanWrite()) return;
+    const ep = id ? pcEpisodes.find(x=>x.id === id) : null;
+    const nextNo = 'EP' + (pcEpisodes.filter(x=>/^EP\d+$/.test(x.ep || '')).length + 1);
+    const vals = ep ? { ...ep, status: pcStFix(ep.status), ...pcMemberVals('h_', ep.hosts) } : { ep: nextNo, status:'待討論', ...pcMemberVals('h_', []) };
+    kgsOpenForm(ep ? '✏️ 編輯集數' : '➕ 新增集數', [
+      { sec:'-', key:'ep', label:'集數', required:true, placeholder:'例：EP3' },
+      { sec:'-', key:'topic', label:'主題' },
+      { sec:'-', key:'recDate', label:'錄音日期', type:'datetime-local' },
+      { sec:'-', key:'status', label:'狀態', type:'select', options: PC_EP_STATUS.map(x=>x.v) },
+      { sec:'-', key:'hostsBox', label:'主持人', type:'checks', options: pcMemberChecks('h_', ep ? ep.hosts : []), full:true },
+      { sec:'-', key:'owner', label:'負責人', type:'select', options:[''].concat(PC_MEMBERS) },
+      { sec:'-', key:'place', label:'錄音地點' },
+      { sec:'-', key:'script', label:'腳本連結（Google 文件網址）', full:true, placeholder:'https://docs.google.com/…' },
+      { sec:'-', key:'publishUrl', label:'上架連結', full:true, placeholder:'https://…' },
+      { sec:'-', key:'note', label:'備註', type:'textarea', full:true, rows:5 },
+    ], vals, out=>{
+      const rec = { ep:(out.ep || '').trim(), topic:out.topic || '', recDate:out.recDate || '', status:out.status || '待討論', hosts:pcPickedFrom(out, 'h_'), owner:out.owner || '', place:out.place || '', script:(out.script || '').trim(), publishUrl:(out.publishUrl || '').trim(), note:out.note || '' };
+      if(!rec.ep) return;
+      if(ep) Object.assign(ep, rec); else pcEpisodes.push({ id:newId('pe'), ...rec, archived:false });
+      scheduleCloudSave(); kgsRenderPc();
+    }, ep ? ()=>{
+      if(!confirm(`確定要刪除「${ep.ep} ${ep.topic || ''}」嗎？`)) return;
+      pcEpisodes = pcEpisodes.filter(x=>x.id !== ep.id); scheduleCloudSave(); kgsRenderPc();
+    } : null, ep ? '儲存' : '新增');
+  }
+  function pcOpenMtForm(id){
+    if(!kgsCanWrite()) return;
+    const mt = id ? pcMeetings.find(x=>x.id === id) : null;
+    const vals = mt ? { ...mt, type: pcTypeFix(mt.type), ...pcMemberVals('p_', mt.people) } : { type:'每月會議', ...pcMemberVals('p_', []) };
+    kgsOpenForm(mt ? '✏️ 編輯會議' : '➕ 新增會議', [
+      { sec:'-', key:'name', label:'會議名稱', required:true },
+      { sec:'-', key:'type', label:'會議類型', type:'select', options: PC_MT_TYPES },
+      { sec:'-', key:'dt', label:'日期時間', type:'datetime-local' },
+      { sec:'-', key:'peopleBox', label:'參與人', type:'checks', options: pcMemberChecks('p_', mt ? mt.people : []), full:true },
+      { sec:'-', key:'agenda', label:'討論事項', type:'textarea', full:true, rows:8 },
+      { sec:'-', key:'minutes', label:'會議紀錄內文', type:'textarea', full:true, rows:12 },
+    ], vals, out=>{
+      const rec = { name:(out.name || '').trim(), type:out.type || PC_MT_TYPES[0], dt:out.dt || '', people:pcPickedFrom(out, 'p_'), agenda:out.agenda || '', minutes:out.minutes || '' };
+      if(!rec.name) return;
+      if(mt) Object.assign(mt, rec); else pcMeetings.push({ id:newId('pm'), ...rec });
+      scheduleCloudSave(); kgsRenderPc();
+    }, mt ? ()=>{
+      if(!confirm(`確定要刪除「${mt.name}」嗎？`)) return;
+      pcMeetings = pcMeetings.filter(x=>x.id !== mt.id); scheduleCloudSave(); kgsRenderPc();
+    } : null, mt ? '儲存' : '新增');
+  }
+
+  function pcRenderEpisodes(){
+    const el = document.getElementById('pcEpList'); if(!el) return;
+    const showArc = document.getElementById('pcShowArchived').checked;
+    const canWrite = kgsCanWrite();
+    const list = pcEpisodes.filter(e=>showArc || !e.archived).slice().sort((a,b)=>(a.recDate || '9').localeCompare(b.recDate || '9'));
+    if(!list.length){
+      el.innerHTML = '<div class="empty-state"><div class="kgs-empty-ico">🎧</div>還沒有集數，點右上角「＋ 新增集數」開始建立</div>' + pcSeedBtn();
+      pcBindSeed(el); return;
+    }
+    const cols = 'minmax(0,.7fr) minmax(0,1.8fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.5fr) 96px';
+    el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>集數</div><div>主題</div><div>錄音日期</div><div>狀態</div><div>主持人</div><div>負責人</div><div>連結</div><div></div></div>`
+      + list.map(e=>{
+        const sUrl = pcSafeUrl(e.script), pUrl = pcSafeUrl(e.publishUrl);
+        return `<div class="kgs-row" style="--cols:${cols};${e.archived ? 'opacity:.55;' : ''}">
+          <div class="kgs-c kgs-name" style="font-weight:600;">${kgsEsc(e.ep)}</div>
+          <div class="kgs-c" data-label="主題">${kgsEsc(e.topic || '—')}${e.note ? `<div class="kgs-muted" style="font-size:12px;margin-top:2px;">${kgsEsc(e.note)}</div>` : ''}</div>
+          <div class="kgs-c" data-label="錄音日期">${pcFmtDt(e.recDate)}${e.place ? `<div class="kgs-muted" style="font-size:12px;">${kgsEsc(e.place)}</div>` : ''}</div>
+          <div class="kgs-c" data-label="狀態"><span class="kgs-badge"><span class="kgs-dot" style="background:${pcEpColor(e.status)}"></span>${kgsEsc(pcStFix(e.status))}</span></div>
+          <div class="kgs-c" data-label="主持人">${(e.hosts || []).map(h=>`<span class="pc-chip">${kgsEsc(h)}</span>`).join('') || '—'}</div>
+          <div class="kgs-c" data-label="負責人">${kgsEsc(e.owner || '—')}</div>
+          <div class="kgs-c pc-link" data-label="連結">${sUrl ? `<a href="${kgsEsc(sUrl)}" target="_blank" rel="noopener noreferrer">腳本</a>` : ''}${pUrl ? `<a href="${kgsEsc(pUrl)}" target="_blank" rel="noopener noreferrer">上架</a>` : ''}${!sUrl && !pUrl ? '—' : ''}</div>
+          <div class="kgs-c" style="display:flex;gap:6px;justify-content:flex-end;">${canWrite ? `<button class="icon-btn" data-pc-edit="${e.id}" title="編輯">✎</button><button class="icon-btn" data-pc-arc="${e.id}" title="${e.archived ? '還原' : '封存'}">${e.archived ? '↩' : '🗄'}</button>` : ''}</div>
+        </div>`;
+      }).join('') + '</div>' + pcSeedBtn();
+    el.querySelectorAll('[data-pc-edit]').forEach(b=> b.addEventListener('click', ()=> pcOpenEpForm(b.dataset.pcEdit)));
+    el.querySelectorAll('[data-pc-arc]').forEach(b=> b.addEventListener('click', ()=>{
+      const e = pcEpisodes.find(x=>x.id === b.dataset.pcArc); if(!e || !kgsCanWrite()) return;
+      e.archived = !e.archived; scheduleCloudSave(); kgsRenderPc();
+    }));
+    pcBindSeed(el);
+  }
+  function pcRenderMeetings(){
+    const el = document.getElementById('pcMtList'); if(!el) return;
+    const canWrite = kgsCanWrite();
+    const now = new Date(), pad = n => String(n).padStart(2, '0');
+    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    // 尚未開的會議：最近的排最前面；已結束的會議：最新的排在其後；沒填時間的放最後
+    const upcoming = pcMeetings.filter(m=>m.dt && m.dt >= nowStr).sort((a,b)=>a.dt.localeCompare(b.dt));
+    const past = pcMeetings.filter(m=>m.dt && m.dt < nowStr).sort((a,b)=>b.dt.localeCompare(a.dt));
+    const undated = pcMeetings.filter(m=>!m.dt);
+    const list = upcoming.concat(past, undated);
+    if(!list.length){
+      el.innerHTML = '<div class="empty-state"><div class="kgs-empty-ico">📝</div>還沒有會議紀錄，點右上角「＋ 新增會議」開始建立</div>' + pcSeedBtn();
+      pcBindSeed(el); return;
+    }
+    el.innerHTML = list.map(m=>`<details class="pc-mt">
+      <summary>
+        <span class="pc-arrow">▸</span>
+        <div style="flex:1;min-width:0;"><h4>${kgsEsc(m.name)}</h4><div class="kgs-muted" style="font-size:12.5px;">${kgsEsc(pcTypeFix(m.type))}・${pcFmtDt(m.dt)}</div>
+        <div style="margin-top:6px;">${(m.people || []).map(h=>`<span class="pc-chip">${kgsEsc(h)}</span>`).join('')}</div></div>
+        ${canWrite ? `<button class="icon-btn" data-pc-mt="${m.id}" title="編輯">✎</button>` : ''}
+      </summary>
+      <div class="pc-detail">
+      ${m.agenda ? `<div class="pc-lab">討論事項</div><div class="pc-body">${kgsEsc(m.agenda)}</div>` : ''}
+      ${m.minutes ? `<div class="pc-lab">會議紀錄</div><div class="pc-body">${kgsEsc(m.minutes)}</div>` : ''}
+      ${!m.agenda && !m.minutes ? '<div class="pc-lab">尚未填寫討論事項或會議紀錄</div>' : ''}
+      </div>
+    </details>`).join('') + pcSeedBtn();
+    el.querySelectorAll('[data-pc-mt]').forEach(b=> b.addEventListener('click', ev=>{ ev.preventDefault(); ev.stopPropagation(); pcOpenMtForm(b.dataset.pcMt); }));
+    pcBindSeed(el);
+  }
+  function pcRenderNextMeeting(){
+    const el = document.getElementById('pcNextMeeting'); if(!el) return;
+    const now = new Date(); const pad = n => String(n).padStart(2, '0');
+    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const next = pcMeetings.filter(m=>m.dt && m.dt >= nowStr).sort((a,b)=>a.dt.localeCompare(b.dt))[0];
+    if(!next){ el.style.display = 'none'; return; }
+    el.style.display = '';
+    el.innerHTML = `<span>🗓 下次會議</span><b>${kgsEsc(next.name)}</b><span>${pcFmtDt(next.dt)}</span><span class="pc-sub">${(next.people || []).map(kgsEsc).join('、')}</span>`;
+    el.onclick = ()=> switchView('pc-meetings');
+  }
+  function kgsRenderPc(){ pcRenderEpisodes(); pcRenderMeetings(); pcRenderNextMeeting(); }
+  document.getElementById('pcAddEpBtn').addEventListener('click', ()=> pcOpenEpForm(null));
+  document.getElementById('pcAddMtBtn').addEventListener('click', ()=> pcOpenMtForm(null));
+  document.getElementById('pcShowArchived').addEventListener('change', pcRenderEpisodes);
+
   function kgsRenderAll(rebuildFilters){
     (kgShows || []).forEach(sh=>{ if(sh && !sh.archived && sh.box && sh.box.settle === '已結清' && sh.status !== '已結案'){ sh.statusBeforeClose = sh.status || ''; sh.status = '已結案'; } }); // 已結清的演出一律是「已結案」
     (kgShows || []).forEach(sh=>{ if(sh && !sh.status && !sh.archived) sh.status = '洽談中'; }); // 沒有狀態的演出一律是「洽談中」
@@ -4618,6 +5036,8 @@
     kgsRenderArchive();
     kgsRenderFinance();
     kgsRenderRoster();
+    kgsRenderCal();
+    kgsRenderPc();
     kgsApplyRole();
   }
 
