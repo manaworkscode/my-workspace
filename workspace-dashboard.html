@@ -909,6 +909,8 @@
   .kgs-wide .kgs-modal-actions{ padding:14px 24px 18px; margin-top:0; border-top:1px solid var(--line); position:sticky; bottom:0; background:var(--surface); }
   @media (max-width:560px){ .kgs-grid{ grid-template-columns:1fr; } .kgs-wide .kgs-mh, .kgs-wide .kgs-body, .kgs-wide .kgs-modal-actions{ padding-left:16px; padding-right:16px; } }
   .kgs-chks{ display:flex; gap:10px; flex-wrap:wrap; }
+  .kgs-chks.kgs-chks-one{ flex-wrap:nowrap; gap:6px; }
+  .kgs-chks.kgs-chks-one .kgs-chk{ padding:8px 8px; gap:4px; white-space:nowrap; flex:1 1 0; justify-content:center; min-width:0; }
   .kgs-chk{ display:flex !important; align-items:center; gap:6px; margin:0 !important; padding:8px 14px; border:1px solid var(--line); border-radius:10px; background:var(--surface-2); font-size:13.5px !important; color:var(--ink) !important; cursor:pointer; }
   .kgs-chk input{ width:auto !important; margin:0; }
   .kgs-tk{ display:flex; gap:6px; justify-content:center; } .kgs-tk .kgs-inp{ width:76px; min-width:0; text-align:center; border:none !important; background:transparent !important; box-shadow:none; padding:4px 2px; border-radius:0; } .kgs-tk .kgs-inp:focus{ border-bottom:1px solid var(--seal) !important; outline:none; }
@@ -3899,7 +3901,7 @@
         const opts = f.options.map(o=>{ const v = typeof o === 'string' ? o : o.v; const l = typeof o === 'string' ? (o || '—') : o.l; return `<option value="${kgsEsc(v)}" ${v===val?'selected':''}>${kgsEsc(l)}</option>`; }).join('');
         input = `<select data-kgs-f="${f.key}">${opts}</select>`;
       }else if(f.type === 'checks'){
-        input = `<div class="kgs-chks">${f.options.map(o=>`<label class="kgs-chk"><input type="checkbox" data-kgs-chk="${o.key}" ${(values[o.key] == null ? o.def : values[o.key]) ? 'checked' : ''}> ${kgsEsc(o.label)}</label>`).join('')}</div>`;
+        input = `<div class="kgs-chks ${f.cls || ''}">${f.options.map(o=>`<label class="kgs-chk"><input type="checkbox" data-kgs-chk="${o.key}" ${(values[o.key] == null ? o.def : values[o.key]) ? 'checked' : ''}> ${kgsEsc(o.label)}</label>`).join('')}</div>`;
       }else if(f.type === 'textarea'){
         input = `<textarea rows="${f.rows || 3}" data-kgs-f="${f.key}">${kgsEsc(val)}</textarea>`;
       }else{
@@ -4909,14 +4911,15 @@
       { sec:'-', key:'topic', label:'主題' },
       { sec:'-', key:'recDate', label:'錄音日期', type:'datetime-local' },
       { sec:'-', key:'status', label:'狀態', type:'select', options: PC_EP_STATUS.map(x=>x.v) },
-      { sec:'-', key:'hostsBox', label:'主持人', type:'checks', options: pcMemberChecks('h_', ep ? ep.hosts : []), full:true },
+      { sec:'-', key:'hostsBox', label:'主持人', type:'checks', options: pcMemberChecks('h_', ep ? ep.hosts : []), cls:'kgs-chks-one' },
+      { sec:'-', key:'guest', label:'嘉賓', placeholder:'多位請用頓號或逗號分隔' },
       { sec:'-', key:'owner', label:'負責人', type:'select', options:[''].concat(PC_MEMBERS) },
       { sec:'-', key:'place', label:'錄音地點' },
       { sec:'-', key:'script', label:'腳本連結（Google 文件網址）', full:true, placeholder:'https://docs.google.com/…' },
       { sec:'-', key:'publishUrl', label:'上架連結', full:true, placeholder:'https://…' },
       { sec:'-', key:'note', label:'備註', type:'textarea', full:true, rows:5 },
     ], vals, out=>{
-      const rec = { ep:(out.ep || '').trim(), topic:out.topic || '', recDate:out.recDate || '', status:out.status || '待討論', hosts:pcPickedFrom(out, 'h_'), owner:out.owner || '', place:out.place || '', script:(out.script || '').trim(), publishUrl:(out.publishUrl || '').trim(), note:out.note || '' };
+      const rec = { ep:(out.ep || '').trim(), topic:out.topic || '', recDate:out.recDate || '', status:out.status || '待討論', hosts:pcPickedFrom(out, 'h_'), guest:(out.guest || '').trim(), owner:out.owner || '', place:out.place || '', script:(out.script || '').trim(), publishUrl:(out.publishUrl || '').trim(), note:out.note || '' };
       if(!rec.ep) return;
       if(ep) Object.assign(ep, rec); else pcEpisodes.push({ id:newId('pe'), ...rec, archived:false });
       scheduleCloudSave(); kgsRenderPc();
@@ -4956,8 +4959,8 @@
       el.innerHTML = '<div class="empty-state"><div class="kgs-empty-ico">🎧</div>還沒有集數，點右上角「＋ 新增集數」開始建立</div>' + pcSeedBtn();
       pcBindSeed(el); return;
     }
-    const cols = 'minmax(0,.7fr) minmax(0,1.8fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.5fr) 96px';
-    el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>集數</div><div>主題</div><div>錄音日期</div><div>狀態</div><div>主持人</div><div>負責人</div><div>連結</div><div></div></div>`
+    const cols = 'minmax(0,.7fr) minmax(0,1.8fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.5fr) 96px';
+    el.innerHTML = `<div class="kgs-pic"><div class="kgs-table-head" style="--cols:${cols}"><div>集數</div><div>主題</div><div>錄音日期</div><div>狀態</div><div>主持人</div><div>嘉賓</div><div>負責人</div><div>連結</div><div></div></div>`
       + list.map(e=>{
         const sUrl = pcSafeUrl(e.script), pUrl = pcSafeUrl(e.publishUrl);
         return `<div class="kgs-row" style="--cols:${cols};${e.archived ? 'opacity:.55;' : ''}">
@@ -4966,6 +4969,7 @@
           <div class="kgs-c" data-label="錄音日期">${pcFmtDt(e.recDate)}${e.place ? `<div class="kgs-muted" style="font-size:12px;">${kgsEsc(e.place)}</div>` : ''}</div>
           <div class="kgs-c" data-label="狀態"><span class="kgs-badge"><span class="kgs-dot" style="background:${pcEpColor(e.status)}"></span>${kgsEsc(pcStFix(e.status))}</span></div>
           <div class="kgs-c" data-label="主持人">${(e.hosts || []).map(h=>`<span class="pc-chip">${kgsEsc(h)}</span>`).join('') || '—'}</div>
+          <div class="kgs-c" data-label="嘉賓">${kgsEsc(e.guest || '—')}</div>
           <div class="kgs-c" data-label="負責人">${kgsEsc(e.owner || '—')}</div>
           <div class="kgs-c pc-link" data-label="連結">${sUrl ? `<a href="${kgsEsc(sUrl)}" target="_blank" rel="noopener noreferrer">腳本</a>` : ''}${pUrl ? `<a href="${kgsEsc(pUrl)}" target="_blank" rel="noopener noreferrer">上架</a>` : ''}${!sUrl && !pUrl ? '—' : ''}</div>
           <div class="kgs-c" style="display:flex;gap:6px;justify-content:flex-end;">${canWrite ? `<button class="icon-btn" data-pc-edit="${e.id}" title="編輯">✎</button><button class="icon-btn" data-pc-arc="${e.id}" title="${e.archived ? '還原' : '封存'}">${e.archived ? '↩' : '🗄'}</button>` : ''}</div>
