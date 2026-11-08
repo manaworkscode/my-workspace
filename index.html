@@ -3934,7 +3934,7 @@
     document.getElementById('kgsFormCancel').addEventListener('click', kgsCloseForm);
     const fx = document.getElementById('kgsFormX'); if(fx) fx.addEventListener('click', kgsCloseForm);
     if(onDelete) document.getElementById('kgsFormDelete').addEventListener('click', ()=>{ kgsCloseForm(); onDelete(); });
-    box.querySelectorAll('input').forEach(el=> el.addEventListener('keydown', e=>{ if(e.key === 'Enter') submit(); }));
+    box.querySelectorAll('input').forEach(el=> el.addEventListener('keydown', e=>{ if(e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) submit(); })); // 注音／拼音選字時按 Enter 只是確認文字，不能送出表單
   }
   document.getElementById('kgsModal').addEventListener('click', e=>{ if(e.target.id === 'kgsModal') kgsCloseForm(); });
   document.addEventListener('keydown', e=>{ if(e.key === 'Escape') kgsCloseForm(); });
@@ -4985,13 +4985,8 @@
   function pcRenderMeetings(){
     const el = document.getElementById('pcMtList'); if(!el) return;
     const canWrite = kgsCanWrite();
-    const now = new Date(), pad = n => String(n).padStart(2, '0');
-    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-    // 尚未開的會議：最近的排最前面；已結束的會議：最新的排在其後；沒填時間的放最後
-    const upcoming = pcMeetings.filter(m=>m.dt && m.dt >= nowStr).sort((a,b)=>a.dt.localeCompare(b.dt));
-    const past = pcMeetings.filter(m=>m.dt && m.dt < nowStr).sort((a,b)=>b.dt.localeCompare(a.dt));
-    const undated = pcMeetings.filter(m=>!m.dt);
-    const list = upcoming.concat(past, undated);
+    // 依開會日期由早到晚排序（和集數進度一致）；沒填日期的放最後
+    const list = pcMeetings.slice().sort((a,b)=>(a.dt || '9999').localeCompare(b.dt || '9999'));
     if(!list.length){
       el.innerHTML = '<div class="empty-state"><div class="kgs-empty-ico">📝</div>還沒有會議紀錄，點右上角「＋ 新增會議」開始建立</div>' + pcSeedBtn();
       pcBindSeed(el); return;
