@@ -5107,6 +5107,14 @@
     }catch(e){ console.error('讀取審核名單失敗', e); kgsApprovals = []; kgsAccStatus('讀取審核名單失敗：請確認 Firebase 的 approvals 規則'); }
     kgsRenderApprovals();
   }
+  // 拒絕通知信：網頁沒辦法自己寄信，所以產生一封預先寫好的信，在你的信箱程式裡按送出即可
+  function kgsRejectMailLink(a){
+    const to = String(a.email || a.username || '').trim();
+    if(!/^[^@\s]+@[^@\s]+$/.test(to) || isLegacyEmail(to)) return '';
+    const subject = '【藝業合作 ArtsWork.hub】帳號申請結果通知';
+    const body = '您好，\n\n感謝您申請「藝業合作 ArtsWork.hub」工作台帳號。\n很抱歉，您的帳號申請這次沒有通過審核，因此目前無法登入使用。\n\n如有疑問，歡迎直接回信詢問。\n\n藝業合作工作室 敬上';
+    return `<a class="icon-btn kgs-btn2" style="text-decoration:none;display:inline-flex;align-items:center;" href="mailto:${encodeURIComponent(to).replace(/%40/g, '@')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}" title="用你的信箱程式寄出拒絕通知信">寄通知信</a>`;
+  }
   function kgsRenderApprovals(){
     const box = document.getElementById('kgsApprovalBox'); if(!box) return;
     box.style.display = kgsIsOwner() ? '' : 'none';
@@ -5116,8 +5124,8 @@
     const rows = (kgsApprovals || []).filter(a=>a.status !== 'approved' || true).map(a=>{
       const st = a.status || 'pending';
       const acts = st === 'pending' ? `<button class="icon-btn kgs-btn2" data-kgs-ap="approved" data-uid="${kgsEsc(a.uid)}">核准</button><button class="icon-btn kgs-btn2 danger" data-kgs-ap="rejected" data-uid="${kgsEsc(a.uid)}">拒絕</button>`
-        : st === 'rejected' ? `<button class="icon-btn kgs-btn2" data-kgs-ap="approved" data-uid="${kgsEsc(a.uid)}">改為核准</button>`
-        : `<button class="icon-btn kgs-btn2 danger" data-kgs-ap="rejected" data-uid="${kgsEsc(a.uid)}">停用</button>`;
+        : st === 'rejected' ? `${kgsRejectMailLink(a)}<button class="icon-btn kgs-btn2" data-kgs-ap="approved" data-uid="${kgsEsc(a.uid)}">改為核准</button>`
+        : `<button class="icon-btn kgs-btn2 danger" data-kgs-ap="rejected" data-uid="${kgsEsc(a.uid)}">拒絕</button>`;
       const when = a.createdAt ? new Date(a.createdAt).toLocaleDateString('zh-TW') : '—';
       return `<div class="kgs-row" style="--cols:repeat(4, minmax(0,1fr))"><div class="kgs-c kgs-name" style="font-weight:500;">${kgsEsc(a.username || (a.email||'').split('@')[0])}</div><div class="kgs-c" data-label="申請日">${kgsEsc(when)}</div><div class="kgs-c" data-label="狀態">${stLabel[st] || st}</div><div class="kgs-c kgs-actions">${acts}</div></div>`;
     });
@@ -5128,7 +5136,34 @@
     const status = b.dataset.kgsAp, uid = b.dataset.uid;
     try{
       await fbDb.collection('approvals').doc(uid).set({ status, reviewedAt:Date.now() }, { merge:true });
-      kgsAccStatus(status === 'approved' ? '已核准，對方現在可以登入' : '已更新為拒絕／停用');
+      let added = false;
+      if(status === 'approved'){
+        // 核准後自動加進上方「帳號與製作人」名單（已有相同帳號就不重複加）；預設權限為「檢視」，可再手動改成製作人
+        const ap = (kgsApprovals || []).find(x=>x.uid === uid) || {};
+        const mail = String(ap.email || ap.username || '').trim();
+        if(mail && !kgProducers.some(n=>kgsNormEmail((kgProducerMeta[n] || {}).email) === kgsNormEmail(mail))){
+          let nm = String(ap.username || mail).split('@')[0] || mail, base = nm, i = 2;
+          while(kgProducers.includes(nm)) nm = base + (i++);
+          kgProducers.push(nm);
+          kgProducerMeta[nm] = { email: mail, role:'檢視' };
+          added = true;
+          scheduleCloudSave(); kgsRenderAll(true);
+        }
+      }
+      let removed = false;
+      if(status === 'rejected'){
+        // 改為拒絕後，一併把這個帳號從上方「帳號與製作人」名單移除（已指派給他的演出不會被刪除）
+        const ap = (kgsApprovals || []).find(x=>x.uid === uid) || {};
+        const key = kgsNormEmail(String(ap.email || ap.username || ''));
+        const gone = key ? kgProducers.filter(n=>kgsNormEmail((kgProducerMeta[n] || {}).email) === key) : [];
+        if(gone.length){
+          kgProducers = kgProducers.filter(n=>!gone.includes(n));
+          gone.forEach(n=>{ delete kgProducerMeta[n]; });
+          removed = true;
+          scheduleCloudSave(); kgsRenderAll(true);
+        }
+      }
+      kgsAccStatus(status === 'approved' ? (added ? '已核准，並加進帳號名單（預設為檢視，可在上方改權限）' : '已核准，對方現在可以登入') : (removed ? '已改為拒絕，並從帳號名單移除，對方將無法登入' : '已改為拒絕，對方將無法登入'));
     }catch(err){ kgsAccStatus('更新失敗：' + ((err && err.message) || '請稍後再試')); }
     kgsLoadApprovals();
   });
