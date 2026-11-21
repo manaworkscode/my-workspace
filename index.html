@@ -1402,7 +1402,7 @@
         <div class="page-head">
           <div style="font-size:11.5px;color:var(--seal);font-weight:600;letter-spacing:.05em;margin-bottom:4px;">🎙️ 有聊直說 Podcast</div>
           <div class="page-title">📝 會議紀錄</div>
-          <div class="page-sub">每月會議與主題會議</div>
+          <div class="page-sub">內部會議與主題會議</div>
         </div>
         <button class="add-form-btn" id="pcAddMtBtn">＋ 新增會議</button>
       </div>
@@ -4870,8 +4870,8 @@
     { v:'待討論', c:'#98A2B3' }, { v:'撰寫腳本中', c:'#8B7CF6' }, { v:'已定稿', c:'#14B8A6' }, { v:'已錄音', c:'#3B7FC4' },
     { v:'剪輯中', c:'#F2A33B' }, { v:'已上架', c:'#2E9E6B' },
   ];
-  const PC_MT_TYPES = ['每月會議','主題會議'];
-  const pcTypeFix = v => v === '每月社群會議' ? '每月會議' : (v || '');
+  const PC_MT_TYPES = ['內部會議','主題會議'];
+  const pcTypeFix = v => (v === '每月社群會議' || v === '每月會議') ? '內部會議' : (v || '');  // 舊名稱自動對應新名稱
   const pcStFix = v => ({ '企劃':'待討論', '腳本':'撰寫腳本中' })[v] || v || '待討論'; // 舊名稱自動對應新名稱
   const pcEpColor = v => pcStFix(v) && (PC_EP_STATUS.find(x=>x.v === pcStFix(v)) || {}).c || '#98A2B3';
   const pcFmtDt = s => { if(!s) return '—'; const t = String(s); return t.slice(0, 10).replace(/-/g, '/') + (t.length > 10 ? ' ' + t.slice(11, 16) : ''); };
@@ -4888,7 +4888,7 @@
   ];
   const PC_SEED_MEETINGS = [
     { id:'pc_seed_mt1', name:'主題會議', type:'主題會議', dt:'2026-11-03T20:00', people:['Mana','七七'], agenda:'1. 11/3 開社群\n2. 提案主題討論\n3. EP2 主題方向確認', minutes:'' },
-    { id:'pc_seed_mt2', name:'每月社群會議', type:'每月會議', dt:'2026-11-09T20:00', people:['Mana','七七','群青'], agenda:'1. PODCAST 名稱「有聊直說」\n2. 社群帳號開設！\n3. 台南場地決定！「森穗町」\n4. 工作內容再確認\n5. Podcast 試錄腳本內容確認\n6. 11/21 當天試錄流程＆設備確認', minutes:'' },
+    { id:'pc_seed_mt2', name:'每月社群會議', type:'內部會議', dt:'2026-11-09T20:00', people:['Mana','七七','群青'], agenda:'1. PODCAST 名稱「有聊直說」\n2. 社群帳號開設！\n3. 台南場地決定！「森穗町」\n4. 工作內容再確認\n5. Podcast 試錄腳本內容確認\n6. 11/21 當天試錄流程＆設備確認', minutes:'' },
   ];
   function pcImportSeed(){
     let n = 0;
@@ -4931,7 +4931,7 @@
   function pcOpenMtForm(id){
     if(!kgsCanWrite()) return;
     const mt = id ? pcMeetings.find(x=>x.id === id) : null;
-    const vals = mt ? { ...mt, type: pcTypeFix(mt.type), ...pcMemberVals('p_', mt.people) } : { type:'每月會議', ...pcMemberVals('p_', []) };
+    const vals = mt ? { ...mt, type: pcTypeFix(mt.type), ...pcMemberVals('p_', mt.people) } : { type:'內部會議', ...pcMemberVals('p_', []) };
     kgsOpenForm(mt ? '✏️ 編輯會議' : '➕ 新增會議', [
       { sec:'-', key:'name', label:'會議名稱', required:true },
       { sec:'-', key:'type', label:'會議類型', type:'select', options: PC_MT_TYPES },
