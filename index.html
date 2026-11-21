@@ -1571,7 +1571,10 @@
     if(pendingForce && pendingForce === user.uid) return 'pending';
     try{
       const d = await fbDb.collection('approvals').doc(user.uid).get();
-      return d.exists ? (d.data().status || 'approved') : 'approved';
+      if(d.exists) return d.data().status || 'approved';
+      // 沒有審核紀錄：舊的內部帳號與白名單帳號視為已通過；用真實 Email 註冊卻沒有紀錄的帳號，一律當成待審核
+      const em = String(user.email || '').toLowerCase();
+      return (KGS_OWNER_EMAILS.includes(em) || KGS_ALWAYS_APPROVED.includes(em)) ? 'approved' : 'pending';
     }catch(e){ console.error('讀取審核狀態失敗', e); return 'approved'; }
   }
 
@@ -1579,6 +1582,7 @@
   // 輸入 Email 就直接使用；只輸入帳號名稱的舊帳號，轉成原本的內部 Email
   const LEGACY_DOMAIN = '@manaworkspace.local';
   const KGS_OWNER_EMAILS = ['manaworkcode@manaworkspace.local'];
+  const KGS_ALWAYS_APPROVED = ['artswork.hub@gmail.com']; // 審核功能上線前就在使用、沒有審核紀錄的帳號
   function usernameToEmail(u){
     const t = String(u || '').trim().toLowerCase();
     if(t.indexOf('@') >= 0) return t;
@@ -1971,8 +1975,23 @@
       loginInitiated = true;
       let resolveWork; signupWork = new Promise(res=>{ resolveWork = res; });
       try{
-        const cred = await fbAuth.createUserWithEmailAndPassword(usernameToEmail(u), p);
+        let cred = null;
         try{
+          cred = await fbAuth.createUserWithEmailAndPassword(usernameToEmail(u), p);
+        }catch(ce){
+          if(!(ce && ce.code === 'auth/email-already-in-use')) throw ce;
+          // 這個 Email 已有登入帳號：可能是先前申請被拒絕（審核紀錄已刪除）的人要重新申請。
+          // 用同一組密碼驗證本人，若沒有審核紀錄就重新送出一筆「待審核」。
+          let rc = null;
+          try{ rc = await fbAuth.signInWithEmailAndPassword(usernameToEmail(u), p); }catch(se){ throw ce; }
+          const em = String(rc.user.email || '').toLowerCase();
+          const ex = await fbDb.collection('approvals').doc(rc.user.uid).get();
+          if(!ex.exists && !isLegacyEmail(em) && !KGS_ALWAYS_APPROVED.includes(em) && !KGS_OWNER_EMAILS.includes(em)){
+            await fbDb.collection('approvals').doc(rc.user.uid).set({ username:u, email:rc.user.email || usernameToEmail(u), status:'pending', createdAt:Date.now() });
+            authNotice = '已重新送出申請，請等管理者審核通過後才能登入。';
+          }
+        }
+        if(cred) try{
           await cred.user.updateProfile({ displayName: u.split('@')[0] });
           try{ if(typeof cred.user.sendEmailVerification === 'function') await cred.user.sendEmailVerification(); }catch(ve){ console.error('驗證信寄送失敗', ve); }
           await fbDb.collection('approvals').doc(cred.user.uid).set({ username:u, email:cred.user.email || usernameToEmail(u), status:'pending', createdAt:Date.now() });
@@ -4199,6 +4218,27 @@
     return role;
   }
   function kgsCanWrite(){ return kgsMyRole() !== '檢視'; }
+  /* ---- 把「製作人」名單同步到 Firebase 的 roles 集合（文件 ID＝Email），讓 Firebase 規則可以直接判斷誰是製作人 ----
+     只有管理者會執行；名單有變動才會寫入。 */
+  let kgsRoleSig = null, kgsRoleBusy = false;
+  async function kgsSyncRoles(){
+    if(!kgsIsOwner() || !currentUser || kgsRoleBusy) return;
+    const want = new Set();
+    kgProducers.forEach(n=>{ const m = kgProducerMeta[n] || {}; if(m.role === '製作人' && m.email){ const e = kgsNormEmail(m.email); if(e) want.add(e); } });
+    const sig = JSON.stringify([...want].sort());
+    if(sig === kgsRoleSig) return;
+    kgsRoleBusy = true;
+    try{
+      const snap = await fbDb.collection('roles').get();
+      const have = new Set(); snap.forEach(d=>have.add(d.id));
+      const ops = [];
+      want.forEach(e=>{ if(!have.has(e)) ops.push(fbDb.collection('roles').doc(e).set({ role:'製作人', updatedAt:Date.now() })); });
+      have.forEach(e=>{ if(!want.has(e)) ops.push(fbDb.collection('roles').doc(e).delete()); });
+      await Promise.all(ops);
+      kgsRoleSig = sig;
+    }catch(err){ console.error('同步製作人權限失敗', err); kgsAccStatus('製作人權限同步失敗：請先到 Firebase 規則加入 roles 的設定'); }
+    kgsRoleBusy = false;
+  }
   function kgsRenderAccounts(){
     const el = document.getElementById('kgsProducerChips'); if(!el) return;
     const cols = 'repeat(5, minmax(0,1fr))'; // 五欄等寬、整列分散對齊
@@ -4223,6 +4263,7 @@
       </div>`);
     });
     kgsRenderDeleteRequests();
+    if(owner) kgsSyncRoles();
     if(owner){ if(kgsApprovals === null){ kgsApprovals = []; kgsLoadApprovals(); } else kgsRenderApprovals(); }
     el.innerHTML = `<div class="kgs-pic kgs-acc"><div class="kgs-table-head" style="--cols:${cols}"><div>顯示名稱</div><div>帳號</div><div>密碼</div><div>權限</div><div></div></div>${rows.join('')}</div>`;
   }
@@ -5113,7 +5154,10 @@
     if(!kgsIsOwner()) return;
     const list = document.getElementById('kgsApprovalList');
     const stLabel = { pending:'待審核', approved:'已通過', rejected:'已拒絕' };
-    const rows = (kgsApprovals || []).filter(a=>a.status !== 'approved' || true).map(a=>{
+    // 被拒絕的帳號預設不顯示在列表裡。紀錄仍保留在雲端（狀態＝已拒絕），不能真的刪掉：
+    // 否則系統會把「沒有紀錄」當成舊帳號而放行，被拒絕的人就能登入了。
+    const rejectedN = (kgsApprovals || []).filter(a=>a.status === 'rejected').length;
+    const rows = (kgsApprovals || []).filter(a=>a.status !== 'rejected' || kgsShowRejected).map(a=>{
       const st = a.status || 'pending';
       const acts = st === 'pending' ? `<button class="icon-btn kgs-btn2" data-kgs-ap="approved" data-uid="${kgsEsc(a.uid)}">核准</button><button class="icon-btn kgs-btn2 danger" data-kgs-ap="rejected" data-uid="${kgsEsc(a.uid)}">拒絕</button>`
         : st === 'rejected' ? `<button class="icon-btn kgs-btn2" data-kgs-ap="approved" data-uid="${kgsEsc(a.uid)}">改為核准</button>`
@@ -5121,13 +5165,26 @@
       const when = a.createdAt ? new Date(a.createdAt).toLocaleDateString('zh-TW') : '—';
       return `<div class="kgs-row" style="--cols:repeat(4, minmax(0,1fr))"><div class="kgs-c kgs-name" style="font-weight:500;">${kgsEsc(a.username || (a.email||'').split('@')[0])}</div><div class="kgs-c" data-label="申請日">${kgsEsc(when)}</div><div class="kgs-c" data-label="狀態">${stLabel[st] || st}</div><div class="kgs-c kgs-actions">${acts}</div></div>`;
     });
-    list.innerHTML = `<div class="kgs-pic kgs-acc"><div class="kgs-table-head" style="--cols:repeat(4, minmax(0,1fr))"><div>帳號</div><div>申請日</div><div>狀態</div><div></div></div>${rows.join('') || '<div class="empty-state">目前沒有新帳號申請</div>'}</div>`;
+    list.innerHTML = `<div class="kgs-pic kgs-acc"><div class="kgs-table-head" style="--cols:repeat(4, minmax(0,1fr))"><div>帳號</div><div>申請日</div><div>狀態</div><div></div></div>${rows.join('') || '<div class="empty-state">目前沒有新帳號申請</div>'}</div>`
+      + (rejectedN ? `<div style="margin-top:10px;"><button class="icon-btn kgs-btn2" data-kgs-toggle-rej="1">${kgsShowRejected ? '隱藏已拒絕的帳號' : `顯示已拒絕的帳號（${rejectedN}）`}</button></div>` : '');
   }
+  let kgsShowRejected = false;
   document.getElementById('kgsApprovalList').addEventListener('click', async e=>{
+    const tg = e.target.closest('[data-kgs-toggle-rej]');
+    if(tg){ kgsShowRejected = !kgsShowRejected; kgsRenderApprovals(); return; }
     const b = e.target.closest('[data-kgs-ap]'); if(!b || !kgsIsOwner()) return;
     const status = b.dataset.kgsAp, uid = b.dataset.uid;
+    const apRow = (kgsApprovals || []).find(x=>x.uid === uid) || {};
+    const apMail = String(apRow.email || apRow.username || '').toLowerCase();
+    const realMail = !!apMail && !isLegacyEmail(apMail);
+    if(status === 'rejected' && !confirm(`確定要拒絕「${apRow.username || apMail}」嗎？\n${realMail ? '這筆申請會從列表刪除，對方將無法登入；如果還想使用，必須重新註冊申請，再由你審核。' : '對方將無法登入。'}`)) return;
     try{
-      await fbDb.collection('approvals').doc(uid).set({ status, reviewedAt:Date.now() }, { merge:true });
+      let deleted = false;
+      if(status === 'rejected' && realMail){
+        // 真實 Email 帳號：沒有審核紀錄就視為待審核，所以可以直接刪除這筆申請；刪除失敗（權限不足）就退回標記為已拒絕
+        try{ await fbDb.collection('approvals').doc(uid).delete(); deleted = true; }catch(de){ console.error('刪除審核紀錄失敗', de); }
+      }
+      if(!deleted) await fbDb.collection('approvals').doc(uid).set({ status, reviewedAt:Date.now() }, { merge:true });
       let added = false;
       if(status === 'approved'){
         // 核准後自動加進上方「帳號與製作人」名單（已有相同帳號就不重複加）；預設權限為「檢視」，可再手動改成製作人
